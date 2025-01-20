@@ -1,0 +1,978 @@
+openapi: 3.0.3
+info:
+  title: Swagger CPR - OpenAPI 3.0
+  description: |-
+    Đây là API của website CPR
+  version: 1.0.1
+servers:
+tags:
+  - name: Account
+    description: API handle login and logout
+  - name: User
+    description: API related for user
+  - name: Item
+    description: API related for item
+  - name: Order
+    description: API related for order
+  - name: Category
+    description: API related for category
+paths:
+  /api/item/all:
+    get:
+      tags:
+        - Item
+      summary: Get all Items
+      description: Returns a list of items
+      operationId: getAllItems
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Item not found
+  /api/item:
+    post:
+      tags:
+        - Item
+      summary: Add a new Item
+      description: create a new Item
+      operationId: createItem
+      requestBody:
+        description: Create a new item
+        content:
+          application/json:
+            schema:
+              required:
+                - itemName
+                - category
+                - itemUrl
+              type: object
+              properties:
+                itemName:
+                  type: string
+                  example: "Khoai Tây Chiên"
+                category:
+                  type: array
+                  items:
+                    type: string
+                    example: "Món ăn kèm"
+                itemUrl:
+                  type: string
+                  example: ""
+                description:
+                  type: string
+                  example: Khoai tây chiên ngoài giòn trong mềm
+                price:
+                  type: integer
+                  default: 0
+        required: true
+      responses:
+        "201":
+          description: Create item success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "400":
+          description: Invalid input
+        "422":
+          description: Validation exception
+    get:
+      tags:
+        - Item
+      summary: Get all Items with searchTerm and paging
+      description: Returns a list of items
+      operationId: getAllItemsWithPaging
+      parameters:
+        - name: searchTerm
+          in: query
+          description: The search term for items
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: The page number for items
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: The limit number for items
+          required: false
+          schema:
+            type: integer
+            default: 5
+        - name: status
+          in: query
+          description: The status of items
+          required: false
+          schema:
+            type: string
+            enum:
+              - Active
+              - Inactive
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Item not found
+  /api/item/{itemName}:
+    put:
+      tags:
+        - Item
+      summary: Update an existing Item
+      description: Update an existing Item by name
+      operationId: updateItemById
+      parameters:
+        - name: itemName
+          in: path
+          description: name of an Item
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Update an existent Item
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Item"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "400":
+          description: Invalid itemName supplied
+        "404":
+          description: Item not found
+        "422":
+          description: Validation exception
+    delete:
+      tags:
+        - Item
+      summary: Deletes an Item
+      description: delete an Item by name
+      operationId: deletePet
+      parameters:
+        - name: itemName
+          in: path
+          description: name of an Item
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+        "204":
+          description: Delete item success
+        "400":
+          description: Invalid itemName supplies
+        "404":
+          description: Item not found
+  /api/item/{term}:
+    get:
+      tags:
+        - Item
+      summary: Find Item by Name or Category
+      description: Returns a list of item
+      operationId: getItemByTerm
+      parameters:
+        - name: term
+          in: path
+          description: The name or category of items
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Item not found
+  /api/user/all:
+    get:
+      tags:
+        - User
+      summary: Get all users
+      description: Return a list of users
+      operationId: getAllUsers
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid username supplied
+        "404":
+          description: User not found
+  /api/user:
+    post:
+      tags:
+        - User
+      summary: Create user
+      description: Create a new user
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              required:
+                - username
+                - email
+                - phoneNumber
+                - address
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: Tiến Tài
+                email:
+                  type: string
+                  example: tientai@example.com
+                password:
+                  type: string
+                  example: ""
+                phoneNumber:
+                  type: string
+                  example: "0907778777"
+                address:
+                  type: string
+                  example: Thành phố HCM
+      responses:
+        "201":
+          description: Create user success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid input
+        "422":
+          description: Validation exception
+    get:
+      tags:
+        - User
+      summary: Get all users with searchTerm and paging
+      description: Return a list of users
+      operationId: getAllUsersWithPaging
+      parameters:
+        - name: searchTerm
+          in: query
+          description: The search term for users
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: The page number for users
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: The limit number for users
+          required: false
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid username supplied
+        "404":
+          description: User not found
+  /api/login:
+    post:
+      tags:
+        - Account
+      summary: Logs user into the system
+      description: ""
+      operationId: loginUser
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              required:
+                - account
+                - password
+              type: object
+              properties:
+                account:
+                  type: string
+                  example: Tiến Tài
+                password:
+                  type: string
+                  example: "Pa$$w0rd"
+      responses:
+        "200":
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/xml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+        "400":
+          description: Invalid username/password supplied
+  /api/user/{username}:
+    get:
+      tags:
+        - User
+      summary: Get user by username
+      description: Returns an user
+      operationId: getUserByName
+      parameters:
+        - name: username
+          in: path
+          description: "The username of the user"
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid username supplied
+        "404":
+          description: User not found
+    put:
+      tags:
+        - User
+      summary: Update user by username
+      description: Update an existing user by username
+      operationId: updateUser
+      parameters:
+        - name: username
+          in: path
+          description: "The username of the user"
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: update user object
+        content:
+          application/json:
+            schema:
+              required:
+                - username
+                - email
+                - phoneNumber
+                - address
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "Tiến Tài"
+                email:
+                  type: string
+                  example: tientai@example.com
+                password:
+                  type: string
+                  example: ""
+                phoneNumber:
+                  type: string
+                  example: "0907778777"
+                address:
+                  type: string
+                  example: Thành phố HCM
+                status:
+                  type: string
+                  example: "Active"
+                  enum:
+                    - Active
+                    - Inactive
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Invalid username supplied
+        "404":
+          description: User not found
+    delete:
+      tags:
+        - User
+      summary: Delete user by username
+      description: Delete an existing user by username
+      operationId: deleteUser
+      parameters:
+        - name: username
+          in: path
+          description: "The username of the user"
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+        "204":
+          description: Delete user success
+        "400":
+          description: Invalid username supplied
+        "404":
+          description: User not found
+  /api/category/all:
+    get:
+      tags:
+        - Category
+      summary: Get all Categories
+      description: Returns a list of categories
+      operationId: getAllCategories
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          description: Invalid name supplied
+        "404":
+          description: Category not found
+  /api/category:
+    post:
+      tags:
+        - Category
+      summary: Create a new Category
+      description: create a new Category
+      operationId: createCategory
+      requestBody:
+        description: Create a new category
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Category"
+      responses:
+        "201":
+          description: Create category success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          description: Invalid input
+        "422":
+          description: Validation exception
+    get:
+      tags:
+        - Category
+      summary: Get all Categories with searchTerm and paging
+      description: Returns a list of categories
+      operationId: getAllCategoriesWithPaging
+      parameters:
+        - name: searchTerm
+          in: query
+          description: The search term for categories
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: The page number for categories
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: The limit number for categories
+          required: false
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          description: Invalid name supplied
+        "404":
+          description: Category not found
+  /api/category/{categoryName}:
+    get:
+      tags:
+        - Category
+      summary: Get Category by name
+      description: Returns a category
+      operationId: getCategoryByName
+      parameters:
+        - name: categoryName
+          in: path
+          description: name of a Category
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          description: Invalid category supplied
+        "404":
+          description: Category not found
+    put:
+      tags:
+        - Category
+      summary: Update an existing Category
+      description: Update an existing Category by name
+      operationId: updateCategoryById
+      parameters:
+        - name: category
+          in: path
+          description: name of a Category
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Update an existent Category
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Category"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "400":
+          description: Invalid category supplied
+        "404":
+          description: Category not found
+        "422":
+          description: Validation exception
+    delete:
+      tags:
+        - Category
+      summary: Deletes a Category
+      description: delete a Category by name
+      operationId: deleteCategory
+      parameters:
+        - name: category
+          in: path
+          description: name of a Category
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+        "204":
+          description: Delete category success
+        "404":
+          description: Category not found
+        "400":
+          description: Invalid category supplies
+  /api/order/all:
+    get:
+      tags:
+        - Order
+      summary: Get all Orders
+      description: Returns a list of orders
+      operationId: getAllOrders
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Invalid Id supplied
+        "404":
+          description: Order not found
+  /api/order:
+    post:
+      tags:
+        - Order
+      summary: Add a new Order
+      description: create a new Order
+      operationId: createOrder
+      requestBody:
+        description: Create a new order
+        content:
+          application/json:
+            schema:
+              required:
+                - orderId
+                - username
+                - Items
+              type: object
+              properties:
+                orderId:
+                  type: string
+                  example: 1
+                username:
+                  type: string
+                  example: Tiến Tài
+                orderDate:
+                  type: string
+                  example: ""
+                items:
+                  type: object
+                  properties:
+                    itemName:
+                      type: string
+                      default: Gà Rán
+                    quantity:
+                      type: integer
+                      default: 1
+                total:
+                  type: integer
+                  default: 0
+        required: true
+      responses:
+        "201":
+          description: Create order success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Invalid input
+        "422":
+          description: Validation exception
+    get:
+      tags:
+        - Order
+      summary: Get all Orders with searchTerm and paging
+      description: Returns a list of orders
+      operationId: getAllOrdersWithPaging
+      parameters:
+        - name: searchTerm
+          in: query
+          description: The search term for orders
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: The page number for orders
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: The limit number for orders
+          required: false
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Invalid Id supplied
+        "404":
+          description: Order not found
+  /api/order/{orderId}:
+    get:
+      tags:
+        - Order
+      summary: Get Order by Id
+      description: Returns an order
+      operationId: getOrderById
+      parameters:
+        - name: orderId
+          in: path
+          description: Id of an Order
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Invalid Id supplied
+        "404":
+          description: Order not found
+    put:
+      tags:
+        - Order
+      summary: Update an existing Order
+      description: Update an existing Order by Id
+      operationId: updateOrderById
+      parameters:
+        - name: orderId
+          in: path
+          description: Id of an Order
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Update an existent Order
+        content:
+          application/json:
+            schema:
+              required:
+                - username
+                - Items
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: Tiến Tài
+                orderDate:
+                  type: string
+                  example: ""
+                items:
+                  type: object
+                  properties:
+                    itemName:
+                      type: string
+                      default: Gà Rán
+                    quantity:
+                      type: integer
+                      default: 1
+                total:
+                  type: integer
+                  default: 0
+                status:
+                  type: string
+                  description: Order Status
+                  example: Success
+                  enum:
+                    - Success
+                    - Cancel
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Invalid Id supplied
+        "404":
+          description: Order not found
+        "422":
+          description: Validation exception
+    delete:
+      tags:
+        - Order
+      summary: Deletes an Order
+      description: delete an Order by Id
+      operationId: deleteOrder
+      parameters:
+        - name: orderId
+          in: path
+          description: Id of an Order
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+        "204":
+          description: Delete order success
+        "400":
+          description: Invalid ID supplies
+        "404":
+          description: Order not found
+  /api/hello:
+    get:
+      summary: test API
+      responses:
+        "200":
+          description: successful operation
+components:
+  schemas:
+    Order:
+      type: object
+      properties:
+        orderId:
+          type: string
+          example: 1
+        username:
+          type: string
+          example: Tiến Tài
+        orderDate:
+          type: date
+          example: 01/01/2024
+        Items:
+          type: object
+          properties:
+            itemName:
+              type: string
+              default: Gà Rán
+            quantity:
+              type: integer
+              default: 1
+        total:
+          type: integer
+        status:
+          type: string
+          description: Order Status
+          example: Success
+          enum:
+            - Success
+            - Cancel
+    User:
+      required:
+        - username
+        - email
+        - phoneNumber
+        - address
+      type: object
+      properties:
+        username:
+          type: string
+          example: "Tiến Tài"
+        email:
+          type: string
+          example: tientai@example.com
+        password:
+          type: string
+          example: "Pa$$w0rd"
+        phoneNumber:
+          type: string
+          example: "12345"
+        address:
+          type: string
+          example: "Thành phố HCM"
+        role:
+          type: string
+          example: "user"
+          enum:
+            - admin
+            - user
+        status:
+          type: string
+          description: User Status
+          example: Active
+          enum:
+            - Active
+            - Inactive
+    Category:
+      type: object
+      properties:
+        category:
+          type: string
+          example: "Gà rán"
+    Item:
+      required:
+        - itemName
+        - category
+        - itemUrl
+      type: object
+      properties:
+        itemName:
+          type: string
+          example: "Khoai Tây Chiên"
+        category:
+          type: array
+          items:
+            type: string
+            example: "Món ăn kèm"
+        itemUrl:
+          type: string
+          default: ""
+        description:
+          type: string
+          example: "Mô tả món ăn"
+        price:
+          type: integer
+        status:
+          type: string
+          description: Item Status
+          example: Active
+          enum:
+            - Active
+            - Inactive
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+  requestBodies:
+    Item:
+      description: Item object that needs to be added to the store
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Item"
+    User:
+      description: List of user object
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/User"
+    Order:
+      description: List of order object
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/Order"
