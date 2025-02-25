@@ -1,7 +1,0 @@
-{
-    "item_name": "Name of Item",
-    "category": ["category 1", "category 2", "category 3"],
-    "item_url": "URL of Item",
-    "description": "Description of item",
-    "price": 0
-}
