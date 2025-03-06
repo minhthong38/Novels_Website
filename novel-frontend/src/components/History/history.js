@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { novels } from '../../data/data';
-// import UserStickyNote from '../UserStickyNote'; 
+import { UserContext } from '../../context/UserContext'; // Import UserContext
 
 export default function History() {
   const navigate = useNavigate();
+  const { isDarkMode } = useContext(UserContext); // Get dark mode state from context
   const [readNovels, setReadNovels] = useState([]);
 
   useEffect(() => {
@@ -23,8 +24,8 @@ export default function History() {
   };
 
   return (
-    <div className="flex justify-center items-start p-32">
-      <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-4xl">
+    <div className={`flex justify-center items-start p-32 min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
+      <div className="shadow-md rounded-lg p-6 w-full max-w-4xl">
         <div className="flex">
           <div className="w-1/4">
             <h2 className="font-bold text-lg mb-4">LỊCH SỬ</h2>

@@ -1,27 +1,35 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { UserContext } from '../../context/UserContext';
-import UserStickyNote from '../UserStickyNote';
+import { users } from '../../data/data'; // Import users data
+import UserNotification from '../notifications/UserNotification'; // Import UserNotification component
 
 export default function UserAccount() {
-  const { loggedInUser, setLoggedInUser } = useContext(UserContext);
+  const { loggedInUser, setLoggedInUser, isDarkMode } = useContext(UserContext);
   const [uploadedImage, setUploadedImage] = useState(null);
-  const [avatarImage, setAvatarImage] = useState(loggedInUser ? loggedInUser.avatar : "https://lh7-rt.googleusercontent.com/docsz/AD_4nXfMk9krvF3lSmqd78EvF2m8RSEOk8aFoUJ_Lb5oSQo1cO3i5jj7fWDPcVEO3Tx79Ubfje2ivLX_hhzxYI2zEvhXXDpCOoAK35p1r4fzeEwS5EuaQWwMpPQNTncJprLsgdfe6E2tUderusU0N12m6xz3OGj7?key=v8ba6Z10Wr-7QNx-8gMTgw");
+  const [avatarImage, setAvatarImage] = useState(loggedInUser ? loggedInUser.img : "https://via.placeholder.com/150");
   const [displayName, setDisplayName] = useState(loggedInUser ? loggedInUser.username : "Nguyễn Văn A");
   const [email, setEmail] = useState(loggedInUser ? loggedInUser.email : "nguyenvana@gmail.com");
   const [gender, setGender] = useState(loggedInUser ? loggedInUser.gender : "Nam");
   const [newDisplayName, setNewDisplayName] = useState(displayName);
   const [newEmail, setNewEmail] = useState(email);
   const [newGender, setNewGender] = useState(gender);
+  const [showAuthorRequestPopup, setShowAuthorRequestPopup] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     if (loggedInUser) {
-      setAvatarImage(loggedInUser.avatar);
+      setAvatarImage(loggedInUser.img);
       setDisplayName(loggedInUser.username);
       setEmail(loggedInUser.email);
       setGender(loggedInUser.gender);
       setNewDisplayName(loggedInUser.username);
       setNewEmail(loggedInUser.email);
       setNewGender(loggedInUser.gender);
+      const storedNotification = localStorage.getItem(`notification_${loggedInUser.id}`);
+      if (storedNotification) {
+        setNotification(JSON.parse(storedNotification));
+        localStorage.removeItem(`notification_${loggedInUser.id}`);
+      }
     }
   }, [loggedInUser]);
 
@@ -45,6 +53,7 @@ export default function UserAccount() {
       gender: newGender
     };
     setLoggedInUser(updatedUser);
+    localStorage.setItem('userAvatar', updatedUser.avatar); // Store updated avatar in localStorage
     setAvatarImage(updatedUser.avatar);
     setDisplayName(updatedUser.username);
     setEmail(updatedUser.email);
@@ -52,10 +61,32 @@ export default function UserAccount() {
     setUploadedImage(null);
   };
 
+  const handleAuthorRequest = () => {
+    const updatedUser = {
+      ...loggedInUser,
+      authorRequest: true // Add author request flag
+    };
+    setLoggedInUser(updatedUser);
+    const userIndex = users.findIndex(user => user.id === loggedInUser.id);
+    if (userIndex !== -1) {
+      users[userIndex] = updatedUser;
+    }
+    setShowAuthorRequestPopup(false);
+    alert('Yêu cầu làm tác giả đã được gửi.');
+  };
+
+  const handleAuthorSpaceClick = () => {
+    if (loggedInUser.role === 'author') {
+      window.location.href = '/authorAccounts';
+    } else {
+      alert('Tài khoản của bạn chưa có vai trò tác giả.');
+    }
+  };
+
   return (
-    <div className="flex flex-col md:flex-row p-4">
+    <div className={`flex flex-col md:flex-row p-4 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
       {/* Left Sidebar */}
-      <div className="w-full md:w-1/4 bg-white p-4 rounded-lg shadow-md">
+      <div className={`w-full md:w-1/4 p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
         <div className="flex flex-col items-center">
           {/* Avatar Image */}
           <img src={avatarImage} alt="User avatar" className="rounded-full w-24 h-24 mb-4" />
@@ -64,7 +95,7 @@ export default function UserAccount() {
           <p className="text-gray-600">{gender}</p>
           <button className="mt-4 text-red-500">Hồ sơ cá nhân</button>
           <button className="mt-2 text-blue-500">Đăng xuất/Thoát</button>
-          <button className="mt-2 text-green-500">Tham gia vai trò tác giả</button> {/* New button */}
+          <button className="mt-2 text-green-500" onClick={() => setShowAuthorRequestPopup(true)}>Tham gia vai trò tác giả</button> {/* New button */}
         </div>
         <div className="mt-4">
           <div className="flex justify-between items-center">
@@ -78,10 +109,10 @@ export default function UserAccount() {
         </div>
         <button className="mt-4 w-full bg-green-500 text-white py-2 rounded-lg">NẠP COIN</button>
         <ul className="mt-4 space-y-2">
-          <li className="flex items-center"><i className="fas fa-credit-card mr-2"></i> <a href="#!">Thanh toán</a></li>
+          <li className="flex items-center"><i className="fas fa-credit-card mr-2"></i> <a href="#!" onClick={handleAuthorSpaceClick}>Không gian tác giả</a></li> {/* Changed section */}
           <li className="flex items-center"><i className="fas fa-heart mr-2"></i> <a href="#!">Yêu thích</a></li>
           <li className="flex items-center"><i className="fas fa-book mr-2"></i> <a href="#!">Truyện đã mở khóa</a></li>
-          <li className="flex items-center"><i className="fas fa-bell mr-2"></i> <a href="#!">Thông báo</a></li>
+          <li className="flex items-center"><i className="fas fa-bell mr-2"></i> <a href="#!" onClick={() => setNotification(null)}>Thông báo</a></li>
           <li className="flex items-center"><i className="fas fa-history mr-2"></i> <a href="/history">Lịch sử đọc</a></li>
           <li className="flex items-center"><i className="fas fa-receipt mr-2"></i> <a href="#!">Lịch sử thanh toán</a></li>
           <li className="flex items-center"><i className="fas fa-key mr-2"></i> <a href="#!">Đổi mật khẩu</a></li>
@@ -89,20 +120,9 @@ export default function UserAccount() {
       </div>
 
       {/* Main Content */}
-      <div className="w-full md:w-3/4 bg-white p-4 rounded-lg shadow-md mt-4 md:mt-0 md:ml-4">
+      <div className={`w-full md:w-3/4 p-4 rounded-lg shadow-md mt-4 md:mt-0 md:ml-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
         {/* Premium Package Section */}
-        <div className="border p-4 rounded-lg">
-          <div className="flex justify-between items-center">
-            <span>Gói Premium:</span>
-            <button className="bg-red-500 text-white py-1 px-4 rounded-lg">Nâng cấp ngay</button>
-          </div>
-          <div className="mt-2">
-            <span>Gói hiện tại: Thường</span>
-          </div>
-          <div className="mt-2">
-            <span>Hạn gói hiện tại:</span>
-          </div>
-        </div>
+       
 
         {/* Current Level Section */}
         <div className="mt-4">
@@ -140,7 +160,7 @@ export default function UserAccount() {
           <label className="block">Tên hiển thị:</label>
           <input 
             type="text" 
-            className="w-full border rounded-lg p-2 mt-1" 
+            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} 
             value={newDisplayName}
             onChange={(e) => setNewDisplayName(e.target.value)}
           />
@@ -149,7 +169,7 @@ export default function UserAccount() {
           <label className="block">Email:</label>
           <input 
             type="email" 
-            className="w-full border rounded-lg p-2 mt-1" 
+            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} 
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
           />
@@ -158,7 +178,7 @@ export default function UserAccount() {
           <label className="block">Giới tính:</label>
           <input 
             type="text" 
-            className="w-full border rounded-lg p-2 mt-1" 
+            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} 
             value={newGender}
             onChange={(e) => setNewGender(e.target.value)}
           />
@@ -185,7 +205,36 @@ export default function UserAccount() {
         </div>
       </div>
 
-      <UserStickyNote />
+      {/* Notification Popup */}
+      {notification && (
+        <UserNotification notification={notification} onClose={() => setNotification(null)} />
+      )}
+
+      {/* Author Request Popup */}
+      {showAuthorRequestPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <h2 className="text-xl font-bold mb-4">Yêu cầu làm tác giả</h2>
+            <p>Bạn có chắc chắn muốn gửi yêu cầu làm tác giả không?</p>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button 
+                className="bg-red-500 text-white py-2 px-4 rounded-lg"
+                onClick={() => setShowAuthorRequestPopup(false)}
+              >
+                Hủy
+              </button>
+              <button 
+                className="bg-green-500 text-white py-2 px-4 rounded-lg"
+                onClick={handleAuthorRequest}
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* <UserStickyNote /> */}
     </div>
   );
 }

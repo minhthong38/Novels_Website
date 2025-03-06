@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { UserContext } from '../../context/UserContext'; // Import UserContext
 
 export default function Discussion() {
   const [comments, setComments] = useState([]);
@@ -8,6 +9,7 @@ export default function Discussion() {
   const [showNotification, setShowNotification] = useState(false);
   const commentsEndRef = useRef(null);
   const containerRef = useRef(null);
+  const { isDarkMode } = useContext(UserContext); // Get dark mode state from context
 
   const handleSend = () => {
     if (newComment.trim()) {
@@ -96,9 +98,9 @@ export default function Discussion() {
   }, [allComments]);
 
   return (
-    <div className="flex-1 mt-8 md:mt-0 mx-auto">
-      <h2 className="text-xl font-bold mb-4 text-center">THẢO LUẬN</h2>
-      <div className="bg-gray-100 p-4 rounded-lg w-full sm:w-[90%] md:w-[70%] lg:w-[60%] mx-auto relative">
+    <div className="flex-1 mt-8 md:mt-0 mx-auto ">
+      <h2 className={`text-xl font-bold mb-4 text-center ${isDarkMode ? 'text-white' : 'text-black'}`}>THẢO LUẬN</h2>
+      <div className={`p-4 rounded-lg w-full sm:w-[90%] md:w-[70%] lg:w-[60%] mx-auto relative ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'}`}>
         <div className="h-96 overflow-auto" ref={containerRef}>
           {allComments.map((comment, index) => (
             <div key={index} className="flex items-center mb-4">

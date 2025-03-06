@@ -7,7 +7,6 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('');
   const [gender, setGender] = useState('');
   const [error, setError] = useState('');
   const [usernameError, setUsernameError] = useState('');
@@ -43,7 +42,7 @@ export default function Register() {
   }, [password, confirmPassword]);
 
   const handleRegister = () => {
-    if (!username || !password || !confirmPassword || !email || !role || !gender) {
+    if (!username || !password || !confirmPassword || !email || !gender) {
       setPopupError('Vui lòng điền đầy đủ thông tin');
       return;
     }
@@ -55,7 +54,7 @@ export default function Register() {
       username,
       password,
       email,
-      role,
+      role: 'user', // Set role to 'user' by default
       gender,
       avatar: uploadedImage || 'https://via.placeholder.com/150'
     });
@@ -159,20 +158,7 @@ export default function Register() {
               <p key={index} className="text-red-500 text-sm mt-1">{err}</p>
             ))}
           </div>
-          <div>
-            <label className="block">Chọn vai trò:</label>
-            <select 
-              className="w-full border rounded-lg p-2 mt-1" 
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              <option value="">Chọn vai trò</option>
-              <option value="user">Người dùng</option>
-              <option value="author">Tác giả</option>
-              <option value="admin">Quản trị viên</option>
-            </select>
-          </div>
-          <div>
+          <div className="col-span-2">
             <label className="block">Giới tính:</label>
             <select 
               className="w-full border rounded-lg p-2 mt-1" 

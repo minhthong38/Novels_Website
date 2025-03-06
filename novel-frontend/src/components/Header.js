@@ -4,7 +4,7 @@ import { categories, novels } from '../data/data';
 import { UserContext } from '../context/UserContext';
 
 function Header() {
-  const { loggedInUser, logout } = useContext(UserContext);
+  const { loggedInUser, logout, isDarkMode, toggleDarkMode } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -50,9 +50,10 @@ function Header() {
     { 
       label: 'Tác Giả', 
       options: [
-        { name: 'Rosie Nguyễn', href: '/authors' },
+        { name: 'Rosie Nguyễn', href: '/authorAccounts' },
       ] 
-    }
+    },
+    { label: 'Blind Book', href: '/blindbook' }
   ];
 
   const handleLogout = () => {
@@ -61,9 +62,11 @@ function Header() {
   };
 
   return (
-    <header className="bg-white shadow-md">
+    <header className={`shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
       <div className="container mx-auto flex justify-between items-center py-4 px-6">
-        <div className="text-xl font-bold">LOGO NÈ</div>
+        <Link to="/">
+          <img src="https://imgur.com/pc05sxO.png/" alt="Logo" className="w-32 h-12" />
+        </Link>
         <nav className="flex space-x-4">
           {tabs.map((tab, index) => (
             <div 
@@ -74,7 +77,7 @@ function Header() {
             >
               <Link 
                 to={tab.href || '#'} 
-                className="text-gray-700 hover:text-blue-500"
+                className={`${isDarkMode ? 'text-white' : 'text-black'} hover:text-blue-500`}
               >
                 {tab.label}
               </Link>
@@ -102,7 +105,7 @@ function Header() {
             value={searchTerm}
             onChange={handleSearchChange}
           />
-          <button className="text-gray-700">🔍</button>
+          <button className={`${isDarkMode ? 'text-white' : 'text-black'}`}>🔍</button>
           {searchResults.length > 0 && (
             <div className="absolute bg-white border rounded shadow-lg left-0 top-full z-10 w-48 mt-2">
               {searchResults.map((novel, index) => (
@@ -117,12 +120,22 @@ function Header() {
               ))}
             </div>
           )}
-          <div className="relative group ml-4">
+          <div className="ml-4 pl-10">
+            <label htmlFor="darkModeToggle" className="flex items-center cursor-pointer">
+              <div className="relative">
+                <input type="checkbox" id="darkModeToggle" className="sr-only" checked={isDarkMode} onChange={toggleDarkMode} />
+                <div className="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition ${isDarkMode ? 'translate-x-full' : ''}`}></div>
+              </div>
+              <div className={`ml-3 ${isDarkMode ? 'text-white' : 'text-black'}`}>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</div>
+            </label>
+          </div>
+          <div className="relative group ml-10 pl-10">
             <div className="flex items-center space-x-2 cursor-pointer">
-              <Link to="/userAccount" className="text-gray-700 focus:outline-none">
-                <img src={loggedInUser ? loggedInUser.avatar : "https://i.imgur.com/Y0N4tO3.png"} alt="User Icon" className="w-6 h-6 rounded-full" />
+              <Link to="/userAccount" className={`${isDarkMode ? 'text-white' : 'text-black'} focus:outline-none`}>
+                <img src={loggedInUser ? loggedInUser.img : "https://i.imgur.com/Y0N4tO3.png"} alt="User Icon" className="w-6 h-6 rounded-full" />
               </Link>
-              {loggedInUser && <span className="ml-2">{loggedInUser.username}</span>}
+              {loggedInUser && <span className={`ml-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>{loggedInUser.username}</span>}
             </div>
             <div className="absolute bg-white border rounded shadow-lg right-0 top-full z-10 w-48 hidden group-hover:block">
               {loggedInUser ? (
@@ -133,7 +146,7 @@ function Header() {
                   {loggedInUser.role === 'author' && (
                     <Link to="/authorAccounts" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Author Profile</Link>
                   )}
-                  {loggedInUser.role === 'admin' && (
+                  {loggedInUser.role === 'user' && (
                     <Link to="/adminAccount" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Admin Profile</Link>
                   )}
                   <Link to="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</Link>
@@ -147,6 +160,7 @@ function Header() {
               )}
             </div>
           </div>
+          
         </div>
       </div>
     </header>

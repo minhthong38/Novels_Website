@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { novels, novelContents } from '../../data/data';
+import { UserContext } from '../../context/UserContext'; // Import UserContext
 
 export default function NovelView() {
   const { novelID } = useParams();
@@ -9,6 +10,7 @@ export default function NovelView() {
   const [banners, setBanners] = useState([]);
   const [currentBanner, setCurrentBanner] = useState(0);
   const [checkpoint, setCheckpoint] = useState(null);
+  const { isDarkMode } = useContext(UserContext); // Get dark mode state from context
 
   useEffect(() => {
     const selectedNovel = novels.find(novel => novel.NovelID === parseInt(novelID));
@@ -48,7 +50,7 @@ export default function NovelView() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen flex flex-col items-center">
+    <div className={`${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} min-h-screen flex flex-col items-center`}>
       <div className="relative w-full h-[500px] overflow-hidden">
         <div
           className="w-full h-full bg-cover bg-center transition-all duration-500"
@@ -59,13 +61,13 @@ export default function NovelView() {
           }}
         ></div>
         <button
-          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full"
+          className={`absolute top-1/2 left-4 transform -translate-y-1/2 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'} p-2 rounded-full`}
           onClick={handlePrevBanner}
         >
           &#8249;
         </button>
         <button
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full"
+          className={`absolute top-1/2 right-4 transform -translate-y-1/2 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'} p-2 rounded-full`}
           onClick={handleNextBanner}
         >
           &#8250;
@@ -82,7 +84,7 @@ export default function NovelView() {
         </div>
       </div>
 
-      <div className="w-full sm:w-3/4 lg:w-2/3 m-4 sm:m-8 p-4 sm:p-8 mt-4 shadow-md rounded-md bg-white">
+      <div className={`w-full sm:w-3/4 lg:w-2/3 m-4 sm:m-8 p-4 sm:p-8 mt-4 shadow-md rounded-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
         <h2 className="text-xl sm:text-2xl font-bold mb-4">
           {novel.Title}
         </h2>
@@ -94,7 +96,7 @@ export default function NovelView() {
             {part.content.map((paragraph, idx) => (
               <p 
                 key={idx} 
-                className={`text-gray-700 text-sm sm:text-base mt-4 cursor-pointer ${checkpoint === idx ? "bg-yellow-100" : ""}`}
+                className={`text-sm sm:text-base mt-4 cursor-pointer ${isDarkMode ? 'text-white' : 'text-black'} ${checkpoint === idx ? "bg-yellow-100 dark:bg-yellow-700" : ""}`}
                 onClick={() => handleCheckpoint(idx)}
               >
                 {paragraph}

@@ -29,6 +29,7 @@ export default function Login() {
 
     setError('');
     setLoggedInUser(user);
+    localStorage.setItem('userAvatar', user.img); // Store avatar in localStorage
   };
 
   return (

@@ -1,16 +1,27 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import AuthorRoute from "../routes/AuthorRoute";
-import AuthorStickyNote from "../AuthorStickyNote";
+// import AuthorStickyNote from "../AuthorStickyNote";
 import { UserContext } from '../../context/UserContext';
 
 function AuthorAccounts() {
   const { loggedInUser, setLoggedInUser } = useContext(UserContext);
-  const [displayName, setDisplayName] = useState(loggedInUser.displayName);
-  const [username, setUsername] = useState(loggedInUser.username);
-  const [password, setPassword] = useState(loggedInUser.password);
-  const [email, setEmail] = useState(loggedInUser.email);
-  const [introduction, setIntroduction] = useState(loggedInUser.introduction);
-  const [avatar, setAvatar] = useState(loggedInUser.avatar);
+  const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [introduction, setIntroduction] = useState('');
+  const [avatar, setAvatar] = useState('');
+
+  useEffect(() => {
+    if (loggedInUser) {
+      setDisplayName(loggedInUser.displayName);
+      setUsername(loggedInUser.username);
+      setPassword(loggedInUser.password);
+      setEmail(loggedInUser.email);
+      setIntroduction(loggedInUser.introduction);
+      setAvatar(loggedInUser.avatar);
+    }
+  }, [loggedInUser]);
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -35,6 +46,10 @@ function AuthorAccounts() {
     };
     setLoggedInUser(updatedUser);
   };
+
+  if (!loggedInUser) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AuthorRoute>
@@ -143,7 +158,7 @@ function AuthorAccounts() {
         >
           Lưu Thay Đổi
         </button>
-        <AuthorStickyNote />
+        {/* <AuthorStickyNote /> */}
       </div>
     </AuthorRoute>
   );

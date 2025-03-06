@@ -6,8 +6,9 @@ import NovelDetail from './components/novelDetail/novelDetail';
 import Authors from './components/authors/authors';
 import Recommend from './components/Recommend/recommend';
 import UserAccount from './components/Account/userAccount';
-import AuthorAccounts from './components/Account/AuthorAccounts';
+import AuthorAccounts from './components/Account/AuthorAccounts'; // Ensure this import is correct
 import AdminAccount from './components/Account/AdminAccount';
+import AdminProfile from './components/Account/AdminProfile'; // New import
 import History from './components/History/history';
 import NovelView from './components/NovelView/novelView';
 import UserStickyNote from './components/UserStickyNote';
@@ -16,6 +17,7 @@ import CreateNovel from './components/createNovel/CreateNovel';
 import ListNovels from './components/ListNovels/ListNovels';
 import UpdateNovel from './components/UpdateNovel/updateNovel';
 import Chapter from './components/Chapter/Chapter';
+import BlindBook from './components/BlindBook/blindbook'; // Correct import
 import AuthorSidebar from './components/sidebar/AuthorSidebar';
 import Update from './components/update/update';
 import Register from './components/register';
@@ -43,6 +45,7 @@ function App() {
           <Route path="/novelView" element={<ClientRoute children={<NovelView />} />} />
           <Route path="/UserStickyNote" element={<UserStickyNote />} />
           <Route path="/AuthorStickyNote" element={<AuthorStickyNote />} />
+          <Route path="/blindbook" element={<ClientRoute children={<BlindBook />} />} /> {/* Correct route */}
           <Route path="/update" element={<ClientRoute children={<Update />} />} />
           <Route path="/register" element={<ClientRoute children={<Register />} />} />
           <Route path="/login" element={<ClientRoute children={<Login />} />} />
@@ -50,7 +53,7 @@ function App() {
           {/* Author Routes */}
           <Route path="/authorsidebar" element={<AuthorRoute children={<AuthorSidebar />} />} />
           <Route path="/authors" element={<ClientRoute children={<Authors />} />} />
-          <Route path="/authorAccounts" element={<ClientRoute children={<AuthorAccounts />} />} />
+          <Route path="/authorAccounts" element={<ClientRoute children={<AuthorAccounts />} />} /> {/* Ensure this route is correct */}
           <Route path="/createNovel" element={<ClientRoute children={<CreateNovel />} />} />
           <Route path="/listNovels" element={<ClientRoute children={<ListNovels />} />} />
           <Route path="/updateNovel" element={<ClientRoute children={<UpdateNovel />} />} />
@@ -58,6 +61,7 @@ function App() {
           
           {/* Admin Routes */}
           <Route path="/adminAccount" element={<ClientRoute children={<AdminAccount />} />} />
+          <Route path="/adminProfile" element={<ClientRoute children={<AdminProfile />} />} /> {/* New route */}
         </Routes>
       </BrowserRouter>
     </UserProvider>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 function AdminSidebar() {
   const [showStoriesMenu, setShowStoriesMenu] = useState(false);
@@ -22,7 +23,9 @@ function AdminSidebar() {
       {/* Sidebar Menu */}
       <ul className="space-y-4">
         <li className="text-gray-700 flex items-center cursor-pointer hover:text-blue-500">
-          <span className="mr-2">👤</span> Hồ sơ cá nhân
+          <Link to="/adminProfile">
+            <span className="mr-2">👤</span> Hồ sơ cá nhân
+          </Link>
         </li>
         <li className="text-gray-700 flex items-center cursor-pointer hover:text-blue-500">
           <span className="mr-2">🔒</span> Đăng xuất / Thoát

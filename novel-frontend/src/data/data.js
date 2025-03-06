@@ -79,8 +79,8 @@ export const novels = [
     },
     {
         NovelID: 8,
-        Title: 'LORD OF THE RINGS',
-        Description: 'Description of LORD OF THE RINGS',
+        Title: 'THE HOBBIT',
+        Description: 'Description of THE HOBBIT',
         AuthorID: 4,
         Views: 600,
         CategoryID: 8,
@@ -112,8 +112,8 @@ export const novels = [
     },
     {
         NovelID: 12,
-        Title: 'PRIDE AND PREJUDICE',
-        Description: 'Description of PRIDE AND PREJUDICE',
+        Title: 'THE MOST HUMAN HUMAN',
+        Description: 'Description of THE MOST HUMAN HUMAN',
         AuthorID: 8,
         Views: 1000,
         CategoryID: 7,
@@ -403,17 +403,27 @@ export const topAuthors = [
     { id: 10, name: 'AGATHA CHRISTIE', imageUrl: 'https://example.com/agatha-christie.jpg' }
 ];
 
-export const users = [];
+export const users = [
+  { id: 1, img: "https://blog.maika.ai/wp-content/uploads/2024/02/anh-meo-meme-8.jpg", username: "meomeo01", password: "111111", level: "VIP 5" },
+  { id: 2, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSSgjs2sCO0xh0Ve1Sf8mDtBt2UhO9GRZImDw&s", username: "meo2bim", password: "222222", level: "VIP 3" },
+  { id: 3, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdHtPqWpMvl_UAqFCb_bWTPWQuQW7hAvD2Hw&s", username: "huhuhu", password: "333333", level: "VIP 2" },
+  { id: 4, img: "https://www.thepoetmagazine.org/wp-content/uploads/2024/06/avatar-meme-meo.jpg", username: "rose04", password: "444444", level: "VIP 3" },
+  { id: 5, img: "https://megaweb.vn/blog/uploads/images/meme-meo-cute-1.jpg", username: "meovang", password: "555555", level: "VIP 0" },
+  { id: 6, img: "https://dulichnghialo.vn/wp-content/uploads/2024/10/anh-meo-bua-87uHbuJ3.jpg", username: "cudamsamset", password: "666666", level: "VIP 4" },
+];
 
 export const registerUser = (user) => {
   const newUser = {
+    id: users.length + 1, // Assign a new ID
+    img: user.avatar || 'https://via.placeholder.com/150',
     username: user.username,
     password: user.password,
+    level: 'VIP 0', // Default level
     email: user.email,
     role: user.role,
     gender: user.gender,
-    avatar: user.avatar
   };
   users.push(newUser);
+  localStorage.setItem('userAvatar', newUser.img); // Store avatar in localStorage
   return newUser;
 };
