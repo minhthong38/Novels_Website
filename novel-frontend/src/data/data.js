@@ -283,7 +283,7 @@ export const novelContents = {
       ]
     },
     8: {
-      title: 'LORD OF THE RINGS',
+      title: 'THE MOST HUMAN HUMAN',
       banners: [
         "https://images-na.ssl-images-amazon.com/images/I/91b0C2YNSrL.jpg",
         "https://example.com/banner8-2.png",
@@ -345,8 +345,8 @@ export const novelContents = {
         }
       ]
     },
-    11: {
-      title: 'PRIDE AND PREJUDICE',
+    12: {
+      title: 'THE MOST HUMAN HUMAN',
       banners: [
         "https://images-na.ssl-images-amazon.com/images/I/81A-mvlo+QL.jpg",
         "https://example.com/banner11-2.png",
@@ -415,15 +415,30 @@ export const users = [
 export const registerUser = (user) => {
   const newUser = {
     id: users.length + 1, // Assign a new ID
-    img: user.avatar || 'https://via.placeholder.com/150',
+    img: user.avatar || 'https://via.placeholder.com/150', // Use a URL instead of base64
     username: user.username,
     password: user.password,
+    fullName: user.fullName, // Add fullName field
     level: 'VIP 0', // Default level
     email: user.email,
     role: user.role,
     gender: user.gender,
   };
   users.push(newUser);
-  localStorage.setItem('userAvatar', newUser.img); // Store avatar in localStorage
+
+  // Store only essential user details in localStorage
+  const minimalUser = {
+    id: newUser.id,
+    fullName: newUser.fullName, // Include fullName
+    username: newUser.username,
+    email: newUser.email,
+    img: newUser.img, // Use URL or placeholder
+    role: newUser.role,
+  };
+  try {
+    localStorage.setItem('loggedInUser', JSON.stringify(minimalUser)); // Store minimal user details
+  } catch (error) {
+    console.error('Failed to store user in localStorage:', error);
+  }
   return newUser;
 };

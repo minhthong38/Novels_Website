@@ -2,12 +2,12 @@ import React, { useContext } from 'react';
 import Banner from '../Banner';
 import TopRanking from '../topRanking/topRanking';
 import Recommend from '../Recommend/recommend';
-import Discussion from '../discussion/discussion';
 import Released from '../released/released';
-import { UserContext } from '../../context/UserContext'; // Import UserContext
+import PlaylistByCategory from '../playlistByCategory/playlistByCategory'; // Import the new component
+import { UserContext } from '../../context/UserContext';
 
 export default function Home() {
-  const { isDarkMode } = useContext(UserContext); // Get dark mode state from context
+  const { isDarkMode } = useContext(UserContext);
 
   return (
     <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} min-h-screen`}>
@@ -20,13 +20,12 @@ export default function Home() {
           <Recommend className={`${isDarkMode ? 'text-white' : 'text-black'}`} />
         </div>
         <div className="flex-1">
-          <Discussion />
+          <PlaylistByCategory /> {/* Replace Discussion with PlaylistByCategory */}
         </div>
       </div>
       <div className="container mx-auto mt-8 pb-10 md:mt-0">
         <Released className={`${isDarkMode ? 'text-white' : 'text-black'}`} />
       </div>
-      {/* <UserStickyNote /> */}
     </div>
   );
 }

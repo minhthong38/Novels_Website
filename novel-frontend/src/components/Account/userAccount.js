@@ -15,16 +15,18 @@ export default function UserAccount() {
   const [newGender, setNewGender] = useState(gender);
   const [showAuthorRequestPopup, setShowAuthorRequestPopup] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [newFullName, setNewFullName] = useState(loggedInUser ? loggedInUser.fullName : ""); // Add newFullName state
 
   useEffect(() => {
     if (loggedInUser) {
       setAvatarImage(loggedInUser.img);
-      setDisplayName(loggedInUser.username);
+      setDisplayName(loggedInUser.fullName || loggedInUser.username); // Use fullName as displayName
       setEmail(loggedInUser.email);
       setGender(loggedInUser.gender);
       setNewDisplayName(loggedInUser.username);
       setNewEmail(loggedInUser.email);
       setNewGender(loggedInUser.gender);
+      setNewFullName(loggedInUser.fullName); // Initialize newFullName
       const storedNotification = localStorage.getItem(`notification_${loggedInUser.id}`);
       if (storedNotification) {
         setNotification(JSON.parse(storedNotification));
@@ -47,18 +49,18 @@ export default function UserAccount() {
   const handleSaveChanges = () => {
     const updatedUser = {
       ...loggedInUser,
-      avatar: uploadedImage || avatarImage,
+      img: uploadedImage || avatarImage, // Update the img field with the uploaded image
+      fullName: newFullName, // Update fullName
       username: newDisplayName,
       email: newEmail,
       gender: newGender
     };
-    setLoggedInUser(updatedUser);
-    localStorage.setItem('userAvatar', updatedUser.avatar); // Store updated avatar in localStorage
-    setAvatarImage(updatedUser.avatar);
-    setDisplayName(updatedUser.username);
+    setLoggedInUser(updatedUser); // Update the loggedInUser state
+    setAvatarImage(updatedUser.img); // Update the avatar image in the UI
+    setDisplayName(updatedUser.fullName); // Update displayName with fullName
     setEmail(updatedUser.email);
     setGender(updatedUser.gender);
-    setUploadedImage(null);
+    setUploadedImage(null); // Clear the uploaded image
   };
 
   const handleAuthorRequest = () => {
@@ -90,9 +92,9 @@ export default function UserAccount() {
         <div className="flex flex-col items-center">
           {/* Avatar Image */}
           <img src={avatarImage} alt="User avatar" className="rounded-full w-24 h-24 mb-4" />
-          <h2 className="text-lg font-semibold">{displayName}</h2>
-          <p className="text-gray-600">{email}</p>
-          <p className="text-gray-600">{gender}</p>
+          <h2 className="text-lg font-semibold">{loggedInUser.fullName || loggedInUser.username}</h2> {/* Display fullName */}
+          <p className="text-gray-600">{loggedInUser.username}</p> {/* Display username */}
+          <p className="text-gray-600">{email}</p> {/* Display email */}
           <button className="mt-4 text-red-500">Hồ sơ cá nhân</button>
           <button className="mt-2 text-blue-500">Đăng xuất/Thoát</button>
           <button className="mt-2 text-green-500" onClick={() => setShowAuthorRequestPopup(true)}>Tham gia vai trò tác giả</button> {/* New button */}
@@ -157,7 +159,16 @@ export default function UserAccount() {
 
         {/* Form Fields */}
         <div className="mt-4">
-          <label className="block">Tên hiển thị:</label>
+          <label className="block">Họ và Tên:</label> {/* Move fullName input above username */}
+          <input 
+            type="text" 
+            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} 
+            value={newFullName}
+            onChange={(e) => setNewFullName(e.target.value)}
+          />
+        </div>
+        <div className="mt-4">
+          <label className="block">Username:</label>
           <input 
             type="text" 
             className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} 
@@ -176,12 +187,16 @@ export default function UserAccount() {
         </div>
         <div className="mt-4">
           <label className="block">Giới tính:</label>
-          <input 
-            type="text" 
-            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} 
+          <select
+            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`}
             value={newGender}
             onChange={(e) => setNewGender(e.target.value)}
-          />
+          >
+            <option value="">Chọn giới tính</option>
+            <option value="male">Nam</option>
+            <option value="female">Nữ</option>
+            <option value="other">Khác</option>
+          </select>
         </div>
         <button className="mt-4 w-full bg-red-500 text-white py-2 rounded-lg" onClick={handleSaveChanges}>Lưu thay đổi</button>
 

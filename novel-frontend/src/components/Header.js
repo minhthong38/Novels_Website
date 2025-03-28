@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { categories, novels } from '../data/data';
 import { UserContext } from '../context/UserContext';
 
 function Header() {
-  const { loggedInUser, logout, isDarkMode, toggleDarkMode } = useContext(UserContext);
+  const { loggedInUser, setLoggedInUser, isDarkMode, toggleDarkMode } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const searchRef = useRef(null);
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   const handleSearchChange = (e) => {
     const keyword = e.target.value;
@@ -57,7 +57,7 @@ function Header() {
   ];
 
   const handleLogout = () => {
-    logout();
+    setLoggedInUser(null);
     navigate('/'); // Redirect to home page after logout
   };
 
@@ -132,10 +132,10 @@ function Header() {
           </div>
           <div className="relative group ml-10 pl-10">
             <div className="flex items-center space-x-2 cursor-pointer">
-              <Link to="/userAccount" className={`${isDarkMode ? 'text-white' : 'text-black'} focus:outline-none`}>
+              <Link to="/login" className={`${isDarkMode ? 'text-white' : 'text-black'} focus:outline-none`}>
                 <img src={loggedInUser ? loggedInUser.img : "https://i.imgur.com/Y0N4tO3.png"} alt="User Icon" className="w-6 h-6 rounded-full" />
               </Link>
-              {loggedInUser && <span className={`ml-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>{loggedInUser.username}</span>}
+              {loggedInUser && <span className={`ml-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>{loggedInUser.fullName || loggedInUser.username}</span>} {/* Display fullName */}
             </div>
             <div className="absolute bg-white border rounded shadow-lg right-0 top-full z-10 w-48 hidden group-hover:block">
               {loggedInUser ? (
@@ -146,8 +146,8 @@ function Header() {
                   {loggedInUser.role === 'author' && (
                     <Link to="/authorAccounts" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Author Profile</Link>
                   )}
-                  {loggedInUser.role === 'user' && (
-                    <Link to="/adminAccount" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Admin Profile</Link>
+                  {loggedInUser && (
+                    <Link to="/history" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">History</Link>
                   )}
                   <Link to="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</Link>
                   <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</button>

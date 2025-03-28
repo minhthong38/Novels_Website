@@ -11,6 +11,7 @@ export default function NovelView() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [checkpoint, setCheckpoint] = useState(null);
   const { isDarkMode } = useContext(UserContext); // Get dark mode state from context
+  const [currentPart, setCurrentPart] = useState(0);
 
   useEffect(() => {
     const selectedNovel = novels.find(novel => novel.NovelID === parseInt(novelID));
@@ -47,6 +48,14 @@ export default function NovelView() {
       setCheckpoint(index);
       localStorage.setItem(`checkpoint_${novelID}`, JSON.stringify(index));
     }
+  };
+
+  const handleNextPart = () => {
+    setCurrentPart((prev) => (prev + 1) % content.length);
+  };
+
+  const handlePrevPart = () => {
+    setCurrentPart((prev) => (prev - 1 + content.length) % content.length);
   };
 
   return (
@@ -88,23 +97,31 @@ export default function NovelView() {
         <h2 className="text-xl sm:text-2xl font-bold mb-4">
           {novel.Title}
         </h2>
-        {content.map((part, index) => (
-          <div key={index}>
-            <h2 className="text-xl sm:text-2xl font-bold mb-4">
-              {part.title}
-            </h2>
-            {part.content.map((paragraph, idx) => (
-              <p 
-                key={idx} 
-                className={`text-sm sm:text-base mt-4 cursor-pointer ${isDarkMode ? 'text-white' : 'text-black'} ${checkpoint === idx ? "bg-yellow-100 dark:bg-yellow-700" : ""}`}
-                onClick={() => handleCheckpoint(idx)}
-              >
-                {paragraph}
-                {checkpoint === idx && <span className="ml-2 text-blue-500">📌</span>}
-              </p>
-            ))}
-          </div>
+        {content[currentPart]?.content.map((paragraph, idx) => (
+          <p 
+            key={idx} 
+            className={`text-sm sm:text-base mt-4 cursor-pointer ${isDarkMode ? 'text-white' : 'text-black'} ${checkpoint === idx ? "bg-gray-200 dark:bg-gray-400" : ""}`}
+            onClick={() => handleCheckpoint(idx)}
+          >
+            {paragraph}
+            {checkpoint === idx && <span className="ml-2 text-blue-500">📌</span>}
+          </p>
         ))}
+        <div className="mt-4 flex justify-between items-center">
+          <button
+            className={`mr-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'} p-2 rounded-full`}
+            onClick={handlePrevPart}
+          >
+            Previous Part
+          </button>
+          <span className="text-lg">{currentPart + 1} / {content.length}</span>
+          <button
+            className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'} p-2 rounded-full`}
+            onClick={handleNextPart}
+          >
+            Next Part
+          </button>
+        </div>
       </div>
     </div>
   );

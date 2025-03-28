@@ -6,9 +6,9 @@ import NovelDetail from './components/novelDetail/novelDetail';
 import Authors from './components/authors/authors';
 import Recommend from './components/Recommend/recommend';
 import UserAccount from './components/Account/userAccount';
-import AuthorAccounts from './components/Account/AuthorAccounts'; // Ensure this import is correct
+import AuthorAccounts from './components/Account/AuthorAccounts';
 import AdminAccount from './components/Account/AdminAccount';
-import AdminProfile from './components/Account/AdminProfile'; // New import
+import AdminProfile from './components/Account/AdminProfile';
 import History from './components/History/history';
 import NovelView from './components/NovelView/novelView';
 import UserStickyNote from './components/UserStickyNote';
@@ -17,8 +17,7 @@ import CreateNovel from './components/createNovel/CreateNovel';
 import ListNovels from './components/ListNovels/ListNovels';
 import UpdateNovel from './components/UpdateNovel/updateNovel';
 import Chapter from './components/Chapter/Chapter';
-import BlindBook from './components/BlindBook/blindbook'; // Correct import
-import AuthorSidebar from './components/sidebar/AuthorSidebar';
+import BlindBook from './components/BlindBook/blindbook';
 import Update from './components/update/update';
 import Register from './components/register';
 import Login from './components/Login';
@@ -27,6 +26,8 @@ import AuthorRoute from './components/routes/AuthorRoute';
 import AdminRoute from './components/routes/AdminRoute';
 import Header from './components/Header';
 import { UserProvider } from './context/UserContext';
+import TopViewedNovels from './components/topViewedNovels/TopViewedNovels'; // Import the new component
+import RevenueTracking from './components/RevenueTracking/RevenueTracking'; // Import RevenueTracking component
 
 function App() {
   return (
@@ -44,24 +45,26 @@ function App() {
           <Route path="/history" element={<ClientRoute children={<History />} />} />
           <Route path="/novelView" element={<ClientRoute children={<NovelView />} />} />
           <Route path="/UserStickyNote" element={<UserStickyNote />} />
-          <Route path="/AuthorStickyNote" element={<AuthorStickyNote />} />
-          <Route path="/blindbook" element={<ClientRoute children={<BlindBook />} />} /> {/* Correct route */}
+          <Route path="/blindbook" element={<ClientRoute children={<BlindBook />} />} /> 
           <Route path="/update" element={<ClientRoute children={<Update />} />} />
           <Route path="/register" element={<ClientRoute children={<Register />} />} />
           <Route path="/login" element={<ClientRoute children={<Login />} />} />
-          
+          <Route path="/topViewedNovels" element={<ClientRoute children={<TopViewedNovels />} />} />
+
           {/* Author Routes */}
-          <Route path="/authorsidebar" element={<AuthorRoute children={<AuthorSidebar />} />} />
-          <Route path="/authors" element={<ClientRoute children={<Authors />} />} />
-          <Route path="/authorAccounts" element={<ClientRoute children={<AuthorAccounts />} />} /> {/* Ensure this route is correct */}
+          <Route path="/header" element={<AuthorRoute children={<Header />} />} />
+          <Route path="/authors" element={<AuthorRoute children={<Authors />} />} />
+          <Route path="/authorAccounts" element={<ClientRoute children={<AuthorAccounts />} />} />
           <Route path="/createNovel" element={<ClientRoute children={<CreateNovel />} />} />
           <Route path="/listNovels" element={<ClientRoute children={<ListNovels />} />} />
           <Route path="/updateNovel" element={<ClientRoute children={<UpdateNovel />} />} />
-          <Route path="/chapter" element={<ClientRoute children={<Chapter />} />} />
-          
+          <Route path="/AuthorStickyNote" element={<AuthorStickyNote />} />
+          <Route path="/chapter" element={<AuthorRoute children={<Chapter />} />} />
+          <Route path="/revenueTracking" element={<AuthorRoute children={<RevenueTracking />} />} />
+
           {/* Admin Routes */}
           <Route path="/adminAccount" element={<ClientRoute children={<AdminAccount />} />} />
-          <Route path="/adminProfile" element={<ClientRoute children={<AdminProfile />} />} /> {/* New route */}
+          <Route path="/adminProfile" element={<ClientRoute children={<AdminProfile />} />} /> 
         </Routes>
       </BrowserRouter>
     </UserProvider>

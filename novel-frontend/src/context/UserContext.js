@@ -3,7 +3,15 @@ import React, { createContext, useState, useEffect } from 'react';
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [loggedInUser, setLoggedInUser] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem('loggedInUser');
+      return storedUser ? JSON.parse(storedUser) : null; // Retrieve minimal user details
+    } catch (error) {
+      console.error('Failed to retrieve user from localStorage:', error);
+      return null;
+    }
+  });
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
     return savedMode ? JSON.parse(savedMode) : false;

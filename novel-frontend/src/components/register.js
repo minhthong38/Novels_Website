@@ -3,6 +3,7 @@ import { registerUser } from '../data/data';
 
 export default function Register() {
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [fullName, setFullName] = useState(''); // Add fullName state
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,7 +43,7 @@ export default function Register() {
   }, [password, confirmPassword]);
 
   const handleRegister = () => {
-    if (!username || !password || !confirmPassword || !email || !gender) {
+    if (!fullName || !username || !password || !confirmPassword || !email || !gender) {
       setPopupError('Vui lòng điền đầy đủ thông tin');
       return;
     }
@@ -51,12 +52,13 @@ export default function Register() {
       return;
     }
     const newUser = registerUser({
+      fullName, // Include fullName in registration
       username,
       password,
       email,
       role: 'user', // Set role to 'user' by default
       gender,
-      avatar: uploadedImage || 'https://via.placeholder.com/150'
+      avatar: uploadedImage || 'https://via.placeholder.com/150', // Use a URL or placeholder
     });
     setPopupError('');
     setRegisteredUser(newUser);
@@ -104,6 +106,15 @@ export default function Register() {
           <input id="image-upload" type="file" className="hidden" onChange={handleImageUpload} />
         </div>
         <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <label className="block">Họ và Tên:</label> {/* New field */}
+            <input 
+              type="text" 
+              className="w-full border rounded-lg p-2 mt-1" 
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+          </div>
           <div className="col-span-2">
             <label className="block">Tên đăng nhập:</label>
             <input 
@@ -198,6 +209,7 @@ export default function Register() {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg shadow-lg">
             <h2 className="text-xl font-bold mb-4">Đăng ký thành công!</h2>
+            <p><strong>Họ và Tên:</strong> {registeredUser.fullName}</p>
             <p><strong>Tên đăng nhập:</strong> {registeredUser.username}</p>
             <p><strong>Email:</strong> {registeredUser.email}</p>
             <p><strong>Vai trò:</strong> {registeredUser.role}</p>

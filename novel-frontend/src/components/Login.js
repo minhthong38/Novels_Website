@@ -1,36 +1,55 @@
 import React, { useState, useContext } from 'react';
-import { users } from '../data/data';
 import { UserContext } from '../context/UserContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const { setLoggedInUser } = useContext(UserContext);
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = () => {
-    if (!username || !password) {
+  const handleLogin = async () => {
+    if (!email || !password) {
       setError('Vui lòng điền đầy đủ thông tin');
       return;
     }
-
-    const user = users.find(user => user.username === username);
-
-    if (!user) {
-      setError('Tên đăng nhập không tồn tại');
-      return;
-    }
-
-    if (user.password !== password) {
-      setError('Mật khẩu không đúng');
-      return;
-    }
-
+  
+    setIsLoading(true);
     setError('');
-    setLoggedInUser(user);
-    localStorage.setItem('userAvatar', user.img); // Store avatar in localStorage
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || 'Đăng nhập thất bại');
+      }
+  
+      if (!data.user || !data.user._id) {
+        throw new Error('Dữ liệu người dùng không hợp lệ từ server!');
+      }
+  
+      localStorage.setItem('token', data.token);
+      setLoggedInUser(data.user); // Lưu user vào context
+  
+      navigate('/'); // Chuyển hướng về trang chủ
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
+  
 
   return (
     <div className="flex flex-col items-center p-20">
@@ -38,12 +57,12 @@ export default function Login() {
         <h1 className="text-2xl font-bold mb-4 text-center">Đăng nhập</h1>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="block">Tên đăng nhập:</label>
+            <label className="block">Email:</label>
             <input 
-              type="text" 
+              type="email" 
               className="w-full border rounded-lg p-2 mt-1" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="col-span-2">
@@ -68,8 +87,9 @@ export default function Login() {
             <button 
               className="w-full bg-black text-white py-2 rounded-lg" 
               onClick={handleLogin}
+              disabled={isLoading}
             >
-              Đăng nhập
+              {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>
           </div>
         </div>
