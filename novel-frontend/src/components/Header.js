@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { categories, novels } from '../data/data';
-import { UserContext } from '../context/UserContext';
+import { fetchUserDetails } from '../services/apiService';
+import { UserContext } from '../context/UserContext'; // Ensure this import is correct and not causing a loop
 
 function Header() {
-  const { loggedInUser, setLoggedInUser, isDarkMode, toggleDarkMode } = useContext(UserContext);
+  const { isDarkMode, toggleDarkMode } = useContext(UserContext); // Use isDarkMode and toggleDarkMode from context
+  const [loggedInUser, setLoggedInUser] = useState(null);
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -15,7 +17,7 @@ function Header() {
     const keyword = e.target.value;
     setSearchTerm(keyword);
     if (keyword.length > 0) {
-      const results = novels.filter(novel => 
+      const results = novels.filter((novel) =>
         novel.Title.toLowerCase().includes(keyword.toLowerCase())
       );
       setSearchResults(results);
@@ -35,6 +37,19 @@ function Header() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) {
+      fetchUserDetails(token)
+        .then((data) => {
+          if (data && data.id) {
+            setLoggedInUser(data); // Set user data
+          }
+        })
+        .catch((error) => console.error('Error fetching user data:', error));
+    }
   }, []);
 
   const tabs = [
@@ -57,6 +72,8 @@ function Header() {
   ];
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
     setLoggedInUser(null);
     navigate('/'); // Redirect to home page after logout
   };

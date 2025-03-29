@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 import { novels } from '../../data/data';
-import { UserContext } from '../../context/UserContext'; // Import UserContext
+import { UserContext } from '../../context/UserContext'; // Ensure this import is correct and not causing a loop
 
 export default function ListNovels() {
   const [searchTerm, setSearchTerm] = useState('');

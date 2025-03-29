@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { registerUser } from '../data/data';
+import axios from 'axios';
 
 export default function Register() {
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -42,7 +43,7 @@ export default function Register() {
     }
   }, [password, confirmPassword]);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!fullName || !username || !password || !confirmPassword || !email || !gender) {
       setPopupError('Vui lòng điền đầy đủ thông tin');
       return;
@@ -51,17 +52,29 @@ export default function Register() {
       setPopupError('Thông tin không hợp lệ. Vui lòng kiểm tra lại.');
       return;
     }
-    const newUser = registerUser({
-      fullName, // Include fullName in registration
-      username,
-      password,
-      email,
-      role: 'user', // Set role to 'user' by default
-      gender,
-      avatar: uploadedImage || 'https://via.placeholder.com/150', // Use a URL or placeholder
-    });
-    setPopupError('');
-    setRegisteredUser(newUser);
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/users', {
+        fullName,
+        username,
+        password,
+        email,
+        role: 'user', // Default role
+        gender,
+        avatar: uploadedImage || 'https://via.placeholder.com/150',
+      });
+
+      if (response.status === 201) {
+        console.log('Tài khoản đã được tạo:', response.data); // Log the API response
+        setPopupError('');
+        setRegisteredUser(response.data); // Display the returned user data
+      } else {
+        setPopupError('Đăng ký thất bại. Vui lòng thử lại.');
+      }
+    } catch (error) {
+      console.error('Lỗi khi đăng ký:', error); // Log the error for debugging
+      setPopupError('Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.');
+    }
   };
 
   const handleUsernameChange = (e) => {
@@ -95,7 +108,7 @@ export default function Register() {
       <div className="border p-4 rounded-lg w-full max-w-md" style={{ backgroundImage: 'url(https://media.istockphoto.com/id/1459373176/vi/vec-to/n%E1%BB%81n-b%E1%BB%8B-m%E1%BA%A5t-n%C3%A9t-tr%E1%BB%ABu-t%C6%B0%E1%BB%A3ng-m%C3%B9a-xu%C3%A2n-m%C3%B9a-h%C3%A8-bi%E1%BB%83n.jpg?s=612x612&w=0&k=20&c=7qcezfnEnWLDiqaxq5ahyhNl6zTCLZbNQ9wQjeRT7F0=)', backgroundSize: 'cover' }}>
         <h1 className="text-2xl font-bold mb-4 text-center">Đăng ký</h1>
         <div className="mb-4 flex flex-col items-center">
-          <label className="block mb-2">Upload Avatar</label>
+          <label className="block mb-2">Upload Avatardd</label>
           <label htmlFor="image-upload" className="cursor-pointer">
             <img
               src={uploadedImage || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcToyYhbHadbpodeEITznau3J5M6eBZVVyIDyg&s'}

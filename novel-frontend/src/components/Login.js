@@ -1,14 +1,15 @@
 import React, { useState, useContext } from 'react';
-import { UserContext } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
+import { UserContext } from '../context/UserContext'; // Ensure this import is correct and not causing a loop
 
 export default function Login() {
-  const { setLoggedInUser } = useContext(UserContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(''); // Add success state
   const [isLoading, setIsLoading] = useState(false);
+  const { setLoggedInUser } = useContext(UserContext); // Access setLoggedInUser from context
   const navigate = useNavigate();
 
   const handleLogin = async () => {
@@ -16,10 +17,11 @@ export default function Login() {
       setError('Vui lòng điền đầy đủ thông tin');
       return;
     }
-  
+
     setIsLoading(true);
     setError('');
-  
+    setSuccess(''); // Clear success message
+
     try {
       const response = await fetch('http://localhost:5000/api/users/login', {
         method: 'POST',
@@ -28,28 +30,44 @@ export default function Login() {
         },
         body: JSON.stringify({ email, password }),
       });
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         throw new Error(data.message || 'Đăng nhập thất bại');
       }
-  
-      if (!data.user || !data.user._id) {
-        throw new Error('Dữ liệu người dùng không hợp lệ từ server!');
+
+      if (!data.token || !data.user) {
+        throw new Error('Dữ liệu không hợp lệ từ server!');
       }
-  
-      localStorage.setItem('token', data.token);
-      setLoggedInUser(data.user); // Lưu user vào context
-  
-      navigate('/'); // Chuyển hướng về trang chủ
+
+      // Save token to localStorage or sessionStorage
+      if (rememberMe) {
+        localStorage.setItem('token', data.token);
+      } else {
+        sessionStorage.setItem('token', data.token);
+      }
+
+      // Save user data to localStorage for Header to access
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Update the logged-in user in the context
+      setLoggedInUser(data.user);
+
+      // Show success message
+      setSuccess('Đăng nhập thành công!');
+
+      // Redirect to the homepage after a short delay
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
     } catch (err) {
+      console.error("Lỗi:", err.message);
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <div className="flex flex-col items-center p-20">
@@ -94,6 +112,7 @@ export default function Login() {
           </div>
         </div>
         {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
+        {success && <p className="text-green-500 text-sm mt-4">{success}</p>} {/* Display success message */}
       </div>
     </div>
   );

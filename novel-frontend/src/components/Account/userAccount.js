@@ -1,39 +1,47 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { UserContext } from '../../context/UserContext';
+import React, { useState, useEffect } from 'react';
+import { fetchUserDetails } from '../../services/apiService'; // Import fetchUserDetails
 import { users } from '../../data/data'; // Import users data
 import UserNotification from '../notifications/UserNotification'; // Import UserNotification component
 
 export default function UserAccount() {
-  const { loggedInUser, setLoggedInUser, isDarkMode } = useContext(UserContext);
+  const [loggedInUser, setLoggedInUser] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
-  const [avatarImage, setAvatarImage] = useState(loggedInUser ? loggedInUser.img : "https://via.placeholder.com/150");
-  const [displayName, setDisplayName] = useState(loggedInUser ? loggedInUser.username : "Nguyễn Văn A");
-  const [email, setEmail] = useState(loggedInUser ? loggedInUser.email : "nguyenvana@gmail.com");
-  const [gender, setGender] = useState(loggedInUser ? loggedInUser.gender : "Nam");
+  const [avatarImage, setAvatarImage] = useState("https://via.placeholder.com/150");
+  const [displayName, setDisplayName] = useState("Nguyễn Văn A");
+  const [email, setEmail] = useState("nguyenvana@gmail.com");
+  const [gender, setGender] = useState("Nam");
   const [newDisplayName, setNewDisplayName] = useState(displayName);
   const [newEmail, setNewEmail] = useState(email);
   const [newGender, setNewGender] = useState(gender);
   const [showAuthorRequestPopup, setShowAuthorRequestPopup] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [newFullName, setNewFullName] = useState(loggedInUser ? loggedInUser.fullName : ""); // Add newFullName state
+  const [newFullName, setNewFullName] = useState(''); // Add newFullName state
 
   useEffect(() => {
-    if (loggedInUser) {
-      setAvatarImage(loggedInUser.img);
-      setDisplayName(loggedInUser.fullName || loggedInUser.username); // Use fullName as displayName
-      setEmail(loggedInUser.email);
-      setGender(loggedInUser.gender);
-      setNewDisplayName(loggedInUser.username);
-      setNewEmail(loggedInUser.email);
-      setNewGender(loggedInUser.gender);
-      setNewFullName(loggedInUser.fullName); // Initialize newFullName
-      const storedNotification = localStorage.getItem(`notification_${loggedInUser.id}`);
-      if (storedNotification) {
-        setNotification(JSON.parse(storedNotification));
-        localStorage.removeItem(`notification_${loggedInUser.id}`);
-      }
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) {
+      fetchUserDetails(token)
+        .then((data) => {
+          if (data && data.id) {
+            setLoggedInUser(data); // Set user data
+            setAvatarImage(data.img);
+            setDisplayName(data.fullName || data.username); // Use fullName as displayName
+            setEmail(data.email);
+            setGender(data.gender);
+            setNewDisplayName(data.username);
+            setNewEmail(data.email);
+            setNewGender(data.gender);
+            setNewFullName(data.fullName); // Initialize newFullName
+            const storedNotification = localStorage.getItem(`notification_${data.id}`);
+            if (storedNotification) {
+              setNotification(JSON.parse(storedNotification));
+              localStorage.removeItem(`notification_${data.id}`);
+            }
+          }
+        })
+        .catch((error) => console.error('Error fetching user data:', error));
     }
-  }, [loggedInUser]);
+  }, []);
 
   const handleAvatarUpload = (event) => {
     const file = event.target.files[0];
@@ -85,10 +93,14 @@ export default function UserAccount() {
     }
   };
 
+  if (!loggedInUser) {
+    return <div className="text-center mt-10">Vui lòng đăng nhập để xem thông tin tài khoản.</div>;
+  }
+
   return (
-    <div className={`flex flex-col md:flex-row p-4 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
+    <div className={`flex flex-col md:flex-row p-4`}>
       {/* Left Sidebar */}
-      <div className={`w-full md:w-1/4 p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className={`w-full md:w-1/4 p-4 rounded-lg shadow-md`}>
         <div className="flex flex-col items-center">
           {/* Avatar Image */}
           <img src={avatarImage} alt="User avatar" className="rounded-full w-24 h-24 mb-4" />
@@ -122,7 +134,7 @@ export default function UserAccount() {
       </div>
 
       {/* Main Content */}
-      <div className={`w-full md:w-3/4 p-4 rounded-lg shadow-md mt-4 md:mt-0 md:ml-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className={`w-full md:w-3/4 p-4 rounded-lg shadow-md mt-4 md:mt-0 md:ml-4`}>
         {/* Premium Package Section */}
        
 
@@ -162,7 +174,7 @@ export default function UserAccount() {
           <label className="block">Họ và Tên:</label> {/* Move fullName input above username */}
           <input 
             type="text" 
-            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} 
+            className={`w-full border rounded-lg p-2 mt-1`} 
             value={newFullName}
             onChange={(e) => setNewFullName(e.target.value)}
           />
@@ -171,7 +183,7 @@ export default function UserAccount() {
           <label className="block">Username:</label>
           <input 
             type="text" 
-            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} 
+            className={`w-full border rounded-lg p-2 mt-1`} 
             value={newDisplayName}
             onChange={(e) => setNewDisplayName(e.target.value)}
           />
@@ -180,7 +192,7 @@ export default function UserAccount() {
           <label className="block">Email:</label>
           <input 
             type="email" 
-            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`} 
+            className={`w-full border rounded-lg p-2 mt-1`} 
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
           />
@@ -188,7 +200,7 @@ export default function UserAccount() {
         <div className="mt-4">
           <label className="block">Giới tính:</label>
           <select
-            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`}
+            className={`w-full border rounded-lg p-2 mt-1`}
             value={newGender}
             onChange={(e) => setNewGender(e.target.value)}
           >

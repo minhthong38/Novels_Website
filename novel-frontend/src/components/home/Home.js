@@ -3,8 +3,8 @@ import Banner from '../Banner';
 import TopRanking from '../topRanking/topRanking';
 import Recommend from '../Recommend/recommend';
 import Released from '../released/released';
-import PlaylistByCategory from '../playlistByCategory/playlistByCategory'; // Import the new component
-import { UserContext } from '../../context/UserContext';
+import PlaylistByCategory from '../playlistByCategory/playlistByCategory';
+import { UserContext } from '../../context/UserContext'; // Corrected the import path
 
 export default function Home() {
   const { isDarkMode } = useContext(UserContext);
@@ -20,7 +20,7 @@ export default function Home() {
           <Recommend className={`${isDarkMode ? 'text-white' : 'text-black'}`} />
         </div>
         <div className="flex-1">
-          <PlaylistByCategory /> {/* Replace Discussion with PlaylistByCategory */}
+          <PlaylistByCategory />
         </div>
       </div>
       <div className="container mx-auto mt-8 pb-10 md:mt-0">

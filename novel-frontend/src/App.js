@@ -25,7 +25,7 @@ import ClientRoute from './components/routes/ClientRoute';
 import AuthorRoute from './components/routes/AuthorRoute';
 import AdminRoute from './components/routes/AdminRoute';
 import Header from './components/Header';
-import { UserProvider } from './context/UserContext';
+import { UserProvider } from './context/UserContext'; // Ensure this import is correct and not causing a loop
 import TopViewedNovels from './components/topViewedNovels/TopViewedNovels'; // Import the new component
 import RevenueTracking from './components/RevenueTracking/RevenueTracking'; // Import RevenueTracking component
 
