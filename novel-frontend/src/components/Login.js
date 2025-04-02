@@ -12,62 +12,63 @@ export default function Login() {
   const { setLoggedInUser } = useContext(UserContext); // Access setLoggedInUser from context
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Vui lòng điền đầy đủ thông tin');
-      return;
+const handleLogin = async () => {
+  if (!email || !password) {
+    setError('Vui lòng điền đầy đủ thông tin');
+    return;
+  }
+
+  setIsLoading(true);
+  setError('');
+  setSuccess('');
+
+  try {
+    const response = await fetch('http://localhost:5000/api/users/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+    console.log('Server response:', data); // Debugging log
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Đăng nhập thất bại');
     }
 
-    setIsLoading(true);
-    setError('');
-    setSuccess(''); // Clear success message
+    if (!data.user || !data.token) { // Ensure both user and token exist
+      console.error('Invalid server response:', data);
+      throw new Error('Dữ liệu người dùng không hợp lệ từ server!');
+    }
 
-    try {
-      const response = await fetch('http://localhost:5000/api/users/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Đăng nhập thất bại');
-      }
-
-      if (!data.token || !data.user) {
-        throw new Error('Dữ liệu không hợp lệ từ server!');
-      }
-
-      // Save token to localStorage or sessionStorage
+    // Store token if it exists
+    if (data.token) {
       if (rememberMe) {
         localStorage.setItem('token', data.token);
       } else {
         sessionStorage.setItem('token', data.token);
       }
-
-      // Save user data to localStorage for Header to access
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      // Update the logged-in user in the context
-      setLoggedInUser(data.user);
-
-      // Show success message
-      setSuccess('Đăng nhập thành công!');
-
-      // Redirect to the homepage after a short delay
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
-    } catch (err) {
-      console.error("Lỗi:", err.message);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
     }
-  };
+
+    // Store user data
+    localStorage.setItem('user', JSON.stringify(data.user));
+
+    // Update context
+    setLoggedInUser(data.user);
+
+    setSuccess('Đăng nhập thành công!');
+
+    setTimeout(() => {
+      navigate('/');
+    }, 1500);
+  } catch (err) {
+    console.error('Lỗi:', err.message);
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div className="flex flex-col items-center p-20">

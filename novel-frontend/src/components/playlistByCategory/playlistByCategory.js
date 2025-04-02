@@ -24,7 +24,7 @@ export default function PlaylistByCategory() {
 
   return (
     <div
-      className={`ml-28 w-3/4 h-96 overflow-y-scroll border rounded-lg p-10 ${
+      className={`ml-28 w-3/4 h-[500px] mt-20 overflow-y-scroll border rounded-lg p-10 ${
         isDarkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-300'
       }`}
     >

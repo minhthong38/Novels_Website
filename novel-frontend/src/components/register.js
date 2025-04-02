@@ -4,7 +4,7 @@ import axios from 'axios';
 
 export default function Register() {
   const [uploadedImage, setUploadedImage] = useState(null);
-  const [fullName, setFullName] = useState(''); // Add fullName state
+  const [fullname, setFullName] = useState(''); // Add fullName state
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -44,39 +44,40 @@ export default function Register() {
   }, [password, confirmPassword]);
 
   const handleRegister = async () => {
-    if (!fullName || !username || !password || !confirmPassword || !email || !gender) {
-      setPopupError('Vui lòng điền đầy đủ thông tin');
+    if (!fullname || !username || !password || !confirmPassword || !email || !gender) {
+      setPopupError("Vui lòng điền đầy đủ thông tin");
       return;
     }
     if (error || usernameError || emailErrors.length > 0) {
-      setPopupError('Thông tin không hợp lệ. Vui lòng kiểm tra lại.');
+      setPopupError("Thông tin không hợp lệ. Vui lòng kiểm tra lại.");
       return;
     }
-
+  
     try {
-      const response = await axios.post('http://localhost:5000/api/users', {
-        fullName,
+      const response = await axios.post("http://localhost:5000/api/users", {
+        fullname, // Sửa từ fullName -> fullname
         username,
         password,
         email,
-        role: 'user', // Default role
-        gender,
-        avatar: uploadedImage || 'https://via.placeholder.com/150',
+        gender
+      }, {
+        headers: { "Content-Type": "application/json" }
       });
-
+  
       if (response.status === 201) {
-        console.log('Tài khoản đã được tạo:', response.data); // Log the API response
-        setPopupError('');
-        setRegisteredUser(response.data); // Display the returned user data
+        console.log("Tài khoản đã được tạo:", response.data);
+        setPopupError("");
+        setRegisteredUser(response.data);
       } else {
-        setPopupError('Đăng ký thất bại. Vui lòng thử lại.');
+        setPopupError("Đăng ký thất bại. Vui lòng thử lại.");
       }
     } catch (error) {
-      console.error('Lỗi khi đăng ký:', error); // Log the error for debugging
-      setPopupError('Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.');
+      console.error("Lỗi khi đăng ký:", error);
+      setPopupError("Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.");
     }
   };
-
+  
+  
   const handleUsernameChange = (e) => {
     const value = e.target.value;
     if (value.includes(' ')) {
@@ -124,7 +125,7 @@ export default function Register() {
             <input 
               type="text" 
               className="w-full border rounded-lg p-2 mt-1" 
-              value={fullName}
+              value={fullname}
               onChange={(e) => setFullName(e.target.value)}
             />
           </div>
@@ -190,8 +191,8 @@ export default function Register() {
               onChange={(e) => setGender(e.target.value)}
             >
               <option value="">Chọn giới tính</option>
-              <option value="male">Nam</option>
-              <option value="female">Nữ</option>
+              <option value="Male">Nam</option>
+              <option value="Female">Nữ</option>
               <option value="other">Khác</option>
             </select>
           </div>
@@ -222,7 +223,7 @@ export default function Register() {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded-lg shadow-lg">
             <h2 className="text-xl font-bold mb-4">Đăng ký thành công!</h2>
-            <p><strong>Họ và Tên:</strong> {registeredUser.fullName}</p>
+            <p><strong>Họ và Tên:</strong> {registeredUser.fullname}</p>
             <p><strong>Tên đăng nhập:</strong> {registeredUser.username}</p>
             <p><strong>Email:</strong> {registeredUser.email}</p>
             <p><strong>Vai trò:</strong> {registeredUser.role}</p>

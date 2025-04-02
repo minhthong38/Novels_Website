@@ -6,11 +6,11 @@ const banners = [
     alt: 'Banner 1',
   },
   {
-    src: 'https://sachkhainguyen.com/wp-content/uploads/2023/03/slide-3.jpg',
+    src: 'https://www.nxbgd.vn/Attachments/images/Sach%20moi/CMLBT_BANNER-WEB-BOOKIZ.png',
     alt: 'Banner 2',
   },
   {
-    src: 'https://cdn.thuonghieuvietnoitieng.com/danh-muc-san-pham/sach-1.png?e=1736057631&s=f865229f557f1919e4d25d7bc46aa553',
+    src: 'https://sachkhainguyen.com/wp-content/uploads/2023/03/slide-3.jpg',
     alt: 'Banner 3',
   }
 ];
