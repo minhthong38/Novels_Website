@@ -17,31 +17,34 @@ export default function UserAccount() {
   const [notification, setNotification] = useState(null);
   const [newFullName, setNewFullName] = useState(''); // Add newFullName state
 
-  useEffect(() => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (token) {
-      fetchUserDetails(token)
-        .then((data) => {
-          if (data && data.id) {
-            setLoggedInUser(data); // Set user data
-            setAvatarImage(data.img);
-            setDisplayName(data.fullName || data.username); // Use fullName as displayName
-            setEmail(data.email);
-            setGender(data.gender);
-            setNewDisplayName(data.username);
-            setNewEmail(data.email);
-            setNewGender(data.gender);
-            setNewFullName(data.fullName); // Initialize newFullName
-            const storedNotification = localStorage.getItem(`notification_${data.id}`);
-            if (storedNotification) {
-              setNotification(JSON.parse(storedNotification));
-              localStorage.removeItem(`notification_${data.id}`);
-            }
+useEffect(() => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  if (token) {
+    fetchUserDetails(token)
+      .then((data) => {
+        if (data && data.id) {
+          setLoggedInUser(data); // Set user data
+          setAvatarImage(data.img);
+          setDisplayName(data.fullName || data.username); // Use fullName as displayName
+          setEmail(data.email);
+          setGender(data.gender);
+          setNewDisplayName(data.username);
+          setNewEmail(data.email);
+          setNewGender(data.gender);
+          setNewFullName(data.fullName); // Initialize newFullName
+          const storedNotification = localStorage.getItem(`notification_${data.id}`);
+          if (storedNotification) {
+            setNotification(JSON.parse(storedNotification));
+            localStorage.removeItem(`notification_${data.id}`);
           }
-        })
-        .catch((error) => console.error('Error fetching user data:', error));
-    }
-  }, []);
+        }
+      })
+      .catch((error) => console.error('Error fetching user data:', error));
+  } else {
+    console.error('No token found. Please log in.');
+  }
+}, []); // Only run once when component mounts
+
 
   const handleAvatarUpload = (event) => {
     const file = event.target.files[0];

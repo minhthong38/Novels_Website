@@ -2,11 +2,10 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { categories, novels } from '../data/data';
 import { fetchUserDetails } from '../services/apiService';
-import { UserContext } from '../context/UserContext'; // Ensure this import is correct and not causing a loop
+import { UserContext } from '../context/UserContext'; // Import UserContext
 
 function Header() {
-  const { isDarkMode, toggleDarkMode } = useContext(UserContext); // Use isDarkMode and toggleDarkMode from context
-  const [loggedInUser, setLoggedInUser] = useState(null);
+  const { loggedInUser, setLoggedInUser, isDarkMode, toggleDarkMode } = useContext(UserContext); // Get loggedInUser from context
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -50,7 +49,7 @@ function Header() {
         })
         .catch((error) => console.error('Error fetching user data:', error));
     }
-  }, []);
+  }, [setLoggedInUser]);
 
   const tabs = [
     { label: 'Trang Chủ', href: '/' },
@@ -148,36 +147,35 @@ function Header() {
             </label>
           </div>
           <div className="relative group ml-10 pl-10">
-            <div className="flex items-center space-x-2 cursor-pointer">
-              <Link to="/login" className={`${isDarkMode ? 'text-white' : 'text-black'} focus:outline-none`}>
-                <img src={loggedInUser ? loggedInUser.img : "https://i.imgur.com/Y0N4tO3.png"} alt="User Icon" className="w-6 h-6 rounded-full" />
-              </Link>
-              {loggedInUser && <span className={`ml-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>{loggedInUser.fullName || loggedInUser.username}</span>} {/* Display fullName */}
-            </div>
-            <div className="absolute bg-white border rounded shadow-lg right-0 top-full z-10 w-48 hidden group-hover:block">
-              {loggedInUser ? (
-                <>
-                  {loggedInUser.role === 'user' && (
-                    <Link to="/userAccount" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">User Profile</Link>
-                  )}
-                  {loggedInUser.role === 'author' && (
-                    <Link to="/authorAccounts" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Author Profile</Link>
-                  )}
-                  {loggedInUser && (
-                    <Link to="/history" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">History</Link>
-                  )}
-                  <Link to="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</Link>
-                  <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</button>
-                </>
-              ) : (
-                <>
-                  <Link to="/register" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Register</Link>
-                  <Link to="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Login</Link>
-                </>
-              )}
-            </div>
-          </div>
-          
+  <div className="flex items-center space-x-2 cursor-pointer">
+    <Link to="/login" className={`${isDarkMode ? 'text-white' : 'text-black'} focus:outline-none`}>
+      <img src={loggedInUser ? loggedInUser.img : "https://i.imgur.com/Y0N4tO3.png"} alt="User Icon" className="w-6 h-6 rounded-full" />
+    </Link>
+    {loggedInUser && <span className={`ml-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>{loggedInUser.fullName || loggedInUser.username}</span>} 
+  </div>
+  <div className="absolute bg-white border rounded shadow-lg right-0 top-full z-10 w-48 hidden group-hover:block">
+    {loggedInUser ? (
+      <>
+        {loggedInUser.role === 'user' && (
+          <Link to="/userAccount" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">User Profile</Link>
+        )}
+        {loggedInUser.role === 'author' && (
+          <Link to="/authorAccounts" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Author Profile</Link>
+        )}
+        <Link to="/userAccount" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">User Profile</Link> {/* Added User Profile link */}
+        <Link to="/history" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">History</Link>
+        <Link to="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</Link>
+        <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</button>
+      </>
+    ) : (
+      <>
+        <Link to="/register" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Register</Link>
+        <Link to="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Login</Link>
+      </>
+    )}
+  </div>
+</div>
+
         </div>
       </div>
     </header>

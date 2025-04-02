@@ -43,26 +43,12 @@ export default function NovelDetail() {
     padding: "8px 16px"
   };
 
-  const fireworksEffect = {
-    animation: "fireworks 1s forwards",
-  };
-
-  const sparkleEffect = {
-    animation: "sparkle 1s forwards",
-  };
-
   const handleReadBookClick = () => {
+    const historyKey = `checkpoint_${novelID}`;
+    if (!localStorage.getItem(historyKey)) {
+      localStorage.setItem(historyKey, JSON.stringify(null)); // Save to history without a bookmark
+    }
     navigate(`/novelView/${novelID}`);
-  };
-
-  const handleFavoriteClick = () => {
-    setIsFavorite(!isFavorite);
-    const button = document.querySelector('.favorite-button');
-    button.classList.add('fireworks');
-
-    setTimeout(() => {
-      button.classList.remove('fireworks');
-    }, 1000);
   };
 
   const handleCommentSubmit = () => {
