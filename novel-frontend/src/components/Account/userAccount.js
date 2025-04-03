@@ -1,50 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { fetchUserDetails } from '../../services/apiService'; // Import fetchUserDetails
 import { users } from '../../data/data'; // Import users data
 import UserNotification from '../notifications/UserNotification'; // Import UserNotification component
+import { UserContext } from '../../context/UserContext'; // Import UserContext
+import axios from 'axios'; // Import axios
 
 export default function UserAccount() {
+  const { setLoggedInUser: updateGlobalUser } = useContext(UserContext); // Access context to update global user
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [avatarImage, setAvatarImage] = useState("https://via.placeholder.com/150");
-  const [displayName, setDisplayName] = useState("Nguyễn Văn A");
-  const [email, setEmail] = useState("nguyenvana@gmail.com");
-  const [gender, setGender] = useState("Nam");
-  const [newDisplayName, setNewDisplayName] = useState(displayName);
-  const [newEmail, setNewEmail] = useState(email);
-  const [newGender, setNewGender] = useState(gender);
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [gender, setGender] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newGender, setNewGender] = useState("");
   const [showAuthorRequestPopup, setShowAuthorRequestPopup] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [newFullName, setNewFullName] = useState(''); // Add newFullName state
+  const [newFullName, setNewFullName] = useState("");
 
-useEffect(() => {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  if (token) {
-    fetchUserDetails(token)
-      .then((data) => {
-        if (data && data.id) {
-          setLoggedInUser(data); // Set user data
-          setAvatarImage(data.img);
-          setDisplayName(data.fullName || data.username); // Use fullName as displayName
-          setEmail(data.email);
-          setGender(data.gender);
-          setNewDisplayName(data.username);
-          setNewEmail(data.email);
-          setNewGender(data.gender);
-          setNewFullName(data.fullName); // Initialize newFullName
-          const storedNotification = localStorage.getItem(`notification_${data.id}`);
-          if (storedNotification) {
-            setNotification(JSON.parse(storedNotification));
-            localStorage.removeItem(`notification_${data.id}`);
-          }
-        }
-      })
-      .catch((error) => console.error('Error fetching user data:', error));
-  } else {
-    console.error('No token found. Please log in.');
-  }
-}, []); // Only run once when component mounts
-
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setLoggedInUser(user);
+      setAvatarImage(user.img || "https://via.placeholder.com/150");
+      setDisplayName(user.fullName || user.username);
+      setEmail(user.email);
+      setGender(user.gender);
+      setNewDisplayName(user.username);
+      setNewEmail(user.email);
+      setNewGender(user.gender);
+      setNewFullName(user.fullName || "");
+    } else {
+      console.error('No user data found. Please log in.');
+    }
+  }, []);
 
   const handleAvatarUpload = (event) => {
     const file = event.target.files[0];
@@ -57,7 +49,7 @@ useEffect(() => {
     }
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     const updatedUser = {
       ...loggedInUser,
       img: uploadedImage || avatarImage, // Update the img field with the uploaded image
@@ -67,11 +59,30 @@ useEffect(() => {
       gender: newGender
     };
     setLoggedInUser(updatedUser); // Update the loggedInUser state
+    updateGlobalUser(updatedUser); // Update the global user in context
     setAvatarImage(updatedUser.img); // Update the avatar image in the UI
     setDisplayName(updatedUser.fullName); // Update displayName with fullName
     setEmail(updatedUser.email);
     setGender(updatedUser.gender);
     setUploadedImage(null); // Clear the uploaded image
+
+    // Update localStorage or sessionStorage
+    const storageKey = localStorage.getItem('user') ? 'localStorage' : 'sessionStorage';
+    window[storageKey].setItem('user', JSON.stringify(updatedUser));
+
+    // Send updated data to the API
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      await axios.put('http://localhost:5000/api/users/update', updatedUser, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log('User data updated successfully on the server.');
+    } catch (error) {
+      console.error('Failed to update user data on the server:', error);
+    }
   };
 
   const handleAuthorRequest = () => {

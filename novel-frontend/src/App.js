@@ -28,11 +28,13 @@ import Header from './components/Header';
 import { UserProvider } from './context/UserContext'; // Ensure this import is correct and not causing a loop
 import TopViewedNovels from './components/topViewedNovels/TopViewedNovels'; // Import the new component
 import RevenueTracking from './components/RevenueTracking/RevenueTracking'; // Import RevenueTracking component
+import MessageAI from './components/messageAI/messageAI'; // Import MessageAI component
 
 function App() {
   return (
     <UserProvider>
       <BrowserRouter>
+        <MessageAI />
         <Routes>
           {/* Client Routes */}
           <Route path="/" element={<ClientRoute children={<Home />} />} />

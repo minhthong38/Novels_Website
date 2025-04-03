@@ -105,8 +105,16 @@ export default function Register() {
   };
 
   return (
-    <div className="flex flex-col items-center p-4">
-      <div className="border p-4 rounded-lg w-full max-w-md" style={{ backgroundImage: 'url(https://media.istockphoto.com/id/1459373176/vi/vec-to/n%E1%BB%81n-b%E1%BB%8B-m%E1%BA%A5t-n%C3%A9t-tr%E1%BB%ABu-t%C6%B0%E1%BB%A3ng-m%C3%B9a-xu%C3%A2n-m%C3%B9a-h%C3%A8-bi%E1%BB%83n.jpg?s=612x612&w=0&k=20&c=7qcezfnEnWLDiqaxq5ahyhNl6zTCLZbNQ9wQjeRT7F0=)', backgroundSize: 'cover' }}>
+    <div
+      className="flex flex-col items-center p-4"
+      style={{
+        background: 'linear-gradient(270deg, #d1c4e9, #b3e5fc, #c8e6c9, #ffe0b2, #ffccbc, #d7ccc8)',
+        backgroundSize: '400% 400%',
+        animation: 'pastel-dark 5s linear infinite',
+        minHeight: '100vh',
+      }}
+    >
+      <div className="border border-black p-4 rounded-lg w-full max-w-md bg-white">
         <h1 className="text-2xl font-bold mb-4 text-center">Đăng ký</h1>
         <div className="mb-4 flex flex-col items-center">
           <label className="block mb-2">Upload Avatardd</label>
@@ -241,3 +249,9 @@ export default function Register() {
     </div>
   );
 }
+
+// Add this CSS animation globally or in a CSS file
+// @keyframes pastel-dark {
+//   0% { background-position: 0% 50%; }
+//   100% { background-position: 100% 50%; }
+// }

@@ -49,7 +49,7 @@ function Header() {
         })
         .catch((error) => console.error('Error fetching user data:', error));
     }
-  }, [setLoggedInUser]);
+  }, [setLoggedInUser]); // Ensure the header updates when the global user changes
 
   const tabs = [
     { label: 'Trang Chủ', href: '/' },

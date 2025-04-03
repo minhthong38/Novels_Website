@@ -1,24 +1,37 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { categories, novels } from '../../data/data';
 import { UserContext } from '../../context/UserContext'; // Import UserContext
 
 export default function PlaylistByCategory() {
   const { isDarkMode } = useContext(UserContext); // Get dark mode state from context
-  const phrases = ['Hay Nhất', 'Nhiều View Nhất', 'Hấp Dẫn Nhất', 'Tiềm Năng Nhất'];
+  const [randomPhrases, setRandomPhrases] = useState({}); // State to store random phrases for each category
+  const [categoryImages, setCategoryImages] = useState({}); // State to store the images for each category
 
-  const getRandomPhrase = () => {
-    return phrases[Math.floor(Math.random() * phrases.length)];
-  };
+  const phrases = ['Hay Nhất', 'Xuất Sắc', 'Hấp Dẫn', 'Tiềm Năng', 'Đáng Đọc', 'Thú Vị', 'Kinh Điển', 'Mới Nhất', 'Hot Nhất'];
 
-  const getRandomNovelCover = (categoryId) => {
-    const novelsInCategory = novels.filter(novel => novel.CategoryID === categoryId);
-    if (novelsInCategory.length > 0) {
-      const randomNovel = novelsInCategory[Math.floor(Math.random() * novelsInCategory.length)];
-      return randomNovel.ImageUrl;
-    }
-    return 'https://via.placeholder.com/150'; // Fallback image if no novels in category
-  };
+  // Generate random phrase and image for each category when component mounts
+  useEffect(() => {
+    const phrasesForCategories = categories.reduce((acc, category) => {
+      const random = phrases[Math.floor(Math.random() * phrases.length)];
+      acc[category.id] = random; // Store random phrase for each category
+      return acc;
+    }, {});
+
+    const imagesForCategories = categories.reduce((acc, category) => {
+      const novelsInCategory = novels.filter(novel => novel.CategoryID === category.id);
+      if (novelsInCategory.length > 0) {
+        const randomNovel = novelsInCategory[Math.floor(Math.random() * novelsInCategory.length)];
+        acc[category.id] = randomNovel.ImageUrl;
+      } else {
+        acc[category.id] = 'https://via.placeholder.com/150'; // Fallback image if no novels in category
+      }
+      return acc;
+    }, {});
+
+    setRandomPhrases(phrasesForCategories);
+    setCategoryImages(imagesForCategories);
+  }, [categories, novels]); // Run this effect only when categories or novels change
 
   const topViewedNovel = novels.sort((a, b) => b.Views - a.Views)[0]; // Get the novel with the most views
 
@@ -52,7 +65,7 @@ export default function PlaylistByCategory() {
         {categories.map((category) => (
           <li key={category.id} className="border-b pb-2 flex items-center">
             <img 
-              src={getRandomNovelCover(category.id)} 
+              src={categoryImages[category.id]} // Use pre-calculated image from state
               alt={`Cover for ${category.name}`} 
               className="w-16 mr-4 object-cover rounded"
             />
@@ -62,7 +75,7 @@ export default function PlaylistByCategory() {
                 isDarkMode ? 'text-white' : 'text-black'
               }`}
             >
-              Tuyển tập sách {category.name} {getRandomPhrase()}
+              Tuyển tập sách {category.name} {randomPhrases[category.id] || 'Mới Nhất'} {/* Displaying the random phrase per category */}
             </Link>
           </li>
         ))}
