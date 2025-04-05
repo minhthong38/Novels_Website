@@ -1,29 +1,58 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { novels } from '../../data/data';  // Adjust the import path as needed
-import { UserContext } from '../../context/UserContext'; // Import UserContext
+import { UserContext } from '../../context/UserContext';
+import { fetchNovels } from '../../services/apiService'; // import API mới
 
 export default function Recommend() {
-  const { isDarkMode } = useContext(UserContext); // Get dark mode state from context
+  const { isDarkMode } = useContext(UserContext);
+  const [topNovels, setTopNovels] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sort novels by views in descending order and take the top 6
-  const topNovels = novels.sort((a, b) => b.Views - a.Views).slice(0, 6);
+  useEffect(() => {
+    const loadNovels = async () => {
+      try {
+        const novels = await fetchNovels();
+        const sorted = novels
+          .sort((a, b) => b.view - a.view) // bạn đang dùng "Views" bên data cũ
+          .slice(0, 6);
+        setTopNovels(sorted);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch novels:', error);
+        setLoading(false);
+      }
+    };
+
+    loadNovels();
+  }, []);
 
   return (
     <div className={`${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} min-h-screen`}>
       <div className="flex flex-col items-center md:flex-row md:justify-center md:ml-36 mb-10">
         <div className="flex-1">
-          <h2 className={`text-xl font-bold mb-4 text-center md:text-left md:ml-5 ${isDarkMode ? 'text-white' : 'text-black'}`}>SÁCH ĐỀ XUẤT</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3">
-            {topNovels.map((novel) => (
-              <div key={novel.NovelID} className="text-center">
-                <Link to={`/novelDetail/${novel.NovelID}`}>
-                  <img src={novel.ImageUrl} style={{ width: '180px', height: '250px' }} alt={`Book cover of ${novel.Title}`} className="mx-auto mb-2"/>
-                  <p className={`text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>{novel.Title}</p>
-                </Link>
-              </div>
-            ))}
-          </div>
+          <h2 className={`text-xl font-bold mb-4 text-center md:text-left md:ml-5 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+            SÁCH ĐỀ XUẤT
+          </h2>
+
+          {loading ? (
+            <p className="text-center">Đang tải...</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3">
+              {topNovels.map((novel) => (
+                <div key={novel._id} className="text-center">
+                  <Link to={`/novelDetail/${novel._id}`}>
+                    <img 
+                      src={novel.imageUrl} 
+                      style={{ width: '180px', height: '250px' }} 
+                      alt={`Bìa sách ${novel.title}`} 
+                      className="mx-auto mb-2 object-cover"
+                    />
+                    <p className={`text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>{novel.title}</p>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

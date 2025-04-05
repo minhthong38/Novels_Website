@@ -50,11 +50,17 @@ const handleLogin = async () => {
       }
     }
 
-    // Store user data
-    localStorage.setItem('user', JSON.stringify(data.user));
+    // Store user data, including full name, avatar, and gender
+    const userWithDetails = { 
+      ...data.user, 
+      avatar: data.user.avatar || 'https://via.placeholder.com/150', 
+      fullName: data.user.fullName || data.user.username,
+      gender: data.user.gender || 'other'
+    };
+    localStorage.setItem('user', JSON.stringify(userWithDetails));
 
     // Update context
-    setLoggedInUser(data.user);
+    setLoggedInUser(userWithDetails);
 
     setSuccess('Đăng nhập thành công!');
 

@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import AuthorRoute from '../routes/AuthorRoute';
 import { UserContext } from '../../context/UserContext';
 import AuthorStickyNote from "../AuthorStickyNote";
+import { useNavigate } from 'react-router-dom';
 
 export default function UpdateNovel() {
   const { loggedInUser } = useContext(UserContext);
@@ -19,6 +20,8 @@ export default function UpdateNovel() {
     { chapter: "Chương 9: Bí mật của một võ sư", views: 1150 },
     { chapter: "Chương 10: Lọ thuốc tăng hình", views: 2200 },
   ];
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     setFilteredChapters(
@@ -101,7 +104,12 @@ export default function UpdateNovel() {
                       <i className="fas fa-eye ml-2"></i>
                     </td>
                     <td className="py-2 px-4 border-b text-left text-green-600">
-                      <a href="/chapter">Cập nhật</a>
+                      <button
+                        onClick={() => navigate('/chapter')} // Navigate to the Chapter page
+                        className="hover:underline"
+                      >
+                        Cập nhật
+                      </button>
                     </td>
                   </tr>
                 ))}

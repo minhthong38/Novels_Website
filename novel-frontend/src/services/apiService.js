@@ -36,3 +36,14 @@ export const fetchNovelRankings = async () => {
     throw error.response?.data || 'Unknown error occurred';
   }
 };
+
+
+export const fetchNovels = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/api/novels'); // hoặc base URL tùy bạn setup
+    return response.data.data; // Vì backend trả { success: true, data: [...] }
+  } catch (error) {
+    console.error("Lỗi khi fetch novels:", error);
+    throw error.response?.data || "Lỗi không xác định";
+  }
+};

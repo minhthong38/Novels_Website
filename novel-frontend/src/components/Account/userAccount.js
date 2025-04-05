@@ -25,14 +25,14 @@ export default function UserAccount() {
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setLoggedInUser(user);
-      setAvatarImage(user.img || "https://via.placeholder.com/150");
-      setDisplayName(user.fullName || user.username);
+      setAvatarImage(user.avatar || "https://via.placeholder.com/150"); // Use avatar field
+      setDisplayName(user.fullName || user.username); // Use fullName if available
       setEmail(user.email);
-      setGender(user.gender);
+      setGender(user.gender || "other"); // Set gender
       setNewDisplayName(user.username);
       setNewEmail(user.email);
-      setNewGender(user.gender);
-      setNewFullName(user.fullName || "");
+      setNewGender(user.gender || "other");
+      setNewFullName(user.fullName || ""); // Set fullName
     } else {
       console.error('No user data found. Please log in.');
     }
@@ -118,9 +118,9 @@ export default function UserAccount() {
         <div className="flex flex-col items-center">
           {/* Avatar Image */}
           <img src={avatarImage} alt="User avatar" className="rounded-full w-24 h-24 mb-4" />
-          <h2 className="text-lg font-semibold">{loggedInUser.fullName || loggedInUser.username}</h2> {/* Display fullName */}
-          <p className="text-gray-600">{loggedInUser.username}</p> {/* Display username */}
+          <h2 className="text-lg font-semibold">{loggedInUser.fullName}</h2> {/* Display fullName */}
           <p className="text-gray-600">{email}</p> {/* Display email */}
+          <p className="text-gray-600">{loggedInUser.gender}</p> {/* Display gender */}
           <button className="mt-4 text-red-500">Hồ sơ cá nhân</button>
           <button className="mt-2 text-blue-500">Đăng xuất/Thoát</button>
           <button className="mt-2 text-green-500" onClick={() => setShowAuthorRequestPopup(true)}>Tham gia vai trò tác giả</button> {/* New button */}
