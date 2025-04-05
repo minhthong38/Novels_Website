@@ -54,14 +54,23 @@ export default function Register() {
     }
   
     try {
-      const response = await axios.post("http://localhost:5000/api/users", {
-        fullname, // Sửa từ fullName -> fullname
-        username,
-        password,
-        email,
-        gender
-      }, {
-        headers: { "Content-Type": "application/json" }
+      const formData = new FormData();
+      formData.append("fullname", fullname);
+      formData.append("username", username);
+      formData.append("password", password);
+      formData.append("email", email);
+      formData.append("gender", gender);
+  
+      // Thêm ảnh (nếu có)
+      const fileInput = document.getElementById("image-upload");
+      if (fileInput && fileInput.files[0]) {
+        formData.append("image", fileInput.files[0]); // tên field 'image' khớp với `upload.single('image')` backend
+      }
+  
+      const response = await axios.post("http://localhost:5000/api/users", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
       });
   
       if (response.status === 201) {
@@ -76,6 +85,7 @@ export default function Register() {
       setPopupError("Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.");
     }
   };
+  
   
   
   const handleUsernameChange = (e) => {

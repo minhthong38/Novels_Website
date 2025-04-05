@@ -12,6 +12,11 @@ function Header() {
   const searchRef = useRef(null);
   const navigate = useNavigate();
 
+    // Log loggedInUser mỗi khi nó thay đổi
+    useEffect(() => {
+      console.log(loggedInUser); // Kiểm tra loggedInUser sau khi set
+    }, [loggedInUser]); // Trigger lại khi loggedInUser thay đổi
+
   const handleSearchChange = (e) => {
     const keyword = e.target.value;
     setSearchTerm(keyword);
@@ -43,7 +48,7 @@ function Header() {
     if (token) {
       fetchUserDetails(token)
         .then((data) => {
-          if (data && data.id) {
+          if (data && data._id) {
             setLoggedInUser(data); // Set user data
           }
         })
@@ -149,7 +154,7 @@ function Header() {
           <div className="relative group ml-10 pl-10">
   <div className="flex items-center space-x-2 cursor-pointer">
     <Link to="/login" className={`${isDarkMode ? 'text-white' : 'text-black'} focus:outline-none`}>
-      <img src={loggedInUser ? loggedInUser.img : "https://i.imgur.com/Y0N4tO3.png"} alt="User Icon" className="w-6 h-6 rounded-full" />
+      <img   src={loggedInUser && loggedInUser.avatar  ? loggedInUser.avatar : "https://i.imgur.com/Y0N4tO3.png"} alt="User Icon" className="w-6 h-6 rounded-full" />
     </Link>
     {loggedInUser && <span className={`ml-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>{loggedInUser.fullName || loggedInUser.username}</span>} 
   </div>
