@@ -1,102 +1,160 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { fetchUserDetails } from '../../services/apiService'; // Import fetchUserDetails
-import { users } from '../../data/data'; // Import users data
-import UserNotification from '../notifications/UserNotification'; // Import UserNotification component
 import { UserContext } from '../../context/UserContext'; // Import UserContext
+import UserNotification from '../notifications/UserNotification'; // Import UserNotification component
 import axios from 'axios'; // Import axios
 
 export default function UserAccount() {
   const { setLoggedInUser: updateGlobalUser } = useContext(UserContext); // Access context to update global user
   const [loggedInUser, setLoggedInUser] = useState(null);
-  const [uploadedImage, setUploadedImage] = useState(null);
   const [avatarImage, setAvatarImage] = useState("https://via.placeholder.com/150");
-  const [displayName, setDisplayName] = useState("");
-  const [email, setEmail] = useState("");
-  const [gender, setGender] = useState("");
   const [newDisplayName, setNewDisplayName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newGender, setNewGender] = useState("");
-  const [showAuthorRequestPopup, setShowAuthorRequestPopup] = useState(false);
-  const [notification, setNotification] = useState(null);
   const [newFullName, setNewFullName] = useState("");
+  const [notification, setNotification] = useState(null);
+  const [showAuthorRequestPopup, setShowAuthorRequestPopup] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      setLoggedInUser(user);
-      setAvatarImage(user.avatar || "https://via.placeholder.com/150"); // Use avatar field
-      setDisplayName(user.fullName || user.username); // Use fullName if available
-      setEmail(user.email);
-      setGender(user.gender || "other"); // Set gender
-      setNewDisplayName(user.username);
-      setNewEmail(user.email);
-      setNewGender(user.gender || "other");
-      setNewFullName(user.fullName || ""); // Set fullName
-    } else {
-      console.error('No user data found. Please log in.');
-    }
+    const fetchUserData = async () => {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token'); // Kiểm tra token
+
+      if (!token) {
+        console.error('No token found. Please log in.');
+        return;
+      }
+
+      try {
+        // Gửi yêu cầu lấy thông tin người dùng từ API
+        const response = await axios.get('http://localhost:5000/api/users/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const user = response.data;
+
+        if (user && user._id) {
+          setLoggedInUser(user);
+          setAvatarImage(user.avatar || "https://via.placeholder.com/150");
+          setNewDisplayName(user.username);
+          setNewEmail(user.email);
+          setNewGender(user.gender || "other");
+          setNewFullName(user.fullname || "");
+        } else {
+          console.error('User data is incomplete or _id is missing.');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data from the server:', error);
+      }
+    };
+
+    fetchUserData();
   }, []);
 
-  const handleAvatarUpload = (event) => {
+  const handleAvatarUpload = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+  
+    // Cập nhật ngay avatarImage trong state để giao diện thay đổi ngay lập tức
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarImage(reader.result);  // Cập nhật ảnh được chọn từ file
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  
+  
+  
+  
+
+  const uploadImageToCloudinary = async (file) => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      console.error('No token found. Please log in.');
+      return null;
+    }
+  
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'user-avatar');
+    formData.append('cloud_name', 'dq7xydlgs');
+    formData.append('folder', 'user_avatar');
+  
+    try {
+      const response = await axios.post('https://api.cloudinary.com/v1_1/dq7xydlgs/image/upload', formData);
+      console.log('Cloudinary Response:', response.data); // Log response data
+      return response.data.secure_url;  // Return image URL
+    } catch (error) {
+      console.error('Error uploading image to Cloudinary: ', error);
+      return null;
     }
   };
 
-  const handleSaveChanges = async () => {
-    const updatedUser = {
-      ...loggedInUser,
-      img: uploadedImage || avatarImage, // Update the img field with the uploaded image
-      fullName: newFullName, // Update fullName
-      username: newDisplayName,
-      email: newEmail,
-      gender: newGender
-    };
-    setLoggedInUser(updatedUser); // Update the loggedInUser state
-    updateGlobalUser(updatedUser); // Update the global user in context
-    setAvatarImage(updatedUser.img); // Update the avatar image in the UI
-    setDisplayName(updatedUser.fullName); // Update displayName with fullName
-    setEmail(updatedUser.email);
-    setGender(updatedUser.gender);
-    setUploadedImage(null); // Clear the uploaded image
-
-    // Update localStorage or sessionStorage
-    const storageKey = localStorage.getItem('user') ? 'localStorage' : 'sessionStorage';
-    window[storageKey].setItem('user', JSON.stringify(updatedUser));
-
-    // Send updated data to the API
+  const updateUserInBackend = async (updatedUser) => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      console.error('No token found. Please log in.');
+      return;
+    }
+  
     try {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      await axios.put('http://localhost:5000/api/users/update', updatedUser, {
+      const response = await axios.put(`http://localhost:5000/api/users/${updatedUser._id}`, updatedUser, {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      console.log('User data updated successfully on the server.');
+      console.log('User updated successfully:', response.data); // Log to verify update
     } catch (error) {
-      console.error('Failed to update user data on the server:', error);
+      console.error('Error updating user in backend: ', error);
     }
   };
+  
 
-  const handleAuthorRequest = () => {
-    const updatedUser = {
-      ...loggedInUser,
-      authorRequest: true // Add author request flag
-    };
-    setLoggedInUser(updatedUser);
-    const userIndex = users.findIndex(user => user.id === loggedInUser.id);
-    if (userIndex !== -1) {
-      users[userIndex] = updatedUser;
+  const handleSaveChanges = async () => {
+    try {
+      let updatedAvatar = avatarImage;
+  
+      // Nếu ảnh mới được chọn (base64), upload lên Cloudinary
+      if (avatarImage !== loggedInUser.avatar && avatarImage.startsWith("data:image")) {
+        const uploadedImageUrl = await uploadImageToCloudinary(avatarImage);
+        if (uploadedImageUrl) {
+          updatedAvatar = uploadedImageUrl;  // Cập nhật avatar với URL mới từ Cloudinary
+        } else {
+          console.error('Không thể upload ảnh lên Cloudinary');
+          return; // Nếu không thể upload ảnh, không tiếp tục lưu thay đổi
+        }
+      }
+  
+      // Cập nhật lại thông tin người dùng
+      const updatedUser = {
+        ...loggedInUser,
+        username: newDisplayName,
+        email: newEmail,
+        gender: newGender,
+        fullname: newFullName,
+        avatar: updatedAvatar, // Lưu ảnh mới
+      };
+  
+      // Lưu thông tin người dùng vào backend
+      await updateUserInBackend(updatedUser);
+  
+      // Cập nhật lại thông tin người dùng trong state và global context
+      setLoggedInUser(updatedUser);
+      updateGlobalUser(updatedUser); // Cập nhật context toàn cục
+  
+      setNotification({ message: 'Cập nhật thành công', type: 'success' });
+    } catch (error) {
+      setNotification({ message: 'Có lỗi khi lưu thay đổi', type: 'error' });
+      console.error('Error saving changes:', error);
     }
+  };
+  
+  
+  const handleAuthorRequest = () => {
+    const updatedUser = { ...loggedInUser, authorRequest: true };
+    setLoggedInUser(updatedUser);
+    updateGlobalUser(updatedUser); // Update global context
     setShowAuthorRequestPopup(false);
-    alert('Yêu cầu làm tác giả đã được gửi.');
+    setNotification({ message: 'Yêu cầu làm tác giả đã được gửi.', type: 'success' });
   };
 
   const handleAuthorSpaceClick = () => {
@@ -119,7 +177,7 @@ export default function UserAccount() {
           {/* Avatar Image */}
           <img src={avatarImage} alt="User avatar" className="rounded-full w-24 h-24 mb-4" />
           <h2 className="text-lg font-semibold">{loggedInUser.fullName}</h2> {/* Display fullName */}
-          <p className="text-gray-600">{email}</p> {/* Display email */}
+          <p className="text-gray-600">{loggedInUser.email}</p> {/* Display email */}
           <p className="text-gray-600">{loggedInUser.gender}</p> {/* Display gender */}
           <button className="mt-4 text-red-500">Hồ sơ cá nhân</button>
           <button className="mt-2 text-blue-500">Đăng xuất/Thoát</button>
@@ -175,13 +233,14 @@ export default function UserAccount() {
           <label htmlFor="avatar-upload" className="cursor-pointer">
             <img
               id="upload-avatar"
-              src={uploadedImage || avatarImage}
+              src={avatarImage} // Hiển thị ảnh mới nếu có, nếu không thì ảnh cũ
               alt="Upload avatar"
               className="rounded-full w-24 h-24 bg-gray-200 flex items-center justify-center"
             />
           </label>
           <input id="avatar-upload" type="file" className="hidden" onChange={handleAvatarUpload} />
         </div>
+
 
         {/* Form Fields */}
         <div className="mt-4">
@@ -224,7 +283,12 @@ export default function UserAccount() {
             <option value="other">Khác</option>
           </select>
         </div>
-        <button className="mt-4 w-full bg-red-500 text-white py-2 rounded-lg" onClick={handleSaveChanges}>Lưu thay đổi</button>
+        <button
+          className="mt-4 w-full bg-red-500 text-white py-2 rounded-lg"
+          onClick={handleSaveChanges} // Không cần truyền đối số nữa
+        >
+          Lưu thay đổi
+        </button>
 
         {/* Achievement Badges */}
         <div className="mt-4">

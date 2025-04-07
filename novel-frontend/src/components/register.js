@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { registerUser } from '../data/data';
 import axios from 'axios';
 
 export default function Register() {
