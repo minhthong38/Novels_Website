@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { categories, novels } from '../data/data';
-import { fetchUserDetails } from '../services/apiService';
+import { categories } from '../data/data';
+import { fetchUserDetails, fetchNovels } from '../services/apiService'; // Import fetchNovels API function
 import { UserContext } from '../context/UserContext'; // Import UserContext
 
 function Header() {
@@ -17,14 +17,20 @@ function Header() {
       console.log(loggedInUser); // Kiểm tra loggedInUser sau khi set
     }, [loggedInUser]); // Trigger lại khi loggedInUser thay đổi
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = async (e) => {
     const keyword = e.target.value;
     setSearchTerm(keyword);
     if (keyword.length > 0) {
-      const results = novels.filter((novel) =>
-        novel.Title.toLowerCase().includes(keyword.toLowerCase())
-      );
-      setSearchResults(results);
+      try {
+        const results = await fetchNovels(); // Fetch novels from API
+        const filteredResults = results.filter((novel) =>
+          novel.Title.toLowerCase().includes(keyword.toLowerCase())
+        );
+        setSearchResults(filteredResults);
+      } catch (error) {
+        console.error('Error fetching novels:', error);
+        setSearchResults([]);
+      }
     } else {
       setSearchResults([]);
     }
@@ -65,12 +71,6 @@ function Header() {
         name: category.name,
         href: `/menu/${category.id}`
       }))
-    },
-    { 
-      label: 'Tác Giả', 
-      options: [
-        { name: 'Rosie Nguyễn', href: '/authorAccounts' },
-      ] 
     },
     { label: 'Blind Book', href: '/blindbook' }
   ];

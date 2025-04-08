@@ -47,3 +47,13 @@ export const fetchNovels = async () => {
     throw error.response?.data || "Lỗi không xác định";
   }
 };
+
+export const fetchCategories = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/api/categories');
+    return response.data.data; // vì backend trả về { success: true, data: [...] }
+  } catch (error) {
+    console.error('Lỗi khi fetch category:', error);
+    throw error.response?.data || 'Lỗi không xác định';
+  }
+};

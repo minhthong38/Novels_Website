@@ -5,6 +5,14 @@ import CreateNovel from '../createNovel/CreateNovel';
 import UpdateNovel from '../UpdateNovel/updateNovel';
 import RevenueTracking from '../RevenueTracking/RevenueTracking'; // Import RevenueTracking component
 
+const taskLevels = [
+  { level: 1, chapters: 10, views: 1000 },
+  { level: 2, chapters: 30, views: 5000 },
+  { level: 3, chapters: 60, views: 15000 },
+  { level: 4, chapters: 100, views: 30000 },
+  { level: 5, chapters: 150, views: 50000 },
+];
+
 function AuthorAccounts() {
   const { loggedInUser, setLoggedInUser } = useContext(UserContext);
   const [activeView, setActiveView] = useState('profile'); // State to toggle views
@@ -51,15 +59,17 @@ function AuthorAccounts() {
   };
 
   const renderContent = () => {
+    const currentLevel = 2; // Explicitly set the current level to 2 for the entire page
+
     switch (activeView) {
       case 'listNovels':
-        return <ListNovels />;
+        return <ListNovels currentLevel={currentLevel} />; // Pass level 2 to other components if needed
       case 'createNovel':
-        return <CreateNovel />;
+        return <CreateNovel currentLevel={currentLevel} />;
       case 'updateNovel':
-        return <UpdateNovel />;
-      case 'revenueTracking': // Add case for revenue tracking
-        return <RevenueTracking />;
+        return <UpdateNovel currentLevel={currentLevel} />;
+      case 'revenueTracking':
+        return <RevenueTracking currentLevel={currentLevel} />;
       default:
         return (
           <div>
@@ -78,7 +88,7 @@ function AuthorAccounts() {
               </label>
               <input id="image-upload" type="file" className="hidden" onChange={handleImageUpload} />
               <p className="text-lg font-bold">{displayName}</p>
-              <p className="text-gray-600 text-sm">Chưa có cấp bậc</p>
+              <p className="text-gray-600 text-sm">{`Cấp độ hiện tại: ${currentLevel}`}</p>
               <p className="text-sm text-gray-700 mt-2">
                 Tỷ lệ chia sẻ doanh thu: <span className="font-bold">60% - 40%</span>
               </p>
@@ -100,12 +110,49 @@ function AuthorAccounts() {
               </div>
             </div>
 
-            {/* Điều kiện nâng cấp */}
+            {/* Thanh cấp bậc */}
             <div className="bg-gray-50 p-4 border rounded-lg mb-4">
-              <p className="text-gray-700 font-semibold">Bạn chưa đủ điều kiện tăng cấp.</p>
-              <ul className="list-disc list-inside text-gray-600 text-sm mt-2">
-                <li>Bạn phải có ít nhất 1 truyện được duyệt.</li>
-              </ul>
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">Tiến độ cấp bậc</h3>
+                <div className="relative w-full">
+                  {/* Progress bar */}
+                  <div className="relative bg-gray-200 rounded-full h-6">
+                    <div
+                      className="absolute top-0 left-0 h-6 bg-green-500 rounded-full"
+                      style={{ width: `${(currentLevel / 5) * 100}%` }}
+                    ></div>
+                    {/* Level markers */}
+                    <div className="absolute top-4 w-full h-6 flex justify-between items-center">
+                      {taskLevels.map((task) => (
+                        <div key={task.level} className="relative text-center w-1/5">
+                          <span
+                            className={`absolute -top-8 w-8 h-8 flex items-center justify-center rounded-full text-white ${
+                              task.level <= currentLevel ? 'bg-green-500' : 'bg-gray-400'
+                            }`}
+                            style={{ left: '50%', transform: 'translateX(-50%)' }}
+                          >
+                            {task.level}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Tasks */}
+                  <div className="flex justify-between mt-6 text-xs text-gray-600">
+                    {taskLevels.map((task) => (
+                      <div key={task.level} className="text-center w-1/5">
+                        <p>{`Chương: ${task.chapters}`}</p>
+                        <p>{`Lượt xem: ${task.views}`}</p>
+                        {task.level <= currentLevel && (
+                          <p className="text-green-600 font-semibold flex items-center justify-center mt-1">
+                            <span className="mr-1">✔</span> Đã hoàn thành
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Chi tiết thông tin */}
