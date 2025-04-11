@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { UserContext } from '../../context/UserContext';
 import { fetchNovels } from '../../services/apiService'; // import API mới
 
-export default function Recommend() {
+export default function Recommend({ customStyle, excludeNovelId }) {
   const { isDarkMode } = useContext(UserContext);
   const [topNovels, setTopNovels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,8 +12,11 @@ export default function Recommend() {
     const loadNovels = async () => {
       try {
         const novels = await fetchNovels();
-        const sorted = novels
-          .sort((a, b) => b.view - a.view) // bạn đang dùng "Views" bên data cũ
+        const filteredNovels = excludeNovelId
+          ? novels.filter((novel) => novel._id !== excludeNovelId)
+          : novels;
+        const sorted = filteredNovels
+          .sort((a, b) => b.view - a.view)
           .slice(0, 6);
         setTopNovels(sorted);
         setLoading(false);
@@ -24,7 +27,7 @@ export default function Recommend() {
     };
 
     loadNovels();
-  }, []);
+  }, [excludeNovelId]);
 
   return (
     <div className={`${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} min-h-screen`}>
@@ -37,20 +40,27 @@ export default function Recommend() {
           {loading ? (
             <p className="text-center">Đang tải...</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3">
-              {topNovels.map((novel) => (
-                <div key={novel._id} className="text-center">
-                  <Link to={`/novelDetail/${novel._id}`}>
-                    <img 
-                      src={novel.imageUrl} 
-                      style={{ width: '180px', height: '250px' }} 
-                      alt={`Bìa sách ${novel.title}`} 
-                      className="mx-auto mb-2 object-cover"
-                    />
-                    <p className={`text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>{novel.title}</p>
-                  </Link>
-                </div>
-              ))}
+            <div
+              className="grid gap-3"
+              style={{
+                gridTemplateColumns: customStyle?.gridTemplateColumns || 'repeat(3, 1fr)',
+              }}
+            >
+              {topNovels
+                .slice(0, customStyle?.maxItems || topNovels.length)
+                .map((novel) => (
+                  <div key={novel._id} className="text-center">
+                    <Link to={`/novelDetail/${novel._id}`}>
+                      <img 
+                        src={novel.imageUrl} 
+                        style={{ width: '180px', height: '250px' }} 
+                        alt={`Bìa sách ${novel.title}`} 
+                        className="mx-auto mb-2 object-cover"
+                      />
+                      <p className={`text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>{novel.title}</p>
+                    </Link>
+                  </div>
+                ))}
             </div>
           )}
         </div>

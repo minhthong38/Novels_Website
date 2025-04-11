@@ -1,127 +1,177 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { useParams } from 'react-router-dom';
-import { novels, novelContents } from '../../data/data';
-import { UserContext } from '../../context/UserContext'; // Import UserContext
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { fetchChaptersByNovelId, fetchChapterContent } from '../../services/apiService';
 
 export default function NovelView() {
   const { novelID } = useParams();
-  const [novel, setNovel] = useState({});
-  const [content, setContent] = useState([]);
-  const [banners, setBanners] = useState([]);
-  const [currentBanner, setCurrentBanner] = useState(0);
-  const [checkpoint, setCheckpoint] = useState(null);
-  const { isDarkMode } = useContext(UserContext); // Get dark mode state from context
-  const [currentPart, setCurrentPart] = useState(0);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [chapters, setChapters] = useState([]);
+  const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
+  const [chapterContent, setChapterContent] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [bannerIndex, setBannerIndex] = useState(0);
+  const [bookmarkedLines, setBookmarkedLines] = useState([]); // State for bookmarked lines
+
+  const banners = [
+    '/images/banner1.jpg',
+    '/images/banner2.jpg',
+    '/images/banner3.jpg',
+  ];
 
   useEffect(() => {
-    const selectedNovel = novels.find(novel => novel.NovelID === parseInt(novelID));
-    setNovel(selectedNovel);
-    setContent(novelContents[novelID]?.parts || []);
-    setBanners(novelContents[novelID]?.banners || []);
-    const savedCheckpoint = localStorage.getItem(`checkpoint_${novelID}`);
-    if (savedCheckpoint) {
-      setCheckpoint(JSON.parse(savedCheckpoint));
-    }
-  }, [novelID]);
+    const loadChapters = async () => {
+      try {
+        const chapterList = await fetchChaptersByNovelId(novelID);
+        setChapters(chapterList);
+
+        const chapterId = searchParams.get('chapterId');
+        if (chapterId) {
+          const index = chapterList.findIndex((chapter) => chapter._id === chapterId);
+          setCurrentChapterIndex(index !== -1 ? index : 0);
+        } else {
+          setCurrentChapterIndex(0);
+        }
+      } catch (err) {
+        setError('Không thể tải danh sách chương.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadChapters();
+  }, [novelID, searchParams]);
+
+  useEffect(() => {
+    const loadChapterContent = async () => {
+      if (chapters.length === 0) return;
+      try {
+        const chapter = chapters[currentChapterIndex];
+        const content = await fetchChapterContent(chapter._id);
+        setChapterContent(content.content);
+        localStorage.setItem(`checkpoint_${novelID}`, currentChapterIndex);
+      } catch (err) {
+        setError('Không thể tải nội dung chương.');
+      }
+    };
+    loadChapterContent();
+  }, [chapters, currentChapterIndex, novelID]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentBanner((prev) => (prev + 1) % banners.length);
-    }, 3000); // 3000ms = 3s
-
-    return () => clearInterval(interval); // Clear interval on component unmount
+      setBannerIndex((prevIndex) => (prevIndex + 1) % banners.length);
+    }, 3000);
+    return () => clearInterval(interval);
   }, [banners.length]);
 
-  const handleNextBanner = () => {
-    setCurrentBanner((prev) => (prev + 1) % banners.length);
-  };
+  useEffect(() => {
+    const savedBookmarks = JSON.parse(localStorage.getItem(`bookmarks_${novelID}_${currentChapterIndex}`)) || [];
+    setBookmarkedLines(savedBookmarks);
+  }, [novelID, currentChapterIndex]);
 
-  const handlePrevBanner = () => {
-    setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length);
-  };
-
-  const handleCheckpoint = (index) => {
-    if (checkpoint === index) {
-      setCheckpoint(null);
-      localStorage.removeItem(`checkpoint_${novelID}`);
-    } else {
-      setCheckpoint(index);
-      localStorage.setItem(`checkpoint_${novelID}`, JSON.stringify(index));
+  const handleNextChapter = () => {
+    if (currentChapterIndex < chapters.length - 1) {
+      setCurrentChapterIndex(currentChapterIndex + 1);
     }
   };
 
-  const handleNextPart = () => {
-    setCurrentPart((prev) => (prev + 1) % content.length);
+  const handlePreviousChapter = () => {
+    if (currentChapterIndex > 0) {
+      setCurrentChapterIndex(currentChapterIndex - 1);
+    }
   };
 
-  const handlePrevPart = () => {
-    setCurrentPart((prev) => (prev - 1 + content.length) % content.length);
+  const handleBannerNavigation = (direction) => {
+    if (direction === 'prev') {
+      setBannerIndex((prevIndex) => (prevIndex - 1 + banners.length) % banners.length);
+    } else if (direction === 'next') {
+      setBannerIndex((prevIndex) => (prevIndex + 1) % banners.length);
+    }
   };
+
+  const handleDotClick = (index) => {
+    setBannerIndex(index);
+  };
+
+  const handleLineBookmarkToggle = (lineIndex) => {
+    const updatedBookmarks = bookmarkedLines.includes(lineIndex)
+      ? bookmarkedLines.filter((index) => index !== lineIndex) // Remove bookmark
+      : [...bookmarkedLines, lineIndex]; // Add bookmark
+
+    setBookmarkedLines(updatedBookmarks);
+    localStorage.setItem(`bookmarks_${novelID}_${currentChapterIndex}`, JSON.stringify(updatedBookmarks));
+  };
+
+  if (loading) return <p>Đang tải dữ liệu...</p>;
+  if (error) return <p>{error}</p>;
 
   return (
-    <div className={`${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} min-h-screen flex flex-col items-center`}>
-      <div className="relative w-full h-[500px] overflow-hidden">
-        <div
-          className="w-full h-full bg-cover bg-center transition-all duration-500"
-          style={{
-            backgroundImage: `url(${banners[currentBanner]})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        ></div>
+    <div className="min-h-screen bg-gray-100">
+      {/* Banner Section */}
+      <div className="relative h-64 bg-cover bg-center transition-all duration-1000" style={{ backgroundImage: `url(${banners[bannerIndex]})` }}>
+        {/* Left Navigation Button */}
         <button
-          className={`absolute top-1/2 left-4 transform -translate-y-1/2 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'} p-2 rounded-full`}
-          onClick={handlePrevBanner}
+          onClick={() => handleBannerNavigation('prev')}
+          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
         >
           &#8249;
         </button>
+
+        {/* Right Navigation Button */}
         <button
-          className={`absolute top-1/2 right-4 transform -translate-y-1/2 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'} p-2 rounded-full`}
-          onClick={handleNextBanner}
+          onClick={() => handleBannerNavigation('next')}
+          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
         >
           &#8250;
         </button>
+
+        {/* Dots for Manual Control */}
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
           {banners.map((_, index) => (
-            <div
+            <button
               key={index}
-              className={`w-3 h-3 rounded-full ${
-                index === currentBanner ? "bg-blue-500" : "bg-gray-300"
-              }`}
-            ></div>
+              onClick={() => handleDotClick(index)}
+              className={`w-3 h-3 rounded-full ${index === bannerIndex ? 'bg-white' : 'bg-gray-400'} hover:bg-gray-200`}
+            ></button>
           ))}
         </div>
       </div>
 
-      <div className={`w-full sm:w-3/4 lg:w-2/3 m-4 sm:m-8 p-4 sm:p-8 mt-4 shadow-md rounded-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
-        <h2 className="text-xl sm:text-2xl font-bold mb-4">
-          {novel.Title}
-        </h2>
-        {content[currentPart]?.content.map((paragraph, idx) => (
-          <p 
-            key={idx} 
-            className={`text-sm sm:text-base mt-4 cursor-pointer ${isDarkMode ? 'text-white' : 'text-black'} ${checkpoint === idx ? "bg-gray-200 dark:bg-gray-400" : ""}`}
-            onClick={() => handleCheckpoint(idx)}
-          >
-            {paragraph}
-            {checkpoint === idx && <span className="ml-2 text-blue-500">📌</span>}
-          </p>
-        ))}
-        <div className="mt-4 flex justify-between items-center">
-          <button
-            className={`mr-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'} p-2 rounded-full`}
-            onClick={handlePrevPart}
-          >
-            Previous Part
-          </button>
-          <span className="text-lg">{currentPart + 1} / {content.length}</span>
-          <button
-            className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'} p-2 rounded-full`}
-            onClick={handleNextPart}
-          >
-            Next Part
-          </button>
+      {/* Chapter Content */}
+      <div className="p-6 max-w-4xl mx-auto bg-white shadow-lg rounded-lg mt-6">
+        <h1 className="text-3xl font-bold text-center mb-4">{chapters[currentChapterIndex]?.title}</h1>
+        <div className="prose max-w-none text-justify text-lg leading-relaxed">
+          {chapterContent.split('\n').map((line, index) => (
+            <div key={index} className="flex items-center group">
+              <p className={`flex-1 ${bookmarkedLines.includes(index) ? 'bg-yellow-100' : ''}`}>{line}</p>
+              <button
+                onClick={() => handleLineBookmarkToggle(index)}
+                className="ml-2 text-gray-500 hover:text-yellow-500 hidden group-hover:block"
+                title={bookmarkedLines.includes(index) ? 'Remove Bookmark' : 'Add Bookmark'}
+              >
+                {bookmarkedLines.includes(index) ? '★' : '☆'}
+              </button>
+            </div>
+          ))}
         </div>
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between items-center max-w-4xl mx-auto mt-6">
+        <button
+          onClick={handlePreviousChapter}
+          disabled={currentChapterIndex === 0}
+          className="px-6 py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 disabled:opacity-50"
+        >
+          Chương trước
+        </button>
+        <button
+          onClick={handleNextChapter}
+          disabled={currentChapterIndex === chapters.length - 1}
+          className="px-6 py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 disabled:opacity-50"
+        >
+          Chương sau
+        </button>
       </div>
     </div>
   );

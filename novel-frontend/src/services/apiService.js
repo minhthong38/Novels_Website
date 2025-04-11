@@ -57,3 +57,27 @@ export const fetchCategories = async () => {
     throw error.response?.data || 'Lỗi không xác định';
   }
 };
+// Lấy danh sách chương theo ID tiểu thuyết
+export const fetchChaptersByNovelId = async (novelId) => {
+  try {
+    const response = await axios.get(`http://localhost:5000/api/chapters/novel/${novelId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Lỗi khi fetch danh sách chương:', error);
+    throw error.response?.data || 'Lỗi không xác định';
+  }
+};
+
+// Lấy nội dung chương theo ID chương
+export const fetchChapterContent = async (chapterId) => {
+  try {
+    const response = await axios.get(`http://localhost:5000/api/chapters/${chapterId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Lỗi khi fetch nội dung chương:', error);
+    throw error.response?.data || 'Lỗi không xác định';
+  }
+};
+
+
+
