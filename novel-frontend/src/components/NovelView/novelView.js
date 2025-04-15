@@ -142,15 +142,13 @@ export default function NovelView() {
         <h1 className="text-3xl font-bold text-center mb-4">{chapters[currentChapterIndex]?.title}</h1>
         <div className="prose max-w-none text-justify text-lg leading-relaxed">
           {chapterContent.split('\n').map((line, index) => (
-            <div key={index} className="flex items-center group">
-              <p className={`flex-1 ${bookmarkedLines.includes(index) ? 'bg-yellow-100' : ''}`}>{line}</p>
-              <button
-                onClick={() => handleLineBookmarkToggle(index)}
-                className="ml-2 text-gray-500 hover:text-yellow-500 hidden group-hover:block"
-                title={bookmarkedLines.includes(index) ? 'Remove Bookmark' : 'Add Bookmark'}
-              >
-                {bookmarkedLines.includes(index) ? '★' : '☆'}
-              </button>
+            <div
+              key={index}
+              className={`flex items-center ${bookmarkedLines.includes(index) ? 'bg-yellow-100' : ''}`}
+              onClick={() => handleLineBookmarkToggle(index)} // Add onClick to the line container
+              title={bookmarkedLines.includes(index) ? 'Remove Bookmark' : 'Add Bookmark'}
+            >
+              <p className="flex-1 cursor-pointer">{line}</p>
             </div>
           ))}
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/UserContext'; // Ensure this import is correct and not causing a loop
 
@@ -12,69 +12,88 @@ export default function Login() {
   const { setLoggedInUser } = useContext(UserContext); // Access setLoggedInUser from context
   const navigate = useNavigate();
 
-const handleLogin = async () => {
-  if (!email || !password) {
-    setError('Vui lòng điền đầy đủ thông tin');
-    return;
-  }
-
-  setIsLoading(true);
-  setError('');
-  setSuccess('');
-
-  try {
-    const response = await fetch('http://localhost:5000/api/users/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-    console.log('Server response:', data); // Debugging log
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Đăng nhập thất bại');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Vui lòng điền đầy đủ thông tin');
+      return;
     }
 
-    if (!data.user || !data.token) { // Ensure both user and token exist
-      console.error('Invalid server response:', data);
-      throw new Error('Dữ liệu người dùng không hợp lệ từ server!');
-    }
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
 
-    // Store token if it exists
-    if (data.token) {
-      if (rememberMe) {
-        localStorage.setItem('token', data.token);
-      } else {
-        sessionStorage.setItem('token', data.token);
+    try {
+      const response = await fetch('http://localhost:5000/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      console.log('Server response:', data); // Debugging log
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Đăng nhập thất bại');
       }
+
+      if (!data.user || !data.token) { // Ensure both user and token exist
+        console.error('Invalid server response:', data);
+        throw new Error('Dữ liệu người dùng không hợp lệ từ server!');
+      }
+
+      // Store token if it exists
+      if (data.token) {
+        if (rememberMe) {
+          localStorage.setItem('token', data.token);
+        } else {
+          sessionStorage.setItem('token', data.token);
+        }
+      }
+
+      // Store email and password if "Nhớ mật khẩu" is checked
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email);
+        localStorage.setItem('rememberedPassword', password);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+        localStorage.removeItem('rememberedPassword');
+      }
+
+      // Store user data, including full name, avatar, and gender
+      const userWithDetails = { 
+        ...data.user, 
+        avatar: data.user.avatar || 'https://via.placeholder.com/150', 
+        fullName: data.user.fullName || data.user.username,
+        gender: data.user.gender || 'other'
+      };
+      localStorage.setItem('user', JSON.stringify(userWithDetails));
+
+      // Update context
+      setLoggedInUser(userWithDetails);
+
+      setSuccess('Đăng nhập thành công!');
+
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
+    } catch (err) {
+      console.error('Lỗi:', err.message);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    // Store user data, including full name, avatar, and gender
-    const userWithDetails = { 
-      ...data.user, 
-      avatar: data.user.avatar || 'https://via.placeholder.com/150', 
-      fullName: data.user.fullName || data.user.username,
-      gender: data.user.gender || 'other'
-    };
-    localStorage.setItem('user', JSON.stringify(userWithDetails));
-
-    // Update context
-    setLoggedInUser(userWithDetails);
-
-    setSuccess('Đăng nhập thành công!');
-
-    setTimeout(() => {
-      navigate('/');
-    }, 1500);
-  } catch (err) {
-    console.error('Lỗi:', err.message);
-    setError(err.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  // Load remembered email and password on component mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    const rememberedPassword = localStorage.getItem('rememberedPassword');
+    if (rememberedEmail && rememberedPassword) {
+      setEmail(rememberedEmail);
+      setPassword(rememberedPassword);
+      setRememberMe(true);
+    }
+  }, []);
 
   return (
     <div

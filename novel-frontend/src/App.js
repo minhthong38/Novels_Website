@@ -56,13 +56,13 @@ function App() {
 
           {/* ---------------- AUTHOR ROUTES ---------------- */}
           <Route path="/header" element={<AuthorRoute children={<Header />} />} />
-          <Route path="/authorAccounts" element={<AuthorRoute children={<AuthorAccounts />} />} />
-          <Route path="/createNovel" element={<AuthorRoute children={<CreateNovel />} />} />
-          <Route path="/listNovels" element={<AuthorRoute children={<ListNovels />} />} />
-          <Route path="/updateNovel" element={<AuthorRoute children={<UpdateNovel />} />} />
-          <Route path="/AuthorStickyNote" element={<AuthorRoute children={<AuthorStickyNote />} />} />
-          <Route path="/chapter" element={<AuthorRoute children={<Chapter />} />} />
-          <Route path="/revenueTracking" element={<AuthorRoute children={<RevenueTracking />} />} />
+          <Route path="/authorAccounts" element={<ClientRoute children={<AuthorAccounts />} />} />
+          <Route path="/createNovel" element={<ClientRoute children={<CreateNovel />} />} />
+          <Route path="/listNovels" element={<ClientRoute children={<ListNovels />} />} />
+          <Route path="/updateNovel" element={<ClientRoute children={<UpdateNovel />} />} />
+          <Route path="/AuthorStickyNote" element={<ClientRoute children={<AuthorStickyNote />} />} />
+          <Route path="/chapter" element={<ClientRoute children={<Chapter />} />} />
+          <Route path="/revenueTracking" element={<ClientRoute children={<RevenueTracking />} />} />
 
           {/* ---------------- ADMIN ROUTES ---------------- */}
           <Route path="/adminAccount" element={<AdminRoute children={<AdminAccount />} />} />

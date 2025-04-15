@@ -79,5 +79,27 @@ export const fetchChapterContent = async (chapterId) => {
   }
 };
 
+// Fetch novels by category ID
+export const fetchNovelsByCategory = async (categoryID) => {
+  try {
+    const response = await axios.get(`http://localhost:5000/api/novels/category/${categoryID}`);
+    return response.data.data; // Assuming backend returns { success: true, data: [...] }
+  } catch (error) {
+    console.error('Error fetching novels by category:', error);
+    throw error.response?.data || 'Unknown error occurred';
+  }
+};
+
+// Fetch category details by category ID
+export const fetchCategoryDetails = async (categoryID) => {
+  try {
+    const response = await axios.get(`http://localhost:5000/api/categories/${categoryID}`);
+    return response.data.data; // Assuming backend returns { success: true, data: {...} }
+  } catch (error) {
+    console.error('Error fetching category details:', error);
+    throw error.response?.data || 'Unknown error occurred';
+  }
+};
+
 
 

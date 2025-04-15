@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { categories } from '../data/data';
-import { fetchUserDetails, fetchNovels } from '../services/apiService'; // Import fetchNovels API function
+import { fetchUserDetails, fetchNovels, fetchCategories } from '../services/apiService'; // Import fetchNovels and fetchCategories API functions
 import { UserContext } from '../context/UserContext'; // Import UserContext
 
 function Header() {
@@ -9,13 +8,14 @@ function Header() {
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [categoryList, setCategoryList] = useState([]); // State for categoryList fetched from API
   const searchRef = useRef(null);
   const navigate = useNavigate();
 
-    // Log loggedInUser mỗi khi nó thay đổi
-    useEffect(() => {
-      console.log(loggedInUser); // Kiểm tra loggedInUser sau khi set
-    }, [loggedInUser]); // Trigger lại khi loggedInUser thay đổi
+  // Log loggedInUser mỗi khi nó thay đổi
+  useEffect(() => {
+    console.log(loggedInUser); // Kiểm tra loggedInUser sau khi set
+  }, [loggedInUser]); // Trigger lại khi loggedInUser thay đổi
 
   const handleSearchChange = async (e) => {
     const keyword = e.target.value;
@@ -62,15 +62,28 @@ function Header() {
     }
   }, [setLoggedInUser]); // Ensure the header updates when the global user changes
 
+  useEffect(() => {
+    // Fetch categoryList from the correct API endpoint
+    fetchCategories()
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCategoryList(data); // Set the fetched categories
+        }
+      })
+      .catch((error) => console.error('Error fetching categories:', error));
+  }, []);
+
   const tabs = [
     { label: 'Trang Chủ', href: '/' },
     { label: 'Mới Cập Nhật', href: '/update' },
-    { 
-      label: 'Thể Loại', 
-      options: categories.map(category => ({
-        name: category.name,
-        href: `/menu/${category.id}`
-      }))
+    {
+      label: 'Thể Loại',
+      options: Array.isArray(categoryList) && categoryList.length > 0
+        ? categoryList.map((category) => ({
+            name: category.titleCategory, // Use titleCategory from API
+            href: `/menu/${category._id}` // Use _id from API to link to the menu
+          }))
+        : [] // Show nothing if categoryList is empty
     },
     { label: 'Blind Book', href: '/blindbook' }
   ];
@@ -152,35 +165,34 @@ function Header() {
             </label>
           </div>
           <div className="relative group ml-10 pl-10">
-  <div className="flex items-center space-x-2 cursor-pointer">
-    <Link to="/login" className={`${isDarkMode ? 'text-white' : 'text-black'} focus:outline-none`}>
-      <img   src={loggedInUser && loggedInUser.avatar  ? loggedInUser.avatar : "https://i.imgur.com/Y0N4tO3.png"} alt="User Icon" className="w-6 h-6 rounded-full" />
-    </Link>
-    {loggedInUser && <span className={`ml-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>{loggedInUser.fullName || loggedInUser.username}</span>} 
-  </div>
-  <div className="absolute bg-white border rounded shadow-lg right-0 top-full z-10 w-48 hidden group-hover:block">
-    {loggedInUser ? (
-      <>
-        {loggedInUser.role === 'user' && (
-          <Link to="/userAccount" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">User Profile</Link>
-        )}
-        {loggedInUser.role === 'author' && (
-          <Link to="/authorAccounts" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Author Profile</Link>
-        )}
-        <Link to="/userAccount" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">User Profile</Link> {/* Added User Profile link */}
-        <Link to="/history" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">History</Link>
-        <Link to="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</Link>
-        <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</button>
-      </>
-    ) : (
-      <>
-        <Link to="/register" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Register</Link>
-        <Link to="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Login</Link>
-      </>
-    )}
-  </div>
-</div>
-
+            <div className="flex items-center space-x-2 cursor-pointer">
+              <Link to="/login" className={`${isDarkMode ? 'text-white' : 'text-black'} focus:outline-none`}>
+                <img src={loggedInUser && loggedInUser.avatar ? loggedInUser.avatar : "https://i.imgur.com/Y0N4tO3.png"} alt="User Icon" className="w-6 h-6 rounded-full" />
+              </Link>
+              {loggedInUser && <span className={`ml-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>{loggedInUser.fullName || loggedInUser.username}</span>} 
+            </div>
+            <div className="absolute bg-white border rounded shadow-lg right-0 top-full z-10 w-48 hidden group-hover:block">
+              {loggedInUser ? (
+                <>
+                  {loggedInUser.role === 'user' && (
+                    <Link to="/userAccount" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">User Profile</Link>
+                  )}
+                  {loggedInUser.role === 'author' && (
+                    <Link to="/authorAccounts" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Author Profile</Link>
+                  )}
+                  <Link to="/userAccount" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">User Profile</Link> {/* Added User Profile link */}
+                  <Link to="/history" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">History</Link>
+                  <Link to="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</Link>
+                  <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/register" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Register</Link>
+                  <Link to="/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Login</Link>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </header>
