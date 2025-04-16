@@ -47,8 +47,8 @@ export default function Menu() {
           {novels.map((novel) => (
             <div key={novel.NovelID} className="text-center">
               <Link to={`/novelDetail/${novel.NovelID}`}>
-                <img src={novel.ImageUrl} alt={novel.Title} className="mb-4" style={{ width: '180px', height: '250px' }} />
-                <p className={`text-base ${isDarkMode ? 'text-white' : 'text-black'}`}>{novel.Title}</p>
+                <img src={novel.imageUrl} alt={novel.title} className="mb-4" style={{ width: '180px', height: '250px' }} />
+                <p className={`text-base ${isDarkMode ? 'text-white' : 'text-black'}`}>{novel.title}</p>
               </Link>
             </div>
           ))}
