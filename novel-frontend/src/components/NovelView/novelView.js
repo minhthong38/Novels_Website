@@ -13,12 +13,7 @@ export default function NovelView() {
   const [error, setError] = useState('');
   const [bannerIndex, setBannerIndex] = useState(0);
   const [bookmarkedLines, setBookmarkedLines] = useState([]); // State for bookmarked lines
-
-  const banners = [
-    '/images/banner1.jpg',
-    '/images/banner2.jpg',
-    '/images/banner3.jpg',
-  ];
+  const [banners, setBanners] = useState([]); // Update banners to be dynamic
 
   useEffect(() => {
     const loadChapters = async () => {
@@ -26,10 +21,10 @@ export default function NovelView() {
         const chapterList = await fetchChaptersByNovelId(novelID);
         setChapters(chapterList);
 
-        const chapterId = searchParams.get('chapterId');
+        const chapterId = searchParams.get('chapterId'); // Get chapterId from query parameters
         if (chapterId) {
           const index = chapterList.findIndex((chapter) => chapter._id === chapterId);
-          setCurrentChapterIndex(index !== -1 ? index : 0);
+          setCurrentChapterIndex(index !== -1 ? index : 0); // Navigate to the correct chapter
         } else {
           setCurrentChapterIndex(0);
         }
@@ -69,6 +64,19 @@ export default function NovelView() {
     setBookmarkedLines(savedBookmarks);
   }, [novelID, currentChapterIndex]);
 
+  useEffect(() => {
+    const loadBanners = async () => {
+      try {
+        const chapterList = await fetchChaptersByNovelId(novelID);
+        const firstBannerImage = chapterList[currentChapterIndex]?.imageUrl || '/images/default-banner.jpg'; // Use the current chapter's imageUrl or a default image
+        setBanners([firstBannerImage, '/images/banner2.jpg', '/images/banner3.jpg']); // Set the first banner dynamically
+      } catch (err) {
+        console.error('Error fetching banners:', err);
+      }
+    };
+    loadBanners();
+  }, [novelID, currentChapterIndex]);
+
   const handleNextChapter = () => {
     if (currentChapterIndex < chapters.length - 1) {
       setCurrentChapterIndex(currentChapterIndex + 1);
@@ -102,17 +110,25 @@ export default function NovelView() {
     localStorage.setItem(`bookmarks_${novelID}_${currentChapterIndex}`, JSON.stringify(updatedBookmarks));
   };
 
-  if (loading) return <p>Đang tải dữ liệu...</p>;
-  if (error) return <p>{error}</p>;
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+    </div>
+  );
+  if (error) return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <p className="text-red-500 text-lg">{error}</p>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white">
       {/* Banner Section */}
-      <div className="relative h-64 bg-cover bg-center transition-all duration-1000" style={{ backgroundImage: `url(${banners[bannerIndex]})` }}>
+      <div className="relative h-72 bg-cover bg-center transition-all duration-1000 shadow-lg" style={{ backgroundImage: `url(${banners[bannerIndex] || '/images/default-banner.jpg'})` }}> {/* Use default image if no banners */}
         {/* Left Navigation Button */}
         <button
           onClick={() => handleBannerNavigation('prev')}
-          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-75 transition"
         >
           &#8249;
         </button>
@@ -120,7 +136,7 @@ export default function NovelView() {
         {/* Right Navigation Button */}
         <button
           onClick={() => handleBannerNavigation('next')}
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-75 transition"
         >
           &#8250;
         </button>
@@ -130,43 +146,46 @@ export default function NovelView() {
           {banners.map((_, index) => (
             <button
               key={index}
-              onClick={() => handleDotClick(index)}
-              className={`w-3 h-3 rounded-full ${index === bannerIndex ? 'bg-white' : 'bg-gray-400'} hover:bg-gray-200`}
+              onClick={() => setBannerIndex(index)} // Update bannerIndex when a dot is clicked
+              className={`w-4 h-4 rounded-full ${index === bannerIndex ? 'bg-white' : 'bg-gray-400'} hover:bg-gray-200 transition`}
             ></button>
           ))}
         </div>
       </div>
 
       {/* Chapter Content */}
-      <div className="p-6 max-w-4xl mx-auto bg-white shadow-lg rounded-lg mt-6">
-        <h1 className="text-3xl font-bold text-center mb-4">{chapters[currentChapterIndex]?.title}</h1>
-        <div className="prose max-w-none text-justify text-lg leading-relaxed">
+      <div className="p-5 max-w-4xl mx-auto bg-white shadow-lg rounded-lg mt-6">
+        <h1 className="text-4xl font-bold text-center mb-6 text-black">{chapters[currentChapterIndex]?.title}</h1>
+        <div className="prose max-w-none text-justify text-lg leading-relaxed space-y-4">
           {chapterContent.split('\n').map((line, index) => (
             <div
               key={index}
-              className={`flex items-center ${bookmarkedLines.includes(index) ? 'bg-yellow-100' : ''}`}
-              onClick={() => handleLineBookmarkToggle(index)} // Add onClick to the line container
+              className={`flex items-center p-2 rounded-md ${bookmarkedLines.includes(index) ? 'bg-yellow-100' : ''} hover:bg-gray-100 transition`}
+              onClick={() => handleLineBookmarkToggle(index)}
               title={bookmarkedLines.includes(index) ? 'Remove Bookmark' : 'Add Bookmark'}
             >
               <p className="flex-1 cursor-pointer">{line}</p>
+              {bookmarkedLines.includes(index) && (
+                <span className="text-yellow-500 font-bold ml-2">★</span>
+              )}
             </div>
           ))}
         </div>
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between items-center max-w-4xl mx-auto mt-6">
+      <div className="flex justify-between items-center max-w-4xl mx-auto m-10">
         <button
           onClick={handlePreviousChapter}
           disabled={currentChapterIndex === 0}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 disabled:opacity-50"
+          className="px-6 py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 disabled:opacity-50 transition"
         >
           Chương trước
         </button>
         <button
           onClick={handleNextChapter}
           disabled={currentChapterIndex === chapters.length - 1}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 disabled:opacity-50"
+          className="px-6 py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 disabled:opacity-50 transition"
         >
           Chương sau
         </button>

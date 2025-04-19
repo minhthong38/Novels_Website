@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -10,17 +10,19 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { UserContext } from '../../context/UserContext'; // Import UserContext
+import AuthorSidebar from '../sidebar/AuthorSidebar'; // Import AuthorSidebar
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const RevenueTracking = () => {
+  const { isDarkMode } = useContext(UserContext); // Use global dark mode state
   const [chartData, setChartData] = useState(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalChaptersSold, setTotalChaptersSold] = useState(0);
   const [percentageChange, setPercentageChange] = useState(0);
 
   useEffect(() => {
-    // Mock data for chapter purchases
     const mockData = [
       { month: 'January', chapterPurchases: 120 },
       { month: 'February', chapterPurchases: 150 },
@@ -31,18 +33,14 @@ const RevenueTracking = () => {
 
     const labels = mockData.map((data) => data.month);
     const chapterPurchasesData = mockData.map((data) => data.chapterPurchases);
-    const incomeData = chapterPurchasesData.map((purchases) => purchases * 1000); // Calculate income
+    const incomeData = chapterPurchasesData.map((purchases) => purchases * 1000);
 
-    // Calculate total revenue and total chapters sold
     const totalRevenue = incomeData.reduce((sum, value) => sum + value, 0);
     const totalChaptersSold = chapterPurchasesData.reduce((sum, value) => sum + value, 0);
 
-    // Calculate percentage change compared to the first month
     const firstMonthRevenue = incomeData[0];
     const lastMonthRevenue = incomeData[incomeData.length - 1];
     const percentageChange = ((lastMonthRevenue - firstMonthRevenue) / firstMonthRevenue) * 100;
-
-    console.log({ totalRevenue, totalChaptersSold, percentageChange }); // Debugging output
 
     setTotalRevenue(totalRevenue);
     setTotalChaptersSold(totalChaptersSold);
@@ -70,45 +68,64 @@ const RevenueTracking = () => {
   }, []);
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4 text-center">Thống Kê Doanh Thu</h1>
+    <div className={`flex flex-col md:flex-row ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} min-h-screen`}>
+      <AuthorSidebar activeView="revenueTracking" /> {/* Use AuthorSidebar */}
+      <main className="w-full md:w-3/4 p-4">
+        <h1 className="text-2xl font-bold mb-4 text-center">Thống Kê Doanh Thu</h1>
 
-      {/* Summary Boxes */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-blue-100 p-4 rounded-lg text-center shadow">
-          <h2 className="text-lg font-bold">Tổng Doanh Thu</h2>
-          <p className="text-xl font-semibold text-blue-600">{totalRevenue.toLocaleString()} VNĐ</p>
+        {/* Summary Boxes */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className={`p-4 rounded-lg text-center shadow ${isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-600'}`}>
+            <h2 className="text-lg font-bold">Tổng Doanh Thu</h2>
+            <p className="text-xl font-semibold">{totalRevenue.toLocaleString()} VNĐ</p>
+          </div>
+          <div className={`p-4 rounded-lg text-center shadow ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-600'}`}>
+            <h2 className="text-lg font-bold">Số Chương Đã Bán</h2>
+            <p className="text-xl font-semibold">{totalChaptersSold}</p>
+          </div>
+          <div className={`p-4 rounded-lg text-center shadow ${isDarkMode ? 'bg-yellow-900 text-yellow-300' : 'bg-yellow-100 text-yellow-600'}`}>
+            <h2 className="text-lg font-bold">Tỷ Số Tăng/Giảm</h2>
+            <p className={`text-xl font-semibold ${percentageChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {percentageChange}%
+            </p>
+          </div>
         </div>
-        <div className="bg-green-100 p-4 rounded-lg text-center shadow">
-          <h2 className="text-lg font-bold">Số Chương Đã Bán</h2>
-          <p className="text-xl font-semibold text-green-600">{totalChaptersSold}</p>
-        </div>
-        <div className="bg-yellow-100 p-4 rounded-lg text-center shadow">
-          <h2 className="text-lg font-bold">Tỷ Số Tăng/Giảm</h2>
-          <p className={`text-xl font-semibold ${percentageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {percentageChange}%
-          </p>
-        </div>
-      </div>
 
-      {/* Line Chart */}
-      {chartData && (
-        <Line
-          data={chartData}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: {
-                position: 'top',
+        {/* Line Chart */}
+        {chartData && (
+          <Line
+            data={chartData}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'top',
+                  labels: {
+                    color: isDarkMode ? 'white' : 'black', // Adjust legend text color for dark mode
+                  },
+                },
+                title: {
+                  display: true,
+                  text: 'Biểu Đồ Doanh Thu và Lượt Mua Chương',
+                  color: isDarkMode ? 'white' : 'black', // Adjust title text color for dark mode
+                },
               },
-              title: {
-                display: true,
-                text: 'Biểu Đồ Doanh Thu và Lượt Mua Chương',
+              scales: {
+                x: {
+                  ticks: {
+                    color: isDarkMode ? 'white' : 'black', // Adjust x-axis tick color for dark mode
+                  },
+                },
+                y: {
+                  ticks: {
+                    color: isDarkMode ? 'white' : 'black', // Adjust y-axis tick color for dark mode
+                  },
+                },
               },
-            },
-          }}
-        />
-      )}
+            }}
+          />
+        )}
+      </main>
     </div>
   );
 };

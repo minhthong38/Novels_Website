@@ -43,11 +43,16 @@ export default function Menu() {
     <div className={`${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} min-h-screen`}>
       <div className="max-w-4xl mx-auto p-9">
         <h1 className="text-center text-3xl font-bold mb-6 mt-10">{categoryName}</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-2 gap-6 mb-10"> {/* Changed to 2 columns for all screen sizes */}
           {novels.map((novel) => (
-            <div key={novel.NovelID} className="text-center">
-              <Link to={`/novelDetail/${novel.NovelID}`}>
-                <img src={novel.imageUrl} alt={novel.title} className="mb-4" style={{ width: '180px', height: '250px' }} />
+            <div key={novel._id || novel.NovelID} className="text-center flex flex-col items-center"> {/* Thêm flex và items-center */}
+              <Link to={`/novelDetail/${novel._id || novel.NovelID}`}>
+                <img 
+                  src={novel.imageUrl} 
+                  alt={novel.title} 
+                  className="mb-4 object-cover" 
+                  style={{ width: '180px', height: '250px' }} 
+                />
                 <p className={`text-base ${isDarkMode ? 'text-white' : 'text-black'}`}>{novel.title}</p>
               </Link>
             </div>

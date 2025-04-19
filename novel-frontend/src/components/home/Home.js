@@ -66,10 +66,10 @@ export default function Home() {
         <TopRanking />
       </div>
       <div className="container mx-auto flex flex-col md:flex-row mt-8 md:mt-0 space-y-8 md:space-y-0 md:gap-2">
-        <div className="flex-1">
+        <div className="flex-1 order-1 md:order-none">
           <Recommend className={`${isDarkMode ? 'text-white' : 'text-black'}`} />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 order-2 md:order-none sm:order-2 lg:order-none">
           <PlaylistByCategory />
         </div>
       </div>

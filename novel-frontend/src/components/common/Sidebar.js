@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { UserContext } from '../../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 
-export default function AuthorSidebar({ activeView }) {
+export default function Sidebar({ activeView }) {
   const { loggedInUser, isDarkMode } = useContext(UserContext);
   const navigate = useNavigate();
 
@@ -22,7 +22,7 @@ export default function AuthorSidebar({ activeView }) {
     <aside className={`w-full md:w-1/4 p-4 border-b md:border-b-0 md:border-r ${isDarkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-gray-100 text-black border-gray-300'}`}>
       <div className={`pt-6 pb-6 text-center mb-6 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'}`}>
         <img
-          src={loggedInUser.avatar || 'https://via.placeholder.com/150'} // Use avatar from loggedInUser
+          src={loggedInUser.img || 'https://via.placeholder.com/150'}
           alt="Admin Avatar"
           className="w-24 h-24 rounded-full mx-auto"
         />

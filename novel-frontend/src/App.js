@@ -31,6 +31,10 @@ import TopViewedNovels from './components/topViewedNovels/TopViewedNovels';
 import RevenueTracking from './components/RevenueTracking/RevenueTracking';
 import MessageAI from './components/messageAI/messageAI';
 
+// ✅ Import thêm các component mới
+import PlaylistByCategory from './components/playlistByCategory/playlistByCategory';
+import PlaylistPage from './components/playlistPage/PlaylistPage';
+
 function App() {
   return (
     <UserProvider>
@@ -53,6 +57,10 @@ function App() {
           <Route path="/register" element={<ClientRoute children={<Register />} />} />
           <Route path="/login" element={<ClientRoute children={<Login />} />} />
           <Route path="/topViewedNovels" element={<ClientRoute children={<TopViewedNovels />} />} />
+
+          {/* ✅ Playlist routes */}
+          <Route path="/playlist" element={<ClientRoute children={<PlaylistByCategory />} />} />
+          <Route path="/playlist/:categoryID" element={<ClientRoute children={<PlaylistPage />} />} />
 
           {/* ---------------- AUTHOR ROUTES ---------------- */}
           <Route path="/header" element={<AuthorRoute children={<Header />} />} />

@@ -41,9 +41,13 @@ export default function Recommend({ customStyle, excludeNovelId }) {
             <p className="text-center">Đang tải...</p>
           ) : (
             <div
-              className="grid gap-3"
+              className={`grid gap-3 ${
+                customStyle?.gridTemplateColumns
+                  ? ''
+                  : 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3'
+              }`}
               style={{
-                gridTemplateColumns: customStyle?.gridTemplateColumns || 'repeat(3, 1fr)',
+                gridTemplateColumns: customStyle?.gridTemplateColumns || undefined,
               }}
             >
               {topNovels

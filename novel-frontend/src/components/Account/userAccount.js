@@ -4,7 +4,7 @@ import UserNotification from '../notifications/UserNotification'; // Import User
 import axios from 'axios'; // Import axios
 
 export default function UserAccount() {
-  const { setLoggedInUser: updateGlobalUser } = useContext(UserContext); // Access context to update global user
+  const { setLoggedInUser: updateGlobalUser, isDarkMode } = useContext(UserContext); // Access context to update global user and dark mode state
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [avatarImage, setAvatarImage] = useState("https://via.placeholder.com/150");
   const [newDisplayName, setNewDisplayName] = useState("");
@@ -60,11 +60,6 @@ export default function UserAccount() {
     reader.readAsDataURL(file);
   };
   
-  
-  
-  
-  
-
   const uploadImageToCloudinary = async (file) => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (!token) {
@@ -170,9 +165,9 @@ export default function UserAccount() {
   }
 
   return (
-    <div className={`flex flex-col md:flex-row p-4`}>
+    <div className={`flex flex-col md:flex-row p-4 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
       {/* Left Sidebar */}
-      <div className={`w-full md:w-1/4 p-4 rounded-lg shadow-md`}>
+      <div className={`w-full md:w-1/4 p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'}`}>
         <div className="flex flex-col items-center">
           {/* Avatar Image */}
           <img src={avatarImage} alt="User avatar" className="rounded-full w-24 h-24 mb-4" />
@@ -193,7 +188,7 @@ export default function UserAccount() {
             <span>0.00 <i className="fas fa-coins text-yellow-500"></i></span>
           </div>
         </div>
-        <button className="mt-4 w-full bg-green-500 text-white py-2 rounded-lg">NẠP COIN</button>
+        <button className={`mt-4 w-full py-2 rounded-lg ${isDarkMode ? 'bg-green-600 text-white' : 'bg-green-500 text-black'}`}>NẠP COIN</button>
         <ul className="mt-4 space-y-2">
           <li className="flex items-center"><i className="fas fa-credit-card mr-2"></i> <a href="#!" onClick={handleAuthorSpaceClick}>Không gian tác giả</a></li> {/* Changed section */}
           <li className="flex items-center"><i className="fas fa-heart mr-2"></i> <a href="#!">Yêu thích</a></li>
@@ -206,7 +201,7 @@ export default function UserAccount() {
       </div>
 
       {/* Main Content */}
-      <div className={`w-full md:w-3/4 p-4 rounded-lg shadow-md mt-4 md:mt-0 md:ml-4`}>
+      <div className={`w-full md:w-3/4 p-4 rounded-lg shadow-md mt-4 md:mt-0 md:ml-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'}`}>
         {/* Premium Package Section */}
        
 
@@ -247,7 +242,7 @@ export default function UserAccount() {
           <label className="block">Họ và Tên:</label> {/* Move fullName input above username */}
           <input 
             type="text" 
-            className={`w-full border rounded-lg p-2 mt-1`} 
+            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'}`} 
             value={newFullName}
             onChange={(e) => setNewFullName(e.target.value)}
           />
@@ -256,7 +251,7 @@ export default function UserAccount() {
           <label className="block">Username:</label>
           <input 
             type="text" 
-            className={`w-full border rounded-lg p-2 mt-1`} 
+            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'}`} 
             value={newDisplayName}
             onChange={(e) => setNewDisplayName(e.target.value)}
           />
@@ -265,7 +260,7 @@ export default function UserAccount() {
           <label className="block">Email:</label>
           <input 
             type="email" 
-            className={`w-full border rounded-lg p-2 mt-1`} 
+            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'}`} 
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
           />
@@ -273,7 +268,7 @@ export default function UserAccount() {
         <div className="mt-4">
           <label className="block">Giới tính:</label>
           <select
-            className={`w-full border rounded-lg p-2 mt-1`}
+            className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'}`}
             value={newGender}
             onChange={(e) => setNewGender(e.target.value)}
           >
@@ -284,7 +279,7 @@ export default function UserAccount() {
           </select>
         </div>
         <button
-          className="mt-4 w-full bg-red-500 text-white py-2 rounded-lg"
+          className={`mt-4 w-full py-2 rounded-lg ${isDarkMode ? 'bg-red-600 text-white' : 'bg-red-500 text-black'}`}
           onClick={handleSaveChanges} // Không cần truyền đối số nữa
         >
           Lưu thay đổi
@@ -317,8 +312,8 @@ export default function UserAccount() {
 
       {/* Author Request Popup */}
       {showAuthorRequestPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg">
+        <div className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? 'bg-black bg-opacity-75' : 'bg-black bg-opacity-50'}`}>
+          <div className={`p-4 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
             <h2 className="text-xl font-bold mb-4">Yêu cầu làm tác giả</h2>
             <p>Bạn có chắc chắn muốn gửi yêu cầu làm tác giả không?</p>
             <div className="mt-4 flex justify-end space-x-2">

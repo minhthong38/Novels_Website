@@ -110,13 +110,15 @@ export default function NovelDetail() {
       <div className="w-full p-12">
         {novel && (
           <>
-            <div className="bg-blue-700 text-white p-6 rounded-lg flex flex-col md:flex-row">
-              <div className="flex-1 flex flex-col md:flex-row md:items-start">
-                <img src={novel.imageUrl} alt={`Book cover with title '${novel.title}'`} className="w-48 h-64 mb-4 md:mb-0" />
-                <div className="flex-1 flex flex-col items-center md:items-start md:ml-6">
+            <div className="bg-blue-700 text-white p-6 rounded-lg flex flex-col items-center md:flex-row md:items-start"> {/* Center content on smaller screens */}
+              <div className="flex-1 flex flex-col items-center md:flex-row md:items-start">
+                <img src={novel.imageUrl} alt={`Book cover with title '${novel.title}'`} className="w-48 h-64 mb-4 md:mb-0 md:mx-0" />
+                <div className="flex-1 flex flex-col items-center md:items-start md:ml-6 text-center md:text-left"> {/* Center text on smaller screens */}
                   <h1 className="text-2xl font-bold">{novel.title}</h1>
-                  <p className="text-sm mt-2">Lượt xem: <span className="font-bold">{novel.Views}</span></p>
-                  <div className="flex items-center mt-2">
+                  <p className="text-sm mt-2">
+                    Lượt xem: <span className="font-bold">{novel.view || 0}</span> {/* Display the Views property */}
+                  </p>
+                  <div className="flex items-center justify-center md:justify-start mt-2"> {/* Center stars on smaller screens */}
                     {/* Star Rating */}
                     <div className="flex space-x-1">
                       {[...Array(5)].map((_, index) => (
@@ -140,7 +142,7 @@ export default function NovelDetail() {
                     </div>
                   </div>
                   <p className="text-lg mt-2">Trang chủ / Thể loại / {categoryName}</p>
-                  <div className="flex items-center mt-2">
+                  <div className="flex items-center justify-center md:justify-start mt-2"> {/* Center author info on smaller screens */}
                     {author?.avatar && (
                       <img src={author.avatar} alt={author.fullname} className="w-8 h-8 rounded-full" />
                     )}
@@ -159,8 +161,8 @@ export default function NovelDetail() {
                   </div>
                 </div>
               </div>
-              <div className="flex-1 mt-6 md:mt-0 md:ml-36">
-                <div className="bg-blue-800 p-10 rounded-lg flex w-68">
+              <div className="flex-1 mt-6 md:mt-0 md:ml-36 w-full md:w-auto"> {/* Ensure chapter list is responsive */}
+                <div className="bg-blue-800 p-10 rounded-lg flex justify-center md:justify-start w-full md:w-68">
                   <ul className="text-white text-lg text-left space-y-2">
                     {parts.map((part, index) => (
                       <li key={index}>
