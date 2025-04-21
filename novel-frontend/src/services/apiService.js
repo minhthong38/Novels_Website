@@ -3,6 +3,8 @@ import axios from 'axios';
 const API_URL = 'http://localhost:5000/api'; // Corrected base URL
 const USERS_API = `${API_URL}/users`; // Separate constant for users endpoint
 const NOVEL_RANKINGS_URL = `${API_URL}/novelRankings`;
+const READER_RANKING = `${API_URL}/readerRankings`;
+const AUTHOR_RANKINGS = `${API_URL}/authorRankings`;
 const NOVEL_API = `${API_URL}/novels`;
 const CATEGORY_API = `${API_URL}/categories`;
 const CHAPTER_API = `${API_URL}/chapters`;
@@ -32,6 +34,29 @@ export const fetchUserDetails = async (token) => {
   }
 };
 
+// Fetch reader rankings
+export const fetchReaderRankings = async () => {
+  try {
+    const response = await axios.get(READER_RANKING);
+    console.log("Reader Rankings Data:", response.data); // kiểm tra dữ liệu thực tế
+    return response.data.data; // 👈 Lấy đúng mảng
+  } catch (error) {
+    console.error('Error fetching reader rankings:', error);
+    throw error.response?.data || 'Unknown error occurred';
+  }
+};
+
+// Fetch author rankings
+export const fetchAuthorRankings = async () => {
+  try {
+    const response = await axios.get(AUTHOR_RANKINGS);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching author rankings:', error);
+    throw error.response?.data || 'Unknown error occurred';
+  }
+};
+
 // Fetch novel rankings
 export const fetchNovelRankings = async () => {
   try {
@@ -43,6 +68,7 @@ export const fetchNovelRankings = async () => {
   }
 };
 
+
 // Fetch all novels
 export const fetchNovels = async () => {
   try {
@@ -50,6 +76,17 @@ export const fetchNovels = async () => {
     return response.data.data;
   } catch (error) {
     console.error('Lỗi khi fetch novels:', error);
+    throw error.response?.data || 'Lỗi không xác định';
+  }
+};
+
+//featch all novels by idUSer
+export const fetchNovelsByAuthor = async (idUser) => {
+  try {
+    const response = await axios.get(`${NOVEL_API}/user/${idUser}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Lỗi khi fetch novels by author:', error);
     throw error.response?.data || 'Lỗi không xác định';
   }
 };
@@ -83,6 +120,17 @@ export const fetchChapterContent = async (chapterId) => {
     return response.data.data;
   } catch (error) {
     console.error('Lỗi khi fetch nội dung chương:', error);
+    throw error.response?.data || 'Lỗi không xác định';
+  }
+};
+
+// Fetch novel by Novel ID
+export const fetchNovelContent = async (novelID) => {
+  try {
+    const response = await axios.get(`${NOVEL_API}/${novelID}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Lỗi khi fetch nội dung novel:', error);
     throw error.response?.data || 'Lỗi không xác định';
   }
 };
