@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { fetchChaptersByNovelId, fetchChapterContent } from '../../services/apiService';
+import { fetchChaptersByNovelId, fetchChapterContent, addExpToReader } from '../../services/apiService';
+import { useContext } from 'react';
+import { UserContext } from '../../context/UserContext';
 
 export default function NovelView() {
   const { novelID } = useParams();
@@ -14,6 +16,7 @@ export default function NovelView() {
   const [bannerIndex, setBannerIndex] = useState(0);
   const [bookmarkedLines, setBookmarkedLines] = useState([]); // State for bookmarked lines
   const [banners, setBanners] = useState([]); // Update banners to be dynamic
+  const { loggedInUser } = useContext(UserContext);
 
   useEffect(() => {
     const loadChapters = async () => {
@@ -77,11 +80,20 @@ export default function NovelView() {
     loadBanners();
   }, [novelID, currentChapterIndex]);
 
-  const handleNextChapter = () => {
+  const handleNextChapter = async () => {
     if (currentChapterIndex < chapters.length - 1) {
-      setCurrentChapterIndex(currentChapterIndex + 1);
+      try {
+        if (loggedInUser && loggedInUser._id) {
+          await addExpToReader(loggedInUser._id);
+        }
+        setCurrentChapterIndex(currentChapterIndex + 1);
+      } catch (err) {
+        console.error('Không thể cộng EXP:', err);
+        setError('Có lỗi xảy ra khi cộng EXP.');
+      }
     }
   };
+  
 
   const handlePreviousChapter = () => {
     if (currentChapterIndex > 0) {

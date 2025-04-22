@@ -1,16 +1,38 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserContext } from '../context/UserContext'; // Ensure this import is correct and not causing a loop
+import { UserContext } from '../context/UserContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(''); // Add success state
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { setLoggedInUser } = useContext(UserContext); // Access setLoggedInUser from context
+
+  const { setLoggedInUser, loggedInUser } = useContext(UserContext);
   const navigate = useNavigate();
+
+  // Theo dõi khi đã đăng nhập thành công và context có dữ liệu
+  useEffect(() => {
+    if (success && loggedInUser) {
+      const timer = setTimeout(() => {
+        navigate('/');
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, loggedInUser]);
+
+  // Load email + password nếu được lưu trước đó
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    const rememberedPassword = localStorage.getItem('rememberedPassword');
+    if (rememberedEmail && rememberedPassword) {
+      setEmail(rememberedEmail);
+      setPassword(rememberedPassword);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -30,27 +52,20 @@ export default function Login() {
       });
 
       const data = await response.json();
-      console.log('Server response:', data); // Debugging log
 
       if (!response.ok) {
         throw new Error(data.message || 'Đăng nhập thất bại');
       }
 
-      if (!data.user || !data.token) { // Ensure both user and token exist
-        console.error('Invalid server response:', data);
+      if (!data.user || !data.token) {
         throw new Error('Dữ liệu người dùng không hợp lệ từ server!');
       }
 
-      // Store token if it exists
-      if (data.token) {
-        if (rememberMe) {
-          localStorage.setItem('token', data.token);
-        } else {
-          sessionStorage.setItem('token', data.token);
-        }
-      }
+      // Lưu token
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem('token', data.token);
 
-      // Store email and password if "Nhớ mật khẩu" is checked
+      // Nhớ tài khoản nếu chọn
       if (rememberMe) {
         localStorage.setItem('rememberedEmail', email);
         localStorage.setItem('rememberedPassword', password);
@@ -59,41 +74,23 @@ export default function Login() {
         localStorage.removeItem('rememberedPassword');
       }
 
-      // Store user data, including full name, avatar, and gender
-      const userWithDetails = { 
-        ...data.user, 
-        avatar: data.user.avatar || 'https://via.placeholder.com/150', 
+      const userWithDetails = {
+        ...data.user,
+        avatar: data.user.avatar || 'https://via.placeholder.com/150',
         fullName: data.user.fullName || data.user.username,
-        gender: data.user.gender || 'other'
+        gender: data.user.gender || 'other',
       };
-      localStorage.setItem('user', JSON.stringify(userWithDetails));
 
-      // Update context
-      setLoggedInUser(userWithDetails);
+      localStorage.setItem('user', JSON.stringify(userWithDetails));
+      setLoggedInUser(userWithDetails); // Cập nhật context
 
       setSuccess('Đăng nhập thành công!');
-
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
     } catch (err) {
-      console.error('Lỗi:', err.message);
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Load remembered email and password on component mount
-  useEffect(() => {
-    const rememberedEmail = localStorage.getItem('rememberedEmail');
-    const rememberedPassword = localStorage.getItem('rememberedPassword');
-    if (rememberedEmail && rememberedPassword) {
-      setEmail(rememberedEmail);
-      setPassword(rememberedPassword);
-      setRememberMe(true);
-    }
-  }, []);
 
   return (
     <div
@@ -110,34 +107,34 @@ export default function Login() {
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <label className="block">Email:</label>
-            <input 
-              type="email" 
-              className="w-full border rounded-lg p-2 mt-1" 
+            <input
+              type="email"
+              className="w-full border rounded-lg p-2 mt-1"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="col-span-2">
             <label className="block">Mật khẩu:</label>
-            <input 
-              type="password" 
-              className="w-full border rounded-lg p-2 mt-1" 
+            <input
+              type="password"
+              className="w-full border rounded-lg p-2 mt-1"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <div className="col-span-2 flex items-center">
-            <input 
-              type="checkbox" 
-              className="mr-2" 
+            <input
+              type="checkbox"
+              className="mr-2"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
             />
             <label>Nhớ mật khẩu</label>
           </div>
           <div className="col-span-2">
-            <button 
-              className="w-full bg-black text-white py-2 rounded-lg" 
+            <button
+              className="w-full bg-black text-white py-2 rounded-lg"
               onClick={handleLogin}
               disabled={isLoading}
             >
@@ -146,14 +143,8 @@ export default function Login() {
           </div>
         </div>
         {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
-        {success && <p className="text-green-500 text-sm mt-4">{success}</p>} {/* Display success message */}
+        {success && <p className="text-green-500 text-sm mt-4">{success}</p>}
       </div>
     </div>
   );
 }
-
-// Add this CSS animation globally or in a CSS file
-// @keyframes pastel-dark {
-//   0% { background-position: 0% 50%; }
-//   100% { background-position: 100% 50%; }
-// }

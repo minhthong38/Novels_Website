@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { topReaders, topAuthors } from '../../data/data';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../../context/UserContext';
 import { fetchNovelRankings, fetchReaderRankings, fetchAuthorRankings } from '../../services/apiService';
@@ -77,7 +76,7 @@ export default function TopRanking() {
             <div className="flex flex-col items-center mb-4 cursor-pointer" onClick={() => handleReaderClick(readerRankings[0].idUser._id)}>
               <img 
                 src={readerRankings[0].idUser.avatar || 'https://via.placeholder.com/150'} 
-                alt={`Image of ${readerRankings[0].idUser.fullname}`}
+                alt={readerRankings[0].idUser.fullname}
                 className="w-24 h-24 rounded-full"
               />
               <span className="text-center mt-2">{readerRankings[0].idUser.fullname} 🥇</span>

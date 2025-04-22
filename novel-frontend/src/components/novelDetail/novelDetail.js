@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { UserContext } from '../../context/UserContext'; // Import UserContext
+import { UserContext } from '../../context/UserContext';
 import Recommend from '../Recommend/recommend'; // Import Recommend component
 import { fetchChaptersByNovelId } from '../../services/apiService'; // Import API service for fetching chapters
+import { addExpToReader } from '../../services/apiService';
 
 export default function NovelDetail() {
   const [activePart, setActivePart] = useState(null);
@@ -55,17 +56,37 @@ export default function NovelDetail() {
     transition: "all 0.3s ease-in-out",
     padding: "8px 16px"
   };
+  
 
-  const handleReadBookClick = () => {
-    const selectedChapter = parts.find((part) => part.label === activePart);
-    if (selectedChapter) {
-      navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
-    } else if (parts.length > 0) {
-      navigate(`/novelView/${novelID}?chapterId=${parts[0].id}`); // Default to the first chapter
-    } else {
-      navigate(`/novelView/${novelID}`);
+  const handleReadBookClick = async () => {
+    try {
+      if (loggedInUser && loggedInUser._id) {
+        console.log('Gọi API cộng EXP...');
+        const expResponse = await addExpToReader(loggedInUser._id);
+        console.log('Kết quả cộng EXP:', expResponse);
+    
+        // Điều hướng sang trang đọc sách
+        const selectedChapter = parts.find((part) => part.label === activePart);
+        if (selectedChapter) {
+          navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
+        } else if (parts.length > 0) {
+          navigate(`/novelView/${novelID}?chapterId=${parts[0].id}`);
+        } else {
+          navigate(`/novelView/${novelID}`);
+        }
+      } else {
+        console.error('Chưa có người dùng đăng nhập hoặc không có userId');
+        // Có thể thông báo người dùng đăng nhập trước khi đọc sách
+        alert('Vui lòng đăng nhập để đọc sách.');
+      }
+    } catch (error) {
+      console.error('Lỗi khi cộng EXP hoặc điều hướng:', error);
     }
   };
+  
+  
+  
+
 
   const handleCommentSubmit = () => {
     if (!newComment.trim()) return;

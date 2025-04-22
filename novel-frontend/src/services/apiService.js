@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api'; // Corrected base URL
 const USERS_API = `${API_URL}/users`; // Separate constant for users endpoint
+const READER_EXP = `${API_URL}/readerExps/add-exp`;
 const NOVEL_RANKINGS_URL = `${API_URL}/novelRankings`;
 const READER_RANKING = `${API_URL}/readerRankings`;
 const AUTHOR_RANKINGS = `${API_URL}/authorRankings`;
@@ -20,6 +21,24 @@ export const loginUser = async (email, password) => {
   }
 };
 
+// Add EXP to reader
+export const addExpToReader = async (userId) => {
+  try {
+    if (!userId) {
+      console.error("Không có userId, không thể cộng EXP");
+      return;
+    }
+    console.log("Gọi API cộng EXP với userId:", userId);
+    const response = await axios.post(READER_EXP, { userId });
+    console.log("Đáp ứng từ API khi cộng EXP:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Lỗi API khi cộng EXP:", error);
+    throw error;
+  }
+};
+
+
 // Fetch user details
 export const fetchUserDetails = async (token) => {
   try {
@@ -33,6 +52,8 @@ export const fetchUserDetails = async (token) => {
     throw error.response?.data || 'Failed to fetch user details';
   }
 };
+
+
 
 // Fetch reader rankings
 export const fetchReaderRankings = async () => {
