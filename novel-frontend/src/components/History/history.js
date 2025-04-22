@@ -30,8 +30,12 @@ export default function History() {
     fetchHistory(); 
   }, [loggedInUser]);
 
-  const handleResumeReading = (novelID, chapterID) => {
-    navigate(`/novelView/${novelID}?chapterId=${chapterID}`); // Pass chapterID as a query parameter
+  const handleResumeReading = (novel, chapter) => {
+    if (novel?._id && chapter?._id) {
+      navigate(`/novelView/${novel._id}?chapterId=${chapter._id}`); // Navigate to the specific novel and chapter
+    } else {
+      console.error('Missing novel or chapter data for navigation.');
+    }
   };
 
   const handleClearHistory = async () => {

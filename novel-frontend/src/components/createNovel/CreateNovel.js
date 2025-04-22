@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { UserContext } from '../../context/UserContext';
-// import { fetchCategories, createNovel } from '../../services/apiService'; // Import API functions
+import { fetchCategories, createNovel } from '../../services/apiService'; // Import API functions
 import AuthorSidebar from '../sidebar/AuthorSidebar';
 
 function CreateNovel() {

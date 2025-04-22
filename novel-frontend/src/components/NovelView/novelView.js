@@ -22,6 +22,9 @@ export default function NovelView() {
     const loadChapters = async () => {
       try {
         const chapterList = await fetchChaptersByNovelId(novelID);
+        if (!chapterList || chapterList.length === 0) {
+          throw new Error('Danh sách chương trống hoặc không tồn tại.');
+        }
         setChapters(chapterList);
 
         const chapterId = searchParams.get('chapterId'); // Get chapterId from query parameters
@@ -32,6 +35,7 @@ export default function NovelView() {
           setCurrentChapterIndex(0);
         }
       } catch (err) {
+        console.error('Error loading chapters:', err);
         setError('Không thể tải danh sách chương.');
       } finally {
         setLoading(false);

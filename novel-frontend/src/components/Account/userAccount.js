@@ -190,8 +190,11 @@ export default function UserAccount() {
         </div>
         <button className={`mt-4 w-full py-2 rounded-lg ${isDarkMode ? 'bg-green-600 text-white' : 'bg-green-500 text-black'}`}>NẠP COIN</button>
         <ul className="mt-4 space-y-2">
-          <li className="flex items-center"><i className="fas fa-credit-card mr-2"></i> <a href="#!" onClick={handleAuthorSpaceClick}>Không gian tác giả</a></li> {/* Changed section */}
-          <li className="flex items-center"><i className="fas fa-heart mr-2"></i> <a href="#!">Yêu thích</a></li>
+          <li className="flex items-center"><i className="fas fa-credit-card mr-2"></i> <a href="#!" onClick={handleAuthorSpaceClick}>Không gian tác giả</a></li>
+          <li className="flex items-center">
+            <i className="fas fa-heart mr-2"></i> 
+            <a href="/favorites">Yêu thích</a>
+          </li>
           <li className="flex items-center"><i className="fas fa-book mr-2"></i> <a href="#!">Truyện đã mở khóa</a></li>
           <li className="flex items-center"><i className="fas fa-bell mr-2"></i> <a href="#!" onClick={() => setNotification(null)}>Thông báo</a></li>
           <li className="flex items-center"><i className="fas fa-history mr-2"></i> <a href="/history">Lịch sử đọc</a></li>

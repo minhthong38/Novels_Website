@@ -34,6 +34,7 @@ import MessageAI from './components/messageAI/messageAI';
 // ✅ Import thêm các component mới
 import PlaylistByCategory from './components/playlistByCategory/playlistByCategory';
 import PlaylistPage from './components/playlistPage/PlaylistPage';
+import FavoriteNovel from './pages/FavoriteNovel';
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
           <Route path="/register" element={<ClientRoute children={<Register />} />} />
           <Route path="/login" element={<ClientRoute children={<Login />} />} />
           <Route path="/topViewedNovels" element={<ClientRoute children={<TopViewedNovels />} />} />
+          <Route path="/favorites" element={<ClientRoute children={<FavoriteNovel />} />} />
 
           {/* ✅ Playlist routes */}
           <Route path="/playlist" element={<ClientRoute children={<PlaylistByCategory />} />} />

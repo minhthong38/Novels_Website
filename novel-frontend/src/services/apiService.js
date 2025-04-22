@@ -10,6 +10,7 @@ const NOVEL_API = `${API_URL}/novels`;
 const CATEGORY_API = `${API_URL}/categories`;
 const CHAPTER_API = `${API_URL}/chapters`;
 const READING_HISTORIES_API = `${API_URL}/readingHistories`; // Added constant for reading histories
+const FAVORITE_API = `${API_URL}/favorites`; // Added constant for favorite novels
 
 // Login user
 export const loginUser = async (email, password) => {
@@ -187,4 +188,62 @@ export const fetchReadingHistories = async (userId) => {
     console.error('Error fetching reading histories:', error); 
     throw error.response?.data || 'Unknown error occurred'; 
   } 
+};
+
+// Fetch user's favorite novels
+export const fetchFavoriteNovels = async (idUser) => {
+  try {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const response = await axios.get(`${FAVORITE_API}/user/${idUser}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    console.log('API Response:', response.data);
+    return response.data.data || [];
+  } catch (error) {
+    console.error('Error fetching favorites:', error);
+    return [];
+  }
+};
+
+// Toggle favorite (add/remove)
+export const toggleFavorite = async (idUser, idNovel) => {
+  try {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const response = await axios.post(
+      `${FAVORITE_API}`, 
+      { idUser, idNovel },
+      { 
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        } 
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Toggle favorite error:', error);
+    throw error.response?.data || { message: 'Failed to update favorite status' };
+  }
+};
+
+// Create a new novel
+export const createNovel = async (novelData) => {
+  try {
+    const response = await axios.post(`${NOVEL_API}`, novelData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating novel:', error);
+    throw error.response?.data || 'Failed to create novel';
+  }
+};
+
+// Create reading history
+export const createReadingHistory = async (historyData) => {
+  try {
+    const response = await axios.post(`${READING_HISTORIES_API}`, historyData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating reading history:', error);
+    throw error.response?.data || 'Failed to create reading history';
+  }
 };
