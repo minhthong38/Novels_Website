@@ -2,10 +2,11 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api'; // Corrected base URL
 const USERS_API = `${API_URL}/users`; // Separate constant for users endpoint
-const READER_EXP = `${API_URL}/readerExps/add-exp`;
+const READER_EXP = `${API_URL}/readerExps`;
 const NOVEL_RANKINGS_URL = `${API_URL}/novelRankings`;
 const READER_RANKING = `${API_URL}/readerRankings`;
 const AUTHOR_RANKINGS = `${API_URL}/authorRankings`;
+const AUTHOR_EXP = `${API_URL}/authorExps`;
 const NOVEL_API = `${API_URL}/novels`;
 const CATEGORY_API = `${API_URL}/categories`;
 const CHAPTER_API = `${API_URL}/chapters`;
@@ -30,15 +31,48 @@ export const addExpToReader = async (userId) => {
       return;
     }
     console.log("Gọi API cộng EXP với userId:", userId);
-    const response = await axios.post(READER_EXP, { userId });
+    const response = await axios.post(`${READER_EXP}/add-exp`, { userId });
     console.log("Đáp ứng từ API khi cộng EXP:", response.data);
     return response.data;
   } catch (error) {
-    console.error("❌ Lỗi API khi cộng EXP:", error);
+    console.error("Lỗi API khi cộng EXP:", error);
     throw error;
   }
 };
 
+//Lấy ReaderExp của User theo idUser
+export const fetchReaderExp = async (readerExpId) => {
+  try {
+    if (!readerExpId) {
+      console.error("Không có readerExpId, không thể lấy EXP");
+      return;
+    }
+    console.log("Gọi API lấy EXP của userId:", readerExpId);
+    const response = await axios.get(`${READER_EXP}/${readerExpId}/user/iduser`);
+    console.log("Đáp ứng từ API khi lấy EXP:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi API khi lấy EXP:", error);
+    throw error;
+  }
+};
+
+//Lấy AuthorExp của User theo idUser
+export const fetchAuthorExp = async (userId) => {
+  try {
+    if (!userId) {
+      console.error("Không có authorExpId, không thể lấy EXP");
+      return;
+    }
+    console.log("Gọi API lấy EXP của userId:", userId);
+    const response = await axios.get(`${AUTHOR_EXP}/user/${userId}`);
+    console.log("Đáp ứng từ API khi lấy Author EXP:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi API khi lấy Author EXP:", error);
+    throw error;
+  }
+};
 
 // Fetch user details
 export const fetchUserDetails = async (token) => {
@@ -179,17 +213,6 @@ export const fetchCategoryDetails = async (categoryID) => {
   }
 };
 
-// Fetch reading histories by readingHistories ID
-export const fetchReadingHistories = async (userId) => { 
-  try { 
-    const response = await axios.get(`${READING_HISTORIES_API}/user/${userId}`);
-    return response.data;  // Đảm bảo API trả về title + imageUrl của novel + chapter
-  } catch (error) { 
-    console.error('Error fetching reading histories:', error); 
-    throw error.response?.data || 'Unknown error occurred'; 
-  } 
-};
-
 // Fetch user's favorite novels
 export const fetchFavoriteNovels = async (idUser) => {
   try {
@@ -237,6 +260,17 @@ export const createNovel = async (novelData) => {
   }
 };
 
+// Fetch reading histories by readingHistories ID
+export const fetchReadingHistories = async (userId) => { 
+  try { 
+    const response = await axios.get(`${READING_HISTORIES_API}/user/${userId}`);
+    return response.data;  // Đảm bảo API trả về title + imageUrl của novel + chapter
+  } catch (error) { 
+    console.error('Error fetching reading histories:', error); 
+    throw error.response?.data || 'Unknown error occurred'; 
+  } 
+};
+
 // Create reading history
 export const createReadingHistory = async (historyData) => {
   try {
@@ -247,3 +281,15 @@ export const createReadingHistory = async (historyData) => {
     throw error.response?.data || 'Failed to create reading history';
   }
 };
+
+// Delete all reading history by userId
+export const deleteAllReadingHistory = async (userId) => {
+  try {
+    const response = await axios.delete(`${READING_HISTORIES_API}/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting all reading history:', error);
+    throw error.response?.data || 'Failed to delete all reading history';
+  }
+};
+

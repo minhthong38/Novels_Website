@@ -61,25 +61,26 @@ export default function NovelDetail() {
 
   const handlePartClick = async (label) => {
     const selectedChapter = parts.find((part) => part.label === label);
-    if (selectedChapter && loggedInUser?._id) {
+    if (selectedChapter && loggedInUser?.id) {
       try {
-        // Create reading history before navigation
+        // 👇 Gọi API cộng EXP
+        await addExpToReader(loggedInUser.id);
+  
+        // 👇 Tạo lịch sử đọc
         await createReadingHistory({
-          idUser: loggedInUser._id,
+          idUser: loggedInUser.id,
           idNovel: novelID,
           idChapter: selectedChapter.id,
           lastReadAt: new Date()
         });
-
-        // Navigate to the chapter
+  
+        // 👉 Điều hướng tới chương
         navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
       } catch (error) {
-        console.error('Error creating reading history:', error);
-        // Still navigate even if history creation fails
+        console.error('Lỗi khi cộng EXP hoặc tạo lịch sử đọc:', error);
         navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
       }
     } else if (selectedChapter) {
-      // If user is not logged in, just navigate
       navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
     }
   };
@@ -95,29 +96,32 @@ export default function NovelDetail() {
 
   const handleReadBookClick = async () => {
     try {
-      if (loggedInUser && loggedInUser._id) {
+      if (loggedInUser && loggedInUser.id) {
         console.log('Gọi API cộng EXP...');
-        const expResponse = await addExpToReader(loggedInUser._id);
-        console.log('Kết quả cộng EXP:', expResponse);
-    
-        // Điều hướng sang trang đọc sách
-        const selectedChapter = parts.find((part) => part.label === activePart);
+        await addExpToReader(loggedInUser.id);
+  
+        const selectedChapter = parts.find((part) => part.label === activePart) || parts[0];
+  
         if (selectedChapter) {
+          await createReadingHistory({
+            idUser: loggedInUser.id,
+            idNovel: novelID,
+            idChapter: selectedChapter.id,
+            lastReadAt: new Date()
+          });
+  
           navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
-        } else if (parts.length > 0) {
-          navigate(`/novelView/${novelID}?chapterId=${parts[0].id}`);
         } else {
           navigate(`/novelView/${novelID}`);
         }
       } else {
-        console.error('Chưa có người dùng đăng nhập hoặc không có userId');
-        // Có thể thông báo người dùng đăng nhập trước khi đọc sách
         alert('Vui lòng đăng nhập để đọc sách.');
       }
     } catch (error) {
-      console.error('Lỗi khi cộng EXP hoặc điều hướng:', error);
+      console.error('Lỗi khi đọc sách:', error);
     }
   };
+  
   
   const handleFavoriteClick = async () => {
     if (!loggedInUser) {

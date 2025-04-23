@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { UserContext } from '../../context/UserContext'; // Import UserContext
 import UserNotification from '../notifications/UserNotification'; // Import UserNotification component
 import axios from 'axios'; // Import axios
+import {fetchReaderExp} from '../../services/apiService';
 
 export default function UserAccount() {
   const { setLoggedInUser: updateGlobalUser, isDarkMode } = useContext(UserContext); // Access context to update global user and dark mode state
@@ -13,23 +14,26 @@ export default function UserAccount() {
   const [newFullName, setNewFullName] = useState("");
   const [notification, setNotification] = useState(null);
   const [showAuthorRequestPopup, setShowAuthorRequestPopup] = useState(false);
+  const [exp, setExp] = useState(0);
+  const [level, setLevel] = useState("VIP 0");
+
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token'); // Kiểm tra token
-
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  
       if (!token) {
         console.error('No token found. Please log in.');
         return;
       }
-
+  
       try {
-        // Gửi yêu cầu lấy thông tin người dùng từ API
+        // Gọi API để lấy user info
         const response = await axios.get('http://localhost:5000/api/users/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
         const user = response.data;
-
+  
         if (user && user._id) {
           setLoggedInUser(user);
           setAvatarImage(user.avatar || "https://via.placeholder.com/150");
@@ -37,17 +41,24 @@ export default function UserAccount() {
           setNewEmail(user.email);
           setNewGender(user.gender || "other");
           setNewFullName(user.fullname || "");
+  
+          // Gọi API exp riêng biệt
+          const expData = await fetchReaderExp(user._id);
+          if (expData) {
+            setExp(expData.totalExp);
+            setLevel(expData.idLevel?.title || "Chưa có cấp độ");
+          }
         } else {
           console.error('User data is incomplete or _id is missing.');
         }
       } catch (error) {
-        console.error('Failed to fetch user data from the server:', error);
+        console.error('Failed to fetch user data or exp:', error);
       }
     };
-
+  
     fetchUserData();
   }, []);
-
+  
   const handleAvatarUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -210,21 +221,24 @@ export default function UserAccount() {
 
         {/* Current Level Section */}
         <div className="mt-4">
-          <span>Cấp độ hiện tại: VIP 0</span>
+          <span>Cấp độ hiện tại: {level}</span>
           <div className="flex items-center mt-2">
-            {/* Using avatarImage in the progress section */}
             <img src={avatarImage} alt="User avatar" className="rounded-full w-12 h-12" />
             <div className="flex-1 mx-4">
               <div className="relative w-full h-4 bg-gray-200 rounded-full">
-                <div className="absolute top-0 left-0 h-4 bg-blue-500 rounded-full" style={{ width: '10%' }}></div>
+                <div
+                  className="absolute top-0 left-0 h-4 bg-blue-500 rounded-full"
+                  style={{ width: `${(exp / 10000) * 100}%` }}  // Dùng exp để tính tiến độ
+                ></div>
               </div>
               <div className="flex justify-between text-sm mt-1">
-                <span>200</span>
-                <span>2,000</span>
+                <span>{exp}</span>  {/* Số điểm kinh nghiệm hiện tại */}
+                <span>10,000</span>  {/* Tổng điểm kinh nghiệm yêu cầu để lên cấp */}
               </div>
             </div>
           </div>
         </div>
+
 
         {/* Avatar Upload Section */}
         <div className="mt-4 flex flex-col items-center">

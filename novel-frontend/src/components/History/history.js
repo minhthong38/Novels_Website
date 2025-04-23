@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchReadingHistories } from '../../services/apiService'; // Import API service
+import { fetchReadingHistories, deleteAllReadingHistory } from '../../services/apiService'; // Import API service
 import { UserContext } from '../../context/UserContext'; // Import UserContext
 
 export default function History() {
@@ -9,26 +9,29 @@ export default function History() {
   const [readNovels, setReadNovels] = useState([]); // Initialize as an empty array
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { 
-    const fetchHistory = async () => { 
-      if (!loggedInUser || !loggedInUser._id) { 
-        console.error('User ID is missing.'); 
-        setLoading(false); 
-        return; 
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!loggedInUser || !loggedInUser.id) { // Use loggedInUser.id
+        console.log('User not logged in or ID is missing:', loggedInUser);
+        // Optionally, redirect to login page if user is not logged in
+        navigate('/login');
+        setLoading(false);
+        return;
       }
-  
-      try { 
-        const histories = await fetchReadingHistories(loggedInUser._id);  
+
+      try {
+        console.log('Fetching reading histories for user:', loggedInUser.id); // Use loggedInUser.id
+        const histories = await fetchReadingHistories(loggedInUser.id); // Use loggedInUser.id
         setReadNovels(histories || []); // Ensure full reading history is fetched
-      } catch (error) { 
-        console.error('Error fetching reading histories:', error); 
-      } finally { 
-        setLoading(false); 
-      } 
+      } catch (error) {
+        console.error('Error fetching reading histories:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-  
-    fetchHistory(); 
-  }, [loggedInUser]);
+
+    fetchHistory();
+  }, [loggedInUser, navigate]); // Add navigate to dependencies to avoid stale closure
 
   const handleResumeReading = (novel, chapter) => {
     if (novel?._id && chapter?._id) {
@@ -39,8 +42,20 @@ export default function History() {
   };
 
   const handleClearHistory = async () => {
-    // Clear history logic (if needed, implement API call to delete history)
-    setReadNovels([]);
+    if (!loggedInUser || !loggedInUser.id) { // Use loggedInUser.id
+      console.error('User ID is missing.');
+      return;
+    }
+
+    try {
+      // Call the API to delete all reading history for the logged-in user
+      await deleteAllReadingHistory(loggedInUser.id); // Use loggedInUser.id
+      setReadNovels([]); // Clear the local state after deleting history
+      alert('Lịch sử đọc đã được xóa!');
+    } catch (error) {
+      console.error('Error deleting all reading history:', error);
+      alert('Xóa lịch sử đọc không thành công!');
+    }
   };
 
   if (loading) {
@@ -59,7 +74,7 @@ export default function History() {
         }`}
       >
         <h2 className="font-bold text-lg mb-4">LỊCH SỬ ĐỌC</h2>
-        {readNovels && readNovels.length === 0 ? ( // Safely check length
+        {readNovels && readNovels.length === 0 ? (
           <div className="text-center">
             <img
               src="https://imgur.com/cx9u9rN.png"
@@ -73,9 +88,7 @@ export default function History() {
             <div
               key={history._id}
               className={`p-4 rounded-lg mb-4 flex flex-col sm:flex-row items-center ${
-                isDarkMode
-                  ? 'bg-gray-500 text-white'
-                  : 'bg-gray-100 text-black'
+                isDarkMode ? 'bg-gray-500 text-white' : 'bg-gray-100 text-black'
               }`}
             >
               <img
@@ -85,7 +98,7 @@ export default function History() {
               />
               <div className="flex-1 text-center sm:text-left">
                 <h3 className="font-bold">{history.idNovel?.title || 'Unknown Title'}</h3>
-                <p className="text-sm">Chapter: {history.idChapter?.title || 'Unknown Chapter'}</p> 
+                <p className="text-sm">Chapter: {history.idChapter?.title || 'Unknown Chapter'}</p>
                 <p className="text-sm">Last read: {new Date(history.lastReadAt).toLocaleString()}</p>
               </div>
               <div className="flex flex-col space-y-2 mt-4 sm:mt-0 sm:ml-4">

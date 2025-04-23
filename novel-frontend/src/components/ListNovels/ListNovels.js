@@ -14,11 +14,11 @@ export default function ListNovels() {
 
   // Fetch novels by logged in user
   useEffect(() => {
-    if (!loggedInUser || !loggedInUser._id) return;
+    if (!loggedInUser || !loggedInUser.id) return;
   
     const fetchData = async () => {
       try {
-        const data = await fetchNovelsByAuthor(loggedInUser._id);
+        const data = await fetchNovelsByAuthor(loggedInUser.id);
         setNovels(data);
         setFilteredNovels(data); // Khởi tạo danh sách lọc ban đầu
   
@@ -36,7 +36,7 @@ export default function ListNovels() {
     };
   
     fetchData();
-  }, [loggedInUser?._id]);
+  }, [loggedInUser?.id]);
   
   // Filter novels based on search term
   useEffect(() => {
