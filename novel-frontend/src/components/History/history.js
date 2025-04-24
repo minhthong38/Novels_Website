@@ -12,9 +12,8 @@ export default function History() {
   useEffect(() => {
     const fetchHistory = async () => {
       if (!loggedInUser || !loggedInUser.id) { // Use loggedInUser.id
-        console.log('User not logged in or ID is missing:', loggedInUser);
+        
         // Optionally, redirect to login page if user is not logged in
-        navigate('/login');
         setLoading(false);
         return;
       }
