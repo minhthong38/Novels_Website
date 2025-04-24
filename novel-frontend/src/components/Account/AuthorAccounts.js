@@ -6,7 +6,7 @@ import ListNovels from '../ListNovels/ListNovels';
 import CreateNovel from '../createNovel/CreateNovel';
 import UpdateNovel from '../UpdateNovel/updateNovel';
 import RevenueTracking from '../RevenueTracking/RevenueTracking';
-import { fetchNovelsByAuthor, fetchAuthorExp } from '../../services/apiService';
+import { fetchNovelsByAuthor, fetchAuthorExp, fetchChaptersByNovelId } from '../../services/apiService';
 
 const taskLevels = [
   { level: 1, chapters: 10, views: 1000 },
@@ -32,6 +32,7 @@ function AuthorAccounts() {
   const [totalExp, setTotalExp] = useState(0);
   const [currentLevel, setCurrentLevel] = useState(1);
   const [titleLevel, setTitleLevel] = useState('');
+  const [totalChapters, setTotalChapters] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +62,15 @@ function AuthorAccounts() {
           const novelsData = await fetchNovelsByAuthor(user._id);
           setNovels(novelsData || []);
           setTotalViews((novelsData || []).reduce((sum, n) => sum + (n.view || 0), 0));
+
+          // Calculate total chapters
+          const chapterCounts = await Promise.all(
+            (novelsData || []).map(async (novel) => {
+              const chapters = await fetchChaptersByNovelId(novel._id);
+              return chapters.length;
+            })
+          );
+          setTotalChapters(chapterCounts.reduce((sum, count) => sum + count, 0));
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -92,6 +102,87 @@ function AuthorAccounts() {
     }
   };
 
+  const calculateProgress = (totalChapters, totalViews) => {
+    let progress = 0;
+    let nextLevel = null;
+
+    for (let i = 0; i < taskLevels.length; i++) {
+      const task = taskLevels[i];
+      if (totalChapters >= task.chapters && totalViews >= task.views) {
+        progress = (i + 1) / taskLevels.length;
+      } else {
+        nextLevel = task;
+        const prevTask = taskLevels[i - 1] || { chapters: 0, views: 0 };
+        const chapterProgress = Math.min(
+          (totalChapters - prevTask.chapters) / (task.chapters - prevTask.chapters),
+          1
+        );
+        const viewProgress = Math.min(
+          (totalViews - prevTask.views) / (task.views - prevTask.views),
+          1
+        );
+        progress += (chapterProgress * viewProgress) / taskLevels.length;
+        break;
+      }
+    }
+
+    return { progress: (progress * 100).toFixed(2), nextLevel };
+  };
+
+  const renderProgressBar = () => {
+    const { progress, nextLevel } = calculateProgress(totalChapters, totalViews);
+
+    return (
+      <div className={`p-4 border rounded-lg mb-4 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50'}`}>
+        <h3 className="text-lg font-semibold mb-2">Tiến độ cấp bậc</h3>
+        <div className="relative w-full bg-gray-200 rounded-full h-6">
+          <div
+            className="absolute top-0 left-0 h-6 bg-green-500 rounded-full"
+            style={{ width: `${progress}%` }}
+          ></div>
+          <div className="absolute top-4 w-full flex justify-between">
+            {taskLevels.map((task) => {
+              const isCompleted = totalChapters >= task.chapters && totalViews >= task.views;
+              return (
+                <div key={task.level} className="relative w-1/5 text-center">
+                  <span
+                    className={`absolute -top-5 w-8 h-8 flex items-center justify-center rounded-full text-black ${
+                      isCompleted ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
+                    style={{ left: '50%', transform: 'translateX(-50%)' }}
+                  >
+                    {task.level}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="flex justify-between mt-6 text-xs">
+          {taskLevels.map((task) => {
+            const isCompleted = totalChapters >= task.chapters && totalViews >= task.views;
+            return (
+              <div key={task.level} className="text-center w-1/5">
+                <p>Chương: {task.chapters}</p>
+                <p>Lượt xem: {task.views}</p>
+                {isCompleted && <p className="text-green-600 font-semibold mt-1">✔ Đã hoàn thành</p>}
+              </div>
+            );
+          })}
+        </div>
+        {nextLevel && (
+          <div className="mt-4 text-sm">
+            <p>
+              Để đạt cấp độ tiếp theo, bạn cần thêm{' '}
+              <span className="font-bold">{Math.max(0, nextLevel.chapters - totalChapters)}</span> chương và{' '}
+              <span className="font-bold">{Math.max(0, nextLevel.views - totalViews)}</span> lượt đọc.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderMainContent = () => {
     switch (activeView) {
       case 'listNovels':
@@ -108,7 +199,6 @@ function AuthorAccounts() {
             <div className={`m-4 text-center py-3 font-semibold text-sm mb-4 ${isDarkMode ? 'bg-red-900 text-red-300' : 'bg-red-200 text-red-700'}`}>
               Chỉ chấp nhận nội dung phù hợp với thuần phong mỹ tục và pháp luật Việt Nam...
             </div>
-
             <div className="mb-4 text-center">
               <label htmlFor="image-upload" className="cursor-pointer">
                 <img src={userData.avatar} alt="avatar" className="rounded-full mx-auto w-24 h-24 mb-2 border-4" />
@@ -118,7 +208,6 @@ function AuthorAccounts() {
               <p className="text-sm">{`Cấp độ hiện tại: ${currentLevel} - ${titleLevel}`}</p>
               <p className="text-sm mt-2">Tỷ lệ chia sẻ doanh thu: <span className="font-bold">60% - 40%</span></p>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 text-center">
               <div className="border rounded-lg py-2 shadow">
                 <p className="text-sm">Tổng truyện đã đăng</p>
@@ -126,42 +215,14 @@ function AuthorAccounts() {
               </div>
               <div className="border rounded-lg py-2 shadow">
                 <p className="text-sm">Tổng chương đã đăng</p>
-                <p className="text-lg font-bold">0</p>
+                <p className="text-lg font-bold">{totalChapters}</p>
               </div>
               <div className="border rounded-lg py-2 shadow">
                 <p className="text-sm">Tổng lượt đọc</p>
                 <p className="text-lg font-bold">{totalViews}</p>
               </div>
             </div>
-
-            <div className={`p-4 border rounded-lg mb-4 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50'}`}>
-              <h3 className="text-lg font-semibold mb-2">Tiến độ cấp bậc</h3>
-              <div className="relative w-full bg-gray-200 rounded-full h-6">
-                <div className="absolute top-0 left-0 h-6 bg-green-500 rounded-full" style={{ width: `${(currentLevel / 5) * 100}%` }}></div>
-                <div className="absolute top-4 w-full flex justify-between">
-                  {taskLevels.map((task) => (
-                    <div key={task.level} className="relative w-1/5 text-center">
-                      <span
-                        className={`absolute -top-8 w-8 h-8 flex items-center justify-center rounded-full text-white ${task.level <= currentLevel ? 'bg-green-500' : 'bg-gray-400'}`}
-                        style={{ left: '50%', transform: 'translateX(-50%)' }}
-                      >
-                        {task.level}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="flex justify-between mt-6 text-xs">
-                {taskLevels.map((task) => (
-                  <div key={task.level} className="text-center w-1/5">
-                    <p>Chương: {task.chapters}</p>
-                    <p>Lượt xem: {task.views}</p>
-                    {task.level <= currentLevel && <p className="text-green-600 font-semibold mt-1">✔ Đã hoàn thành</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
+            {renderProgressBar()}
             <div className="space-y-2 text-sm">
               {['displayName', 'username', 'password', 'email', 'introduction'].map((field) => (
                 <div key={field}>
@@ -183,7 +244,6 @@ function AuthorAccounts() {
                 </div>
               ))}
             </div>
-
             <div className="text-center mt-6">
               <button className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600" onClick={handleSave}>
                 Lưu Thay Đổi

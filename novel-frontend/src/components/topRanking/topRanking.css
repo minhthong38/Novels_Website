@@ -1,0 +1,12 @@
+@keyframes flap {
+  0%, 100% {
+    transform: translateY(-15px);
+  }
+  50% {
+    transform: translateY(15px);
+  }
+}
+
+.animate-flap {
+  animation: flap 1.5s infinite ease-in-out;
+}

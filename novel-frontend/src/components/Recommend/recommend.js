@@ -53,15 +53,22 @@ export default function Recommend({ customStyle, excludeNovelId }) {
               {topNovels
                 .slice(0, customStyle?.maxItems || topNovels.length)
                 .map((novel) => (
-                  <div key={novel._id} className="text-center">
+                  <div
+                    key={novel._id}
+                    className="text-center transform transition duration-300 hover:scale-105 hover:shadow-lg"
+                  >
                     <Link to={`/novelDetail/${novel._id}`}>
-                      <img 
-                        src={novel.imageUrl} 
-                        style={{ width: '180px', height: '250px' }} 
-                        alt={`Bìa sách ${novel.title}`} 
-                        className="mx-auto mb-2 object-cover"
-                      />
-                      <p className={`text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>{novel.title}</p>
+                      <div className="relative overflow-hidden rounded-lg">
+                        <img
+                          src={novel.imageUrl}
+                          style={{ width: '180px', height: '250px' }}
+                          alt={`Bìa sách ${novel.title}`}
+                          className="mx-auto mb-2 object-cover transition-transform duration-300 hover:scale-110"
+                        />
+                      </div>
+                      <p className={`text-sm ${isDarkMode ? 'text-white' : 'text-black'} mt-2`}>
+                        {novel.title}
+                      </p>
                     </Link>
                   </div>
                 ))}

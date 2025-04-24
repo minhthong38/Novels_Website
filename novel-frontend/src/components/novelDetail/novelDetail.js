@@ -44,15 +44,23 @@ export default function NovelDetail() {
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (loggedInUser?._id) {
-        try {
-          const response = await axios.get(`http://localhost:5000/api/favorites/check/${loggedInUser._id}/${novelID}`);
+      if (!loggedInUser?._id) return;
+  
+      try {
+        console.log("Kiểm tra trạng thái yêu thích...");
+        const response = await axios.get(`http://localhost:5000/api/favoriteNovels/check/${loggedInUser._id}/${novelID}`);
+  
+        if (response?.data?.isFavorited !== undefined) {
           setIsFavorited(response.data.isFavorited);
-        } catch (error) {
-          console.error('Error checking favorite status:', error);
+        } else {
+          console.warn("API không trả về trạng thái yêu thích đúng");
         }
+  
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
       }
     };
+  
     checkFavoriteStatus();
   }, [loggedInUser, novelID]);
 
@@ -128,13 +136,22 @@ export default function NovelDetail() {
       alert('Vui lòng đăng nhập để thêm vào yêu thích');
       return;
     }
-
+  
     try {
-      await toggleFavorite(loggedInUser._id, novelID);
+      const response = await toggleFavorite(loggedInUser._id, novelID);
+      console.log("Phản hồi sau khi toggle yêu thích:", response);
+  
+      if (response && response.message) {
+        alert(response.message); // Chỉ hiển thị phản hồi từ API nếu thành công
+      }
+  
       setIsFavorited(!isFavorited);
+      
+      const updatedFavorites = await fetchFavoriteNovels(loggedInUser._id);
+      setFavorites(updatedFavorites);
     } catch (error) {
-      console.error('Error toggling favorite:', error);
-      alert('Có lỗi xảy ra khi thay đổi trạng thái yêu thích');
+      console.error('Lỗi khi thay đổi trạng thái yêu thích:', error);
+   
     }
   };
 

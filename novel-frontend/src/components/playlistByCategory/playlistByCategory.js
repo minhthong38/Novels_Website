@@ -62,43 +62,45 @@ export default function PlaylistByCategory() {
 
   return (
     <div
-      className={`ml-14 w-3/4 h-[500px] mt-20 overflow-y-scroll border rounded-lg p-10 ${
+      className={`ml-14 w-3/4 h-[500px] mt-20 overflow-y-scroll border rounded-lg ${
         isDarkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-300'
-      } sm:ml-auto sm:mr-auto sm:w-11/12 sm:mt-4 lg:ml-28 lg:w-3/4 lg:mt-20`}
+      } sm:ml-auto sm:mr-auto sm:w-11/12 sm:mt-4 lg:ml-28 lg:w-3/4 lg:mt-20 relative`}
     >
-      <h2 className="text-xl font-bold mb-4 text-center sm:text-lg lg:text-xl">PLAYLIST</h2>
-      <ul className="space-y-4 sm:space-y-2 lg:space-y-4">
+      <h2 className="text-2xl font-bold mb-6 text-center sticky top-0 bg-inherit z-10 p-4">
+        Tuyển Tập Theo Thể Loại
+      </h2>
+      <ul className="space-y-4 p-4">
         {categories.map((category) => (
           <li
             key={category._id}
-            className="border-b pb-2 flex items-center sm:flex-col sm:items-center lg:flex-row lg:items-center"
+            className={`flex items-center bg-gray-100 rounded-lg shadow-md p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg ${
+              isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'hover:bg-gray-200 text-black'
+            }`}
           >
-            <img
-              src={categoryImages[category._id]}
-              alt={`Cover for ${category.titleCategory}`}
-              className="rounded"
-              style={{
-                width: '100px', // Fixed width
-                height: '100px', // Fixed height
-                objectFit: 'cover', // Ensures the image fills the area while maintaining aspect ratio
-                marginRight: '16px', // Spacing between image and content
-              }}
-              onError={(e) =>
-                (e.target.src =
-                  'https://plus.unsplash.com/premium_photo-1669652639337-c513cc42ead6?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTN8fGJvb2tzfGVufDB8fDB8fHww')
-              }
-            />
-            <Link
-              to={{
-                pathname: `/playlist/${category._id}`,
-                state: { playlistName: `Tuyển tập sách ${category.titleCategory} ${randomPhrases[category._id] || 'Mới Nhất'}` },
-              }} // Pass full playlist name as state
-              className={`text-lg font-semibold hover:underline sm:text-base lg:text-lg ${
-                isDarkMode ? 'text-white' : 'text-black'
-              }`}
-            >
-              Tuyển tập sách {category.titleCategory} {randomPhrases[category._id] || 'Mới Nhất'}
-            </Link>
+            <div className="relative w-24 h-24 flex-shrink-0">
+              <img
+                src={categoryImages[category._id]}
+                alt={`Cover for ${category.titleCategory}`}
+                className="w-full h-full object-cover rounded-lg border transition-transform duration-300 hover:scale-110"
+                onError={(e) =>
+                  (e.target.src =
+                    'https://www.shutterstock.com/image-photo/black-book-isolated-on-white-600nw-2316218599.jpg')
+                }
+              />
+            </div>
+            <div className="ml-4 flex-1">
+              <Link
+                to={{
+                  pathname: `/playlist/${category._id}`,
+                  state: { playlistName: `Tuyển tập sách ${category.titleCategory} ${randomPhrases[category._id] || 'Mới Nhất'}` },
+                }}
+                className="block"
+              >
+                <h3 className="text-lg font-semibold hover:underline">
+                  Tuyển tập sách {category.titleCategory} {randomPhrases[category._id] || 'Mới Nhất'}
+                </h3>
+              </Link>
+            </div>
           </li>
         ))}
       </ul>
