@@ -30,6 +30,7 @@ import { UserProvider } from './context/UserContext';
 import TopViewedNovels from './components/topViewedNovels/TopViewedNovels';
 import RevenueTracking from './components/RevenueTracking/RevenueTracking';
 import MessageAI from './components/messageAI/messageAI';
+import UnlockedNovels from './components/UnlockedNovels/UnlockedNovels';
 
 // ✅ Import thêm các component mới
 import PlaylistByCategory from './components/playlistByCategory/playlistByCategory';
@@ -59,6 +60,7 @@ function App() {
           <Route path="/login" element={<ClientRoute children={<Login />} />} />
           <Route path="/topViewedNovels" element={<ClientRoute children={<TopViewedNovels />} />} />
           <Route path="/favorites" element={<ClientRoute children={<FavoriteNovel />} />} />
+          <Route path="/unlockedNovels" element={<ClientRoute children={<UnlockedNovels />} />} />
 
           {/* ✅ Playlist routes */}
           <Route path="/playlist" element={<ClientRoute children={<PlaylistByCategory />} />} />

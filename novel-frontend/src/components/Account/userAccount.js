@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { UserContext } from '../../context/UserContext'; // Import UserContext
-import UserNotification from '../notifications/UserNotification'; // Import UserNotification component
+import { UserContext } from '../../context/UserContext'; // Import UserContext/ Import UserNotification component
 import axios from 'axios'; // Import axios
 import {fetchReaderExp} from '../../services/apiService';
+import { Link } from 'react-router-dom';
 
 export default function UserAccount() {
   const { setLoggedInUser: updateGlobalUser, isDarkMode } = useContext(UserContext); // Access context to update global user and dark mode state
@@ -16,7 +16,49 @@ export default function UserAccount() {
   const [showAuthorRequestPopup, setShowAuthorRequestPopup] = useState(false);
   const [exp, setExp] = useState(0);
   const [level, setLevel] = useState("VIP 0");
+  const [showCoinRechargePopup, setShowCoinRechargePopup] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [activePaymentMethod, setActivePaymentMethod] = useState('momo'); // 'momo', 'card', 'bank'
+  const [showQRCode, setShowQRCode] = useState(false);
 
+  const coinPackages = [
+    { id: 1, coins: 4, price: 20000, bonus: 0 },
+    { id: 2, coins: 10, price: 50000, bonus: 1 },
+    { id: 3, coins: 20, price: 100000, bonus: 3 },
+    { id: 4, coins: 50, price: 250000, bonus: 10 },
+    { id: 5, coins: 100, price: 500000, bonus: 25 },
+    { id: 6, coins: 200, price: 1000000, bonus: 60 }
+  ];
+
+  const paymentMethods = [
+    {
+      id: 'momo',
+      name: 'Ví MoMo',
+      icon: '💜',
+      description: 'Quét mã QR hoặc chuyển khoản qua MoMo',
+      qrCode: 'https://imgur.com/S4OTTI1.jpg', // Replace with actual QR code
+      accountNumber: '0987654321',
+      accountName: 'NOVEL WEBSITE'
+    },
+    {
+      id: 'card',
+      name: 'Thẻ cào',
+      icon: '💳',
+      description: 'Nạp bằng thẻ cào điện thoại',
+      cardTypes: ['Viettel', 'Mobifone', 'Vinaphone', 'Vietnamobile']
+    },
+    {
+      id: 'bank',
+      name: 'Chuyển khoản ngân hàng',
+      icon: '🏦',
+      description: 'Chuyển khoản qua ngân hàng',
+      banks: [
+        { name: 'Vietcombank', number: '1234567890', name: 'NOVEL WEBSITE' },
+        { name: 'Techcombank', number: '0987654321', name: 'NOVEL WEBSITE' },
+        { name: 'MB Bank', number: '1122334455', name: 'NOVEL WEBSITE' }
+      ]
+    }
+  ];
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -182,12 +224,9 @@ export default function UserAccount() {
         <div className="flex flex-col items-center">
           {/* Avatar Image */}
           <img src={avatarImage} alt="User avatar" className="rounded-full w-24 h-24 mb-4" />
-          <h2 className="text-lg font-semibold">{loggedInUser.fullName}</h2> {/* Display fullName */}
-          <p className="text-gray-600">{loggedInUser.email}</p> {/* Display email */}
-          <p className="text-gray-600">{loggedInUser.gender}</p> {/* Display gender */}
-          <button className="mt-4 text-red-500">Hồ sơ cá nhân</button>
-          <button className="mt-2 text-blue-500">Đăng xuất/Thoát</button>
-          <button className="mt-2 text-green-500" onClick={() => setShowAuthorRequestPopup(true)}>Tham gia vai trò tác giả</button> {/* New button */}
+          <h2 className="text-lg font-semibold">{loggedInUser.fullName}</h2>
+          <p className="text-gray-600">{loggedInUser.email}</p>
+          <p className="text-gray-600">{loggedInUser.gender}</p>
         </div>
         <div className="mt-4">
           <div className="flex justify-between items-center">
@@ -199,19 +238,44 @@ export default function UserAccount() {
             <span>0.00 <i className="fas fa-coins text-yellow-500"></i></span>
           </div>
         </div>
-        <button className={`mt-4 w-full py-2 rounded-lg ${isDarkMode ? 'bg-green-600 text-white' : 'bg-green-500 text-black'}`}>NẠP COIN</button>
-        <ul className="mt-4 space-y-2">
-          <li className="flex items-center"><i className="fas fa-credit-card mr-2"></i> <a href="#!" onClick={handleAuthorSpaceClick}>Không gian tác giả</a></li>
-          <li className="flex items-center">
-            <i className="fas fa-heart mr-2"></i> 
-            <a href="/favorites">Yêu thích</a>
-          </li>
-          <li className="flex items-center"><i className="fas fa-book mr-2"></i> <a href="#!">Truyện đã mở khóa</a></li>
-          <li className="flex items-center"><i className="fas fa-bell mr-2"></i> <a href="#!" onClick={() => setNotification(null)}>Thông báo</a></li>
-          <li className="flex items-center"><i className="fas fa-history mr-2"></i> <a href="/history">Lịch sử đọc</a></li>
-          <li className="flex items-center"><i className="fas fa-receipt mr-2"></i> <a href="#!">Lịch sử thanh toán</a></li>
-          <li className="flex items-center"><i className="fas fa-key mr-2"></i> <a href="#!">Đổi mật khẩu</a></li>
-        </ul>
+        <button 
+          className={`mt-4 w-full py-2 rounded-lg ${isDarkMode ? 'bg-green-600 text-white' : 'bg-green-500 text-black'}`}
+          onClick={() => setShowCoinRechargePopup(true)}
+        >
+          NẠP COIN
+        </button>
+        <div className="space-y-4 mt-4">
+          <ul className="space-y-2">
+            <li className="flex items-center">
+              <i className="fas fa-credit-card mr-2"></i> 
+              <a href="#!" onClick={handleAuthorSpaceClick}>Không gian tác giả</a>
+            </li>
+            <li className="flex items-center">
+              <i className="fas fa-heart mr-2"></i> 
+              <Link to="/favorites">Yêu thích</Link>
+            </li>
+            <li className="flex items-center">
+              <i className="fas fa-book mr-2"></i> 
+              <Link to="/unlockedNovels">Truyện đã mở khóa</Link>
+            </li>
+            <li className="flex items-center">
+              <i className="fas fa-bell mr-2"></i> 
+              <a href="#!" onClick={() => setNotification(null)}>Thông báo</a>
+            </li>
+            <li className="flex items-center">
+              <i className="fas fa-history mr-2"></i> 
+              <Link to="/history">Lịch sử đọc</Link>
+            </li>
+            <li className="flex items-center">
+              <i className="fas fa-receipt mr-2"></i> 
+              <a href="#!">Lịch sử thanh toán</a>
+            </li>
+            <li className="flex items-center">
+              <i className="fas fa-key mr-2"></i> 
+              <a href="#!">Đổi mật khẩu</a>
+            </li>
+          </ul>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -324,25 +388,260 @@ export default function UserAccount() {
 
       {/* Notification Popup */}
       {notification && (
-        <UserNotification notification={notification} onClose={() => setNotification(null)} />
+        <div className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? 'bg-black bg-opacity-75' : 'bg-black bg-opacity-50'}`}>
+          <div className={`p-4 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
+            <h2 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>Thông báo</h2>
+            <p className={`mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{notification.message}</p>
+            <button 
+              className={`w-full py-2 px-4 rounded-lg ${
+                notification.type === 'success' 
+                  ? isDarkMode 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                  : isDarkMode 
+                    ? 'bg-red-600 text-white hover:bg-red-700' 
+                    : 'bg-red-500 text-white hover:bg-red-600'
+              }`}
+              onClick={() => setNotification(null)}
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Author Request Popup */}
       {showAuthorRequestPopup && (
         <div className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? 'bg-black bg-opacity-75' : 'bg-black bg-opacity-50'}`}>
           <div className={`p-4 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
-            <h2 className="text-xl font-bold mb-4">Yêu cầu làm tác giả</h2>
-            <p>Bạn có chắc chắn muốn gửi yêu cầu làm tác giả không?</p>
+            <h2 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>Yêu cầu làm tác giả</h2>
+            <p className={`mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Bạn có chắc chắn muốn gửi yêu cầu làm tác giả không?</p>
             <div className="mt-4 flex justify-end space-x-2">
               <button 
-                className="bg-red-500 text-white py-2 px-4 rounded-lg"
+                className={`px-4 py-2 rounded-lg ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                    : 'bg-gray-200 text-black hover:bg-gray-300'
+                }`}
                 onClick={() => setShowAuthorRequestPopup(false)}
               >
                 Hủy
               </button>
               <button 
-                className="bg-green-500 text-white py-2 px-4 rounded-lg"
+                className={`px-4 py-2 rounded-lg ${
+                  isDarkMode 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
                 onClick={handleAuthorRequest}
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Coin Recharge Popup */}
+      {showCoinRechargePopup && (
+        <div className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? 'bg-black bg-opacity-75' : 'bg-black bg-opacity-50'}`}>
+          <div className={`p-4 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Nạp Coin</h2>
+              <button
+                onClick={() => setShowCoinRechargePopup(false)}
+                className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Package Selection */}
+            <div className="mb-3">
+              <h3 className={`text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Chọn gói Coin</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {coinPackages.map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className={`p-2 rounded-lg border cursor-pointer transition-all ${
+                      selectedPackage?.id === pkg.id
+                        ? isDarkMode
+                          ? 'border-green-500 bg-gray-700'
+                          : 'border-green-500 bg-green-50'
+                        : isDarkMode
+                        ? 'border-gray-600 hover:border-green-500'
+                        : 'border-gray-300 hover:border-green-500'
+                    }`}
+                    onClick={() => setSelectedPackage(pkg)}
+                  >
+                    <div className="text-center">
+                      <div className={`text-lg font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-500'}`}>{pkg.coins}</div>
+                      <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Coin</div>
+                      <div className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>{pkg.price.toLocaleString()}đ</div>
+                      {pkg.bonus > 0 && (
+                        <div className={`text-xs ${isDarkMode ? 'text-green-400' : 'text-green-500'}`}>+{pkg.bonus}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Payment Methods Tabs */}
+            <div className="mb-3">
+              <h3 className={`text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Phương thức thanh toán</h3>
+              <div className="flex space-x-1 mb-2">
+                {paymentMethods.map((method) => (
+                  <button
+                    key={method.id}
+                    className={`flex items-center px-2 py-1 rounded text-sm ${
+                      activePaymentMethod === method.id
+                        ? isDarkMode
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'bg-green-500 text-white hover:bg-green-600'
+                        : isDarkMode
+                        ? 'bg-gray-700 text-white hover:bg-gray-600'
+                        : 'bg-gray-200 text-black hover:bg-gray-300'
+                    }`}
+                    onClick={() => setActivePaymentMethod(method.id)}
+                  >
+                    <span className="mr-1">{method.icon}</span>
+                    {method.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Payment Method Content */}
+              <div className={`p-3 rounded-lg border ${isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-white'}`}>
+                {activePaymentMethod === 'momo' && (
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg">
+                      <img
+                        src={paymentMethods[0].qrCode}
+                        alt="MoMo QR Code"
+                        className="w-32 h-32"
+                      />
+                    </div>
+                    <div className="text-sm">
+                      <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>Thông tin chuyển khoản:</p>
+                      <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Số tài khoản: {paymentMethods[0].accountNumber}</p>
+                      <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Tên tài khoản: {paymentMethods[0].accountName}</p>
+                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Lưu ý: NOVEL [Số điện thoại]
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {activePaymentMethod === 'card' && (
+                  <div>
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      {paymentMethods[1].cardTypes.map((type) => (
+                        <div
+                          key={type}
+                          className={`p-2 border rounded-lg cursor-pointer ${
+                            isDarkMode 
+                              ? 'border-gray-600 hover:border-green-500 bg-gray-700' 
+                              : 'border-gray-300 hover:border-green-500 bg-white'
+                          }`}
+                        >
+                          <div className="text-center">
+                            <span className="text-lg">📱</span>
+                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>{type}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        placeholder="Nhập mã thẻ"
+                        className={`w-full p-2 text-sm rounded-lg border ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-black placeholder-gray-500'
+                        }`}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Nhập seri thẻ"
+                        className={`w-full p-2 text-sm rounded-lg border ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-black placeholder-gray-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {activePaymentMethod === 'bank' && (
+                  <div className="space-y-2">
+                    {paymentMethods[2].banks.map((bank) => (
+                      <div
+                        key={bank.name}
+                        className={`p-2 border rounded-lg text-sm ${
+                          isDarkMode 
+                            ? 'border-gray-600 bg-gray-700' 
+                            : 'border-gray-300 bg-white'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>{bank.name}</p>
+                            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Số TK: {bank.number}</p>
+                            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Chủ TK: {bank.name}</p>
+                          </div>
+                          <button
+                            className={`px-2 py-1 rounded text-sm ${
+                              isDarkMode 
+                                ? 'bg-green-600 text-white hover:bg-green-700' 
+                                : 'bg-green-500 text-white hover:bg-green-600'
+                            }`}
+                            onClick={() => {
+                              navigator.clipboard.writeText(bank.number);
+                              setNotification({
+                                message: 'Đã sao chép số tài khoản',
+                                type: 'success'
+                              });
+                            }}
+                          >
+                            Sao chép
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-2">
+              <button
+                className={`px-3 py-1 rounded text-sm ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                    : 'bg-gray-200 text-black hover:bg-gray-300'
+                }`}
+                onClick={() => setShowCoinRechargePopup(false)}
+              >
+                Hủy
+              </button>
+              <button
+                className={`px-3 py-1 rounded text-sm ${
+                  isDarkMode 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                } ${!selectedPackage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!selectedPackage}
+                onClick={() => {
+                  setShowCoinRechargePopup(false);
+                  setNotification({
+                    message: `Đã chọn gói ${selectedPackage.coins} Coin (${selectedPackage.price.toLocaleString()}đ)`,
+                    type: 'success'
+                  });
+                }}
               >
                 Xác nhận
               </button>

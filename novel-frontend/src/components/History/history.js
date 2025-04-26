@@ -8,29 +8,38 @@ export default function History() {
   const { isDarkMode, loggedInUser } = useContext(UserContext); // Get dark mode state and logged-in user from context
   const [readNovels, setReadNovels] = useState([]); // Initialize as an empty array
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchHistory = async () => {
-      if (!loggedInUser || !loggedInUser.id) { // Use loggedInUser.id
-        
-        // Optionally, redirect to login page if user is not logged in
+      if (!loggedInUser || !loggedInUser._id) {
         setLoading(false);
         return;
       }
 
       try {
-        console.log('Fetching reading histories for user:', loggedInUser.id); // Use loggedInUser.id
-        const histories = await fetchReadingHistories(loggedInUser.id); // Use loggedInUser.id
-        setReadNovels(histories || []); // Ensure full reading history is fetched
+        setLoading(true);
+        console.log('Fetching reading histories for user:', loggedInUser._id);
+        const response = await fetchReadingHistories(loggedInUser._id);
+        
+        if (response && Array.isArray(response)) {
+          setReadNovels(response);
+        } else if (response && response.data && Array.isArray(response.data)) {
+          setReadNovels(response.data);
+        } else {
+          console.error('Invalid reading histories data format:', response);
+          setError('Không thể tải lịch sử đọc. Vui lòng thử lại sau.');
+        }
       } catch (error) {
         console.error('Error fetching reading histories:', error);
+        setError('Không thể tải lịch sử đọc. Vui lòng thử lại sau.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchHistory();
-  }, [loggedInUser, navigate]); // Add navigate to dependencies to avoid stale closure
+  }, [loggedInUser?._id]);
 
   const handleResumeReading = (novel, chapter) => {
     if (novel?._id && chapter?._id) {
@@ -41,14 +50,14 @@ export default function History() {
   };
 
   const handleClearHistory = async () => {
-    if (!loggedInUser || !loggedInUser.id) { // Use loggedInUser.id
+    if (!loggedInUser || !loggedInUser._id) {
       console.error('User ID is missing.');
       return;
     }
 
     try {
       // Call the API to delete all reading history for the logged-in user
-      await deleteAllReadingHistory(loggedInUser.id); // Use loggedInUser.id
+      await deleteAllReadingHistory(loggedInUser._id); // Use loggedInUser._id
       setReadNovels([]); // Clear the local state after deleting history
       alert('Lịch sử đọc đã được xóa!');
     } catch (error) {
@@ -58,7 +67,13 @@ export default function History() {
   };
 
   if (loading) {
-    return <div className="text-center mt-10">Đang tải lịch sử đọc...</div>;
+    return (
+      <div className={`flex justify-center items-center min-h-screen ${
+        isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'
+      }`}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
   return (
@@ -73,6 +88,13 @@ export default function History() {
         }`}
       >
         <h2 className="font-bold text-lg mb-4">LỊCH SỬ ĐỌC</h2>
+        
+        {error && (
+          <div className="p-4 rounded-lg bg-red-100 text-red-700 mb-4">
+            {error}
+          </div>
+        )}
+
         {readNovels && readNovels.length === 0 ? (
           <div className="text-center">
             <img

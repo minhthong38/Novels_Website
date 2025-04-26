@@ -173,14 +173,14 @@ export default function NovelView() {
       <div className="p-5 max-w-4xl mx-auto bg-white shadow-lg rounded-lg mt-6">
         <h1 className="text-4xl font-bold text-center mb-6 text-black">{chapters[currentChapterIndex]?.title}</h1>
         <div className="prose max-w-none text-justify text-lg leading-relaxed space-y-4">
-          {chapterContent.split('\n').map((line, index) => (
+          {chapterContent.split('<br/>').map((line, index) => (
             <div
               key={index}
               className={`flex items-center p-2 rounded-md ${bookmarkedLines.includes(index) ? 'bg-yellow-100' : ''} hover:bg-gray-100 transition`}
               onClick={() => handleLineBookmarkToggle(index)}
               title={bookmarkedLines.includes(index) ? 'Remove Bookmark' : 'Add Bookmark'}
             >
-              <p className="flex-1 cursor-pointer">{line}</p>
+              <p className="flex-1 cursor-pointer" dangerouslySetInnerHTML={{ __html: line }}></p>
               {bookmarkedLines.includes(index) && (
                 <span className="text-yellow-500 font-bold ml-2">★</span>
               )}

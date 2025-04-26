@@ -11,7 +11,7 @@ export default function AuthorSidebar({ activeView }) {
   }
 
   const menuItems = [
-    { label: 'Hồ sơ cá nhân', icon: '👤', view: 'profile', path: '/userAccount' },
+    { label: 'Hồ sơ cá nhân', icon: '👤', view: 'profile', path: '/authorAccounts' },
     { label: 'Truyện của tôi', icon: '📚', view: 'listNovels', path: '/listNovels' },
     { label: 'Thêm truyện mới', icon: '➕', view: 'createNovel', path: '/createNovel' },
     { label: 'Cập nhật truyện', icon: '✏️', view: 'updateNovel', path: '/updateNovel' },

@@ -1,64 +1,44 @@
 import React, { useContext, useEffect, useState } from "react";
 import { UserContext } from '../../context/UserContext';
-import { fetchCategories, createNovel } from '../../services/apiService'; // Import API functions
+import { fetchCategories, createNovel } from '../../services/apiService';
 import AuthorSidebar from '../sidebar/AuthorSidebar';
 
 function CreateNovel() {
   const { loggedInUser, isDarkMode } = useContext(UserContext);
-  const [uploadedImage, setUploadedImage] = useState(null);
   const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
-  const [ageLimit, setAgeLimit] = useState('');
-  const [status, setStatus] = useState('');
-  const [categories, setCategories] = useState([]); // Ensure categories is initialized as an array
-  const [selectedCategories, setSelectedCategories] = useState([]);
   const [description, setDescription] = useState('');
+  const [status, setStatus] = useState('ongoing');
+  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const predefinedCategories = [
-    { id: 1, name: "Family Drama" },
-    { id: 2, name: "Society" },
-    { id: 3, name: "Horror" },
-    { id: 4, name: "Adventure" },
-    { id: 5, name: "Martial Arts" },
-    { id: 6, name: "Romance" },
-    { id: 7, name: "Sports" },
-    { id: 8, name: "Comedy" },
-    { id: 9, name: "Detective" },
-    { id: 10, name: "Science Fiction" },
-  ];
+  // Default cover image
+  const defaultCoverImage = 'https://imgur.com/zOuGi1m.jpg';
 
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const fetchedCategories = await fetchCategories();
-        setCategories(
-          Array.isArray(fetchedCategories) && fetchedCategories.length > 0
-            ? fetchedCategories
-            : predefinedCategories // Use predefined categories if API returns empty
-        );
+        console.log('Fetching categories...');
+        const response = await fetchCategories();
+        console.log('Categories response:', response);
+        
+        if (response && Array.isArray(response)) {
+          setCategories(response);
+        } else if (response && response.data && Array.isArray(response.data)) {
+          setCategories(response.data);
+        } else {
+          console.error('Invalid categories data format:', response);
+          setError('Không thể tải danh mục. Vui lòng thử lại sau.');
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
-        setCategories(predefinedCategories); // Fallback to predefined categories on error
+        setError('Không thể tải danh mục. Vui lòng thử lại sau.');
       }
     };
     loadCategories();
   }, []);
-
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const triggerFileUpload = () => {
-    document.getElementById("image-upload").click();
-  };
 
   const handleCategoryChange = (categoryId) => {
     setSelectedCategories((prev) =>
@@ -69,42 +49,43 @@ function CreateNovel() {
   };
 
   const handleSave = async () => {
-    if (!title || !author || !ageLimit || !status || selectedCategories.length === 0 || !description) {
-      alert('Please fill in all required fields!');
+    if (!title || !description || selectedCategories.length === 0) {
+      setError('Vui lòng điền đầy đủ thông tin bắt buộc');
       return;
     }
 
-    const newNovel = {
-      title,
-      description,
-      authorId: loggedInUser.id || 1,
-      ageLimit,
-      status,
-      categories: selectedCategories,
-      imageUrl: uploadedImage || 'https://via.placeholder.com/150',
-    };
-
     try {
-      await createNovel(newNovel);
-      setSuccessMessage('Novel created successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setLoading(true);
+      const newNovel = {
+        title,
+        description,
+        idCategories: selectedCategories,
+        idUser: loggedInUser._id,
+        status,
+        imageUrl: defaultCoverImage,
+        view: 0,
+        rate: 0
+      };
 
-      // Reset form fields
-      setUploadedImage(null);
-      setTitle('');
-      setAuthor('');
-      setAgeLimit('');
-      setStatus('');
-      setSelectedCategories([]);
-      setDescription('');
+      const response = await createNovel(newNovel);
+      setSuccessMessage('Tạo truyện thành công!');
+      setTimeout(() => {
+        setSuccessMessage('');
+        // Reset form
+        setTitle('');
+        setDescription('');
+        setSelectedCategories([]);
+      }, 3000);
     } catch (error) {
       console.error('Error creating novel:', error);
-      alert('An error occurred while creating the novel!');
+      setError('Không thể tạo truyện. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
     }
   };
 
   if (!loggedInUser) {
-    return <div className="text-center mt-10">Please log in to create a new novel.</div>;
+    return <div className="text-center mt-10">Vui lòng đăng nhập để tạo truyện mới.</div>;
   }
 
   return (
@@ -112,134 +93,185 @@ function CreateNovel() {
       <AuthorSidebar activeView="createNovel" />
       <main className="w-full md:w-3/4 p-8">
         <div className={`p-4 rounded mb-4 ${isDarkMode ? 'bg-red-900 text-white' : 'bg-red-100 text-red-700'}`}>
-          Chỉ chấp nhận nội dung phù hợp với thuần phong mỹ tục và pháp luật Việt Nam. Tác giả lưu ý khi đăng tải tác phẩm. Nếu vi phạm bạn có thể bị khóa truyện, nếu tái phạm có thể bị khóa tài khoản vĩnh viễn.
+          Chỉ chấp nhận nội dung phù hợp với thuần phong mỹ tục và pháp luật Việt Nam. Tác giả lưu ý khi đăng tải tác phẩm.
         </div>
-        <br />
+        
         <div className={`p-4 rounded mb-4 ${isDarkMode ? 'bg-green-900 text-white' : 'bg-green-200 text-black'}`}>
-          Truyện sau khi có đủ 5 chương mới có thể duyệt. Truyện sau khi gửi yêu cầu duyệt mất từ 1-2 ngày để xem xét. Khi đã duyệt hoặc từ chối bạn sẽ nhận được thông báo.
+          Truyện sau khi có đủ 5 chương mới có thể duyệt. Truyện sau khi gửi yêu cầu duyệt mất từ 1-2 ngày để xem xét.
         </div>
-        <br />
+
         <h1 className="text-2xl font-bold mb-6">Tạo Truyện Mới</h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="flex flex-col items-center">
-            <label htmlFor="image-upload" className="cursor-pointer">
-              <img
-                src={uploadedImage || 'https://images.icon-icons.com/1875/PNG/512/fileupload_120150.png'}
-                alt="Book cover"
-                className={`border w-full md:w-60 h-80 px-4 py-2 mb-4 object-cover ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}
-              />
-            </label>
-            <input
-              id="image-upload"
-              type="file"
-              className="hidden"
-              onChange={handleImageUpload}
+
+        {/* Author Info */}
+        <div className={`p-4 rounded-lg mb-6 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+          <h2 className="text-lg font-semibold mb-2">Thông tin tác giả</h2>
+          <div className="flex items-center space-x-4">
+            <img 
+              src={loggedInUser.avatar || 'https://via.placeholder.com/150'} 
+              alt="Author avatar" 
+              className="w-16 h-16 rounded-full"
             />
-            <button
-              className="bg-green-500 text-white px-8 py-2 rounded shadow-md hover:bg-green-600 w-full md:w-auto"
-              onClick={triggerFileUpload}
-            >
-              Chọn Ảnh Bìa
-            </button>
+            <div>
+              <p className="font-semibold">{loggedInUser.fullName || loggedInUser.username}</p>
+              <p className="text-sm text-gray-500">{loggedInUser.email}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Cover Image Section */}
+          <div className="flex flex-col items-center">
+            <div className={`relative w-full md:w-60 h-80 border-2 rounded-lg overflow-hidden ${
+              isDarkMode ? 'border-gray-600' : 'border-gray-300'
+            }`}>
+              <img
+                src={defaultCoverImage}
+                alt="Default book cover"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <p className="mt-2 text-sm text-gray-500">Ảnh bìa mặc định</p>
           </div>
 
-          {/* Left Section */}
-          <div className="flex flex-col">
-            <div className="mb-4">
+          {/* Basic Info Section */}
+          <div className="flex flex-col space-y-4">
+            <div>
+              <label className="block font-bold mb-2">Tiêu đề</label>
               <input
                 type="text"
-                className={`border-b w-full px-4 py-2 focus:outline-none mb-4 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'border-gray-300'}`}
-                placeholder="Nhập tiêu đề truyện tại đây"
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-white border-gray-600' 
+                    : 'bg-white text-black border-gray-300'
+                }`}
+                placeholder="Nhập tiêu đề truyện"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
             </div>
-            <div className="mb-4">
-              <input
-                type="text"
-                className={`border-b w-full px-4 py-2 focus:outline-none mb-4 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'border-gray-300'}`}
-                placeholder="Nhập tên tác giả"
-                value={author}
-                onChange={(e) => setAuthor(e.target.value)}
-              />
-            </div>
 
-            <div className="mb-4">
-              <label className="block font-bold mb-2">Giới Hạn Độ Tuổi</label>
+            <div>
+              <label className="block font-bold mb-2">Tình trạng</label>
               <select
-                className={`border rounded w-full px-4 py-2 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'border-gray-300'}`}
-                value={ageLimit}
-                onChange={(e) => setAgeLimit(e.target.value)}
-              >
-                <option value=""></option>
-                <option value="16+">16+</option>
-                <option value="18+">18+</option>
-                <option value="20+">20+</option>
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label className="block font-bold mb-2">Tình Trạng</label>
-              <select
-                className={`border rounded w-full px-4 py-2 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'border-gray-300'}`}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-white border-gray-600' 
+                    : 'bg-white text-black border-gray-300'
+                }`}
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
               >
-                <option value=""></option>
-                <option value="Đang cập nhật">Đang cập nhật</option>
-                <option value="Đã hoàn thành">Đã hoàn thành</option>
-                <option value="Sắp ra mắt">Sắp ra mắt</option>
+                <option value="ongoing">Đang cập nhật</option>
+                <option value="completed">Đã hoàn thành</option>
+                <option value="hiatus">Tạm ngưng</option>
               </select>
             </div>
           </div>
 
-          {/* Right Section */}
+          {/* Categories Section */}
           <div className="flex flex-col">
-            <div className="mb-4">
-              <h3 className="text-lg font-bold">Novel Categories</h3>
-              <p className="text-sm text-gray-500 mb-2">Select up to 10 categories</p>
-              <div className={`border p-4 rounded h-80 overflow-y-scroll ${isDarkMode ? 'border-gray-600' : 'border-black'}`}>
-                <div className="flex flex-col">
-                  {categories.map((category) => (
-                    <div
-                      key={category.id}
-                      className="flex justify-between items-center mb-2"
-                    >
-                      <span>{category.name}</span>
-                      <input
-                        type="checkbox"
-                        checked={selectedCategories.includes(category.id)}
-                        onChange={() => handleCategoryChange(category.id)}
-                      />
-                    </div>
-                  ))}
-                </div>
+            <h3 className="text-lg font-bold mb-2">Thể loại</h3>
+            {categories.length === 0 ? (
+              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                <p className="text-center">Đang tải thể loại...</p>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className={`border rounded-lg p-4 h-80 overflow-y-auto ${
+                  isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
+                }`}>
+                  <div className="grid grid-cols-1 gap-2">
+                    {categories.map((category) => (
+                      <label
+                        key={category._id}
+                        className={`flex items-center p-2 rounded-lg cursor-pointer ${
+                          selectedCategories.includes(category._id)
+                            ? isDarkMode
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-blue-500 text-white'
+                            : isDarkMode
+                            ? 'hover:bg-gray-700'
+                            : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mr-2"
+                          checked={selectedCategories.includes(category._id)}
+                          onChange={() => handleCategoryChange(category._id)}
+                        />
+                        {category.name || category.titleCategory}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {selectedCategories.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm font-semibold">Đã chọn: {selectedCategories.length} thể loại</p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {selectedCategories.map(categoryId => {
+                        const category = categories.find(c => c._id === categoryId);
+                        return category ? (
+                          <span 
+                            key={categoryId}
+                            className={`px-2 py-1 rounded-full text-sm ${
+                              isDarkMode 
+                                ? 'bg-blue-600 text-white' 
+                                : 'bg-blue-100 text-blue-800'
+                            }`}
+                          >
+                            {category.name || category.titleCategory}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 
-        {/* Introduction Section */}
+        {/* Description Section */}
         <div className="mt-8">
-          <label className="block font-bold mb-2">Giới Thiệu</label>
+          <label className="block font-bold mb-2">Giới thiệu</label>
           <textarea
-            className={`border rounded w-full px-4 py-2 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'border-gray-300'}`}
+            className={`w-full px-4 py-2 rounded-lg border ${
+              isDarkMode 
+                ? 'bg-gray-700 text-white border-gray-600' 
+                : 'bg-white text-black border-gray-300'
+            }`}
             rows="6"
+            placeholder="Nhập nội dung giới thiệu truyện"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           ></textarea>
         </div>
 
-        <button
-          className="bg-red-500 text-white px-6 py-2 rounded shadow-md hover:bg-red-600 mt-6 w-full md:w-auto"
-          onClick={handleSave}
-        >
-          Lưu Thay Đổi
-        </button>
-
-        {successMessage && (
-          <div className="mt-4 text-green-500 font-bold">{successMessage}</div>
+        {/* Error and Success Messages */}
+        {error && (
+          <div className="mt-4 p-4 rounded-lg bg-red-100 text-red-700">
+            {error}
+          </div>
         )}
+        {successMessage && (
+          <div className="mt-4 p-4 rounded-lg bg-green-100 text-green-700">
+            {successMessage}
+          </div>
+        )}
+
+        {/* Save Button */}
+        <button
+          className={`mt-6 px-6 py-3 rounded-lg font-bold ${
+            isDarkMode 
+              ? 'bg-green-600 text-white hover:bg-green-700' 
+              : 'bg-green-500 text-white hover:bg-green-600'
+          }`}
+          onClick={handleSave}
+          disabled={loading}
+        >
+          {loading ? 'Đang tạo...' : 'Tạo Truyện'}
+        </button>
       </main>
     </div>
   );

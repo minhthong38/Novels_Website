@@ -2,13 +2,13 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { UserContext } from '../../context/UserContext';
-import Recommend from '../Recommend/recommend'; // Import Recommend component
-import { fetchChaptersByNovelId, addExpToReader, createReadingHistory, toggleFavorite } from '../../services/apiService'; // Import API services
+import Recommend from '../Recommend/recommend';
+import { fetchChaptersByNovelId, addExpToReader, createReadingHistory, toggleFavorite, fetchFavoriteNovels } from '../../services/apiService';
 
 export default function NovelDetail() {
   const [activePart, setActivePart] = useState(null);
   const [novel, setNovel] = useState({});
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [editingComment, setEditingComment] = useState(null);
@@ -16,8 +16,7 @@ export default function NovelDetail() {
   const [rating, setRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [parts, setParts] = useState([]); // Replace static parts with state
-  const [isFavorited, setIsFavorited] = useState(false);
+  const [parts, setParts] = useState([]);
   const navigate = useNavigate();
   const { novelID } = useParams();
   const { isDarkMode, loggedInUser } = useContext(UserContext);
@@ -27,12 +26,11 @@ export default function NovelDetail() {
       try {
         const response = await axios.get(`http://localhost:5000/api/novels/${novelID}`);
         const novelData = response.data.data;
-        novelData.Views += 1; // Increment the views count
+        novelData.Views += 1;
         setNovel(novelData);
 
-        // Fetch chapters for the novel
         const chapters = await fetchChaptersByNovelId(novelID);
-        setParts(chapters.map((chapter) => ({ label: chapter.title, id: chapter._id }))); // Include chapter ID
+        setParts(chapters.map((chapter) => ({ label: chapter.title, id: chapter._id })));
       } catch (err) {
         setError('Không thể lấy thông tin tiểu thuyết.');
       } finally {
@@ -47,42 +45,32 @@ export default function NovelDetail() {
       if (!loggedInUser?._id) return;
   
       try {
-        console.log("Kiểm tra trạng thái yêu thích...");
-        const response = await axios.get(`http://localhost:5000/api/favoriteNovels/check/${loggedInUser._id}/${novelID}`);
-  
-        if (response?.data?.isFavorited !== undefined) {
-          setIsFavorited(response.data.isFavorited);
-        } else {
-          console.warn("API không trả về trạng thái yêu thích đúng");
-        }
-  
+        const favorites = await fetchFavoriteNovels(loggedInUser._id);
+        const isNovelFavorited = favorites.some(fav => fav.idNovel?._id === novelID);
+        console.log('Favorite status:', isNovelFavorited);
+        setIsFavorited(isNovelFavorited);
       } catch (error) {
         console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
       }
     };
   
     checkFavoriteStatus();
-  }, [loggedInUser, novelID]);
+  }, [loggedInUser?._id, novelID]);
 
   if (loading) return <p>Đang tải dữ liệu...</p>;
   if (error) return <p>{error}</p>;
 
   const handlePartClick = async (label) => {
     const selectedChapter = parts.find((part) => part.label === label);
-    if (selectedChapter && loggedInUser?.id) {
+    if (selectedChapter && loggedInUser?._id) {
       try {
-        // 👇 Gọi API cộng EXP
-        await addExpToReader(loggedInUser.id);
-  
-        // 👇 Tạo lịch sử đọc
+        await addExpToReader(loggedInUser._id);
         await createReadingHistory({
-          idUser: loggedInUser.id,
+          idUser: loggedInUser._id,
           idNovel: novelID,
           idChapter: selectedChapter.id,
           lastReadAt: new Date()
         });
-  
-        // 👉 Điều hướng tới chương
         navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
       } catch (error) {
         console.error('Lỗi khi cộng EXP hoặc tạo lịch sử đọc:', error);
@@ -100,24 +88,20 @@ export default function NovelDetail() {
     transition: "all 0.3s ease-in-out",
     padding: "8px 16px"
   };
-  
 
   const handleReadBookClick = async () => {
     try {
-      if (loggedInUser && loggedInUser.id) {
-        console.log('Gọi API cộng EXP...');
-        await addExpToReader(loggedInUser.id);
-  
+      if (loggedInUser?._id) {
+        await addExpToReader(loggedInUser._id);
         const selectedChapter = parts.find((part) => part.label === activePart) || parts[0];
   
         if (selectedChapter) {
           await createReadingHistory({
-            idUser: loggedInUser.id,
+            idUser: loggedInUser._id,
             idNovel: novelID,
             idChapter: selectedChapter.id,
             lastReadAt: new Date()
           });
-  
           navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
         } else {
           navigate(`/novelView/${novelID}`);
@@ -129,8 +113,7 @@ export default function NovelDetail() {
       console.error('Lỗi khi đọc sách:', error);
     }
   };
-  
-  
+
   const handleFavoriteClick = async () => {
     if (!loggedInUser) {
       alert('Vui lòng đăng nhập để thêm vào yêu thích');
@@ -138,20 +121,18 @@ export default function NovelDetail() {
     }
   
     try {
-      const response = await toggleFavorite(loggedInUser._id, novelID);
-      console.log("Phản hồi sau khi toggle yêu thích:", response);
-  
-      if (response && response.message) {
-        alert(response.message); // Chỉ hiển thị phản hồi từ API nếu thành công
-      }
-  
+      await toggleFavorite(loggedInUser._id, novelID);
+      // Cập nhật trạng thái ngay lập tức
       setIsFavorited(!isFavorited);
       
-      const updatedFavorites = await fetchFavoriteNovels(loggedInUser._id);
-      setFavorites(updatedFavorites);
+      // Kiểm tra lại trạng thái từ server sau 1 giây
+      setTimeout(async () => {
+        const favorites = await fetchFavoriteNovels(loggedInUser._id);
+        const isNovelFavorited = favorites.some(fav => fav.idNovel?._id === novelID);
+        setIsFavorited(isNovelFavorited);
+      }, 1000);
     } catch (error) {
       console.error('Lỗi khi thay đổi trạng thái yêu thích:', error);
-   
     }
   };
 
@@ -271,7 +252,7 @@ export default function NovelDetail() {
               </div>
               <div className="flex-1 mt-6 md:mt-0 md:ml-36 w-full md:w-auto">
                 <div className="bg-gradient-to-r from-purple-800 to-indigo-700 p-10 rounded-lg flex justify-center md:justify-start w-full md:w-68 shadow-md">
-                  <ul className="text-white text-lg text-left space-y-2">
+                  <ul className="text-white text-lg text-left space-y-2 max-h-[500px] overflow-y-auto pr-4">
                     {parts.map((part, index) => (
                       <li key={index}>
                         <button

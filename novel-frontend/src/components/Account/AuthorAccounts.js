@@ -206,7 +206,6 @@ function AuthorAccounts() {
               <input id="image-upload" type="file" className="hidden" onChange={handleImageUpload} />
               <p className="text-lg font-bold">{userData.displayName}</p>
               <p className="text-sm">{`Cấp độ hiện tại: ${currentLevel} - ${titleLevel}`}</p>
-              <p className="text-sm mt-2">Tỷ lệ chia sẻ doanh thu: <span className="font-bold">60% - 40%</span></p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 text-center">
               <div className="border rounded-lg py-2 shadow">

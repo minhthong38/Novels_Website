@@ -141,6 +141,18 @@ export const createNovel = async (novelData) => {
   }
 };
 
+export const deleteNovel = async (novelId) => {
+  try {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const response = await axios.delete(`${NOVEL_API}/${novelId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || 'Lỗi khi xóa truyện';
+  }
+};
+
 // ===================== CATEGORY =====================
 export const fetchCategories = async () => {
   try {
@@ -176,6 +188,30 @@ export const fetchChapterContent = async (chapterId) => {
     return response.data.data;
   } catch (error) {
     throw error.response?.data || 'Lỗi không xác định';
+  }
+};
+
+export const createChapter = async (chapterData) => {
+  try {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const response = await axios.post(CHAPTER_API, chapterData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || 'Lỗi khi tạo chương mới';
+  }
+};
+
+export const updateChapter = async (chapterId, chapterData) => {
+  try {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const response = await axios.put(`${CHAPTER_API}/${chapterId}`, chapterData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || 'Lỗi khi cập nhật chương';
   }
 };
 

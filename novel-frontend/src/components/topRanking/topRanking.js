@@ -12,38 +12,64 @@ export default function TopRanking() {
   const [authorRankings, setAuthorRankings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedReader, setSelectedReader] = useState(null);
+  const [showReaderPopup, setShowReaderPopup] = useState(false);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
 
     const getNovelRankings = async () => {
       try {
         const data = await fetchNovelRankings();
-        setNovelRankings(data.data);
+        if (data && data.data) {
+          // Filter out any invalid entries
+          const validNovels = data.data.filter(novel => 
+            novel?.idNovel?._id && novel?.idNovel?.title
+          );
+          setNovelRankings(validNovels);
+        } else {
+          setNovelRankings([]);
+        }
       } catch (err) {
-        setError(err.message || 'An error occurred');
-      } finally {
-        setLoading(false);
+        setError(err.message || 'An error occurred while fetching novel rankings');
+        setNovelRankings([]);
       }
     };
   
     const getReaderRankings = async () => {
       try {
         const data = await fetchReaderRankings();
-        setReaderRankings(data);
+        if (data) {
+          // Filter out any invalid entries
+          const validReaders = data.filter(reader => 
+            reader?.idUser?._id && reader?.idUser?.fullname
+          );
+          setReaderRankings(validReaders);
+        } else {
+          setReaderRankings([]);
+        }
       } catch (err) {
-        setError(err.message || 'An error occurred');
-      } finally {
-        setLoading(false);
+        setError(err.message || 'An error occurred while fetching reader rankings');
+        setReaderRankings([]);
       }
     };
   
     const getAuthorRankings = async () => {
       try {
         const data = await fetchAuthorRankings();
-        setAuthorRankings(data);
+        if (data) {
+          // Filter out any invalid entries
+          const validAuthors = data.filter(author => 
+            author?.idUser?._id && author?.idUser?.fullname
+          );
+          setAuthorRankings(validAuthors);
+        } else {
+          setAuthorRankings([]);
+        }
       } catch (err) {
-        setError(err.message || 'An error occurred');
+        setError(err.message || 'An error occurred while fetching author rankings');
+        setAuthorRankings([]);
       } finally {
         setLoading(false);
       }
@@ -60,9 +86,16 @@ export default function TopRanking() {
     navigate(`/novelDetail/${novelID}`);
   };
 
-  const handleReaderClick = (readerID) => {
-    navigate(`/readerDetail/${readerID}`); // Chuyển hướng khi nhấp vào độc giả
+  const handleReaderClick = (reader) => {
+    setSelectedReader(reader);
+    setShowReaderPopup(true);
   };
+
+  const closeReaderPopup = () => {
+    setShowReaderPopup(false);
+    setSelectedReader(null);
+  };
+
   return (
     <div
       className={`py-10 ${
@@ -88,7 +121,7 @@ export default function TopRanking() {
             <p className="text-center text-red-500">{error}</p>
           ) : readerRankings.length > 0 ? (
             <>
-              <div className="flex flex-col items-center mb-4 cursor-pointer" onClick={() => handleReaderClick(readerRankings[0].idUser._id)}>
+              <div className="flex flex-col items-center mb-4 cursor-pointer" onClick={() => handleReaderClick(readerRankings[0])}>
                 <img 
                   src={readerRankings[0].idUser.avatar || 'https://via.placeholder.com/150'} 
                   alt={readerRankings[0].idUser.fullname}
@@ -98,7 +131,7 @@ export default function TopRanking() {
               </div>
               <div className="overflow-y-auto h-64">
                 {readerRankings.map((reader, index) => (
-                  <div key={reader.idUser._id} className="flex items-center mb-4 cursor-pointer" onClick={() => handleReaderClick(reader.idUser._id)}>
+                  <div key={reader.idUser._id} className="flex items-center mb-4 cursor-pointer" onClick={() => handleReaderClick(reader)}>
                     {index !== 0 && (
                       <>
                         <span className="flex-1 text-left">{index + 1}. {reader.idUser.fullname} {index === 1 ? '🥈' : index === 2 ? '🥉' : ''}</span>
@@ -125,10 +158,14 @@ export default function TopRanking() {
             <p className="text-center">Loading...</p>
           ) : error ? (
             <p className="text-center text-red-500">{error}</p>
-          ) : novelRankings.length > 0 ? (
+          ) : novelRankings && novelRankings.length > 0 ? (
             <>
               <div className="flex flex-col items-center mb-4 cursor-pointer" onClick={() => handleNovelClick(novelRankings[0].idNovel._id)}>
-                <img src={novelRankings[0].idNovel.imageUrl} alt={`Book cover of '${novelRankings[0].idNovel.title}'`} className="w-24 h-36" />
+                <img 
+                  src={novelRankings[0].idNovel.imageUrl || 'https://via.placeholder.com/150'} 
+                  alt={`Book cover of ${novelRankings[0].idNovel.title}`} 
+                  className="w-24 h-36"
+                />
                 <span className="text-center mt-2">{novelRankings[0].idNovel.title} 🥇</span>
               </div>
               <div className="overflow-y-auto h-64">
@@ -149,7 +186,7 @@ export default function TopRanking() {
               </div>
             </>
           ) : (
-            <p className="text-center">No rankings available</p>
+            <p className="text-center">Chưa có dữ liệu xếp hạng</p>
           )}
         </div>
 
@@ -193,6 +230,35 @@ export default function TopRanking() {
           className="absolute right-20 top-[calc(50%-10px)] transform -translate-y-1/2 hidden md:block w-40 h-auto animate-flap"
         />
       </div>
+
+      {/* Reader Popup */}
+      {showReaderPopup && selectedReader && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`p-6 rounded-lg shadow-lg max-w-md w-full mx-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Thông tin độc giả</h3>
+              <button onClick={closeReaderPopup} className="text-gray-500 hover:text-gray-700">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex flex-col items-center">
+              <img
+                src={selectedReader.idUser.avatar || 'https://via.placeholder.com/150'}
+                alt={selectedReader.idUser.fullname}
+                className="w-32 h-32 rounded-full mb-4"
+              />
+              <h4 className="text-xl font-semibold mb-2">{selectedReader.idUser.fullname}</h4>
+              <p className="text-gray-600 mb-2">Email: {selectedReader.idUser.email}</p>
+              <p className="text-gray-600 mb-2">Username: {selectedReader.idUser.username}</p>
+              <p className="text-gray-600 mb-2">Điểm kinh nghiệm: {selectedReader.totalExp || 0}</p>
+              <p className="text-gray-600 mb-2">Cấp độ: {selectedReader.idLevel?.level || 1}</p>
+              <p className="text-gray-600 mb-2">Danh hiệu: {selectedReader.idLevel?.title || 'Chưa có'}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

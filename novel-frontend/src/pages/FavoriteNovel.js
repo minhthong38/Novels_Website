@@ -65,7 +65,7 @@ export default function FavoriteNovel() {
   return (
     <div className={`p-6 ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
       <div className="max-w-screen-xl mx-auto text-center">
-        <h1 className="text-2xl font-bold mb-6">❤ DANH SÁCH YÊU THÍCH ❤</h1>
+        <h1 className="text-2xl font-bold mb-6"> DANH SÁCH YÊU THÍCH </h1>
         {favorites.length > 0 && (
           <button
             onClick={handleRemoveAllFavorites}
@@ -78,7 +78,7 @@ export default function FavoriteNovel() {
 
       {favorites.length === 0 ? (
         <div className="text-center">
-          <img src="https://imgur.com/cx9u9rN.jpg" alt="Không có truyện yêu thích" className="w-28 h-28 mx-auto mb-4" />
+          <img src="https://imgur.com/33Se6Xs.jpg" alt="Không có truyện yêu thích" className="w-28 h-28 mx-auto mb-4" />
           <p className="text-lg">Bạn chưa có truyện yêu thích nào.</p>
           <Link to="/" className="text-blue-500 hover:underline mt-4 inline-block text-lg">
             Khám phá truyện ngay
@@ -94,12 +94,12 @@ export default function FavoriteNovel() {
                   isDarkMode ? "bg-gray-700 text-white" : "bg-gray-100 text-black"
                 }`}
               >
-                <Link to={`/novel/${favorite.idNovel._id}`}>
+                <Link to={`/novelDetail/${favorite.idNovel._id}`}>
                   <img src={favorite.idNovel.imageUrl} alt={favorite.idNovel.title} className="w-full h-48 object-cover" />
                 </Link>
                 <div className="p-4 text-center">
                   <Link
-                    to={`/novel/${favorite.idNovel._id}`}
+                    to={`/novelDetail/${favorite.idNovel._id}`}
                     className="text-lg font-semibold hover:text-blue-500"
                   >
                     {favorite.idNovel.title}
