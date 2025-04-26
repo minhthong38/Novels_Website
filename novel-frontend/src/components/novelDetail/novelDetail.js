@@ -2,35 +2,36 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { UserContext } from '../../context/UserContext';
-import Recommend from '../Recommend/recommend';
-import { fetchChaptersByNovelId, addExpToReader, createReadingHistory, toggleFavorite, fetchFavoriteNovels  
-,addComment, fetchCommentsByNovel, deleteComment, submitRating, fetchRatingsByNovel,deleteRating
-  ,fetchUserRatingForNovel } from '../../services/apiService'; // Import API services
+import Recommend from '../Recommend/recommend'; // Import Recommend component
+import { fetchChaptersByNovelId, addExpToReader, 
+  createReadingHistory, toggleFavorite,fetchFavoriteNovels,
+  addComment, fetchCommentsByNovel, deleteComment, submitRating, fetchRatingsByNovel,deleteRating
+,fetchUserRatingForNovel } from '../../services/apiService'; // Import API services
 
-  export default function NovelDetail() {
-    const [activePart, setActivePart] = useState(null);
-    const [novel, setNovel] = useState({});
+export default function NovelDetail() {
+  const [activePart, setActivePart] = useState(null);
+  const [novel, setNovel] = useState({});
+  const [favorites, setFavorites] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [editingComment, setEditingComment] = useState(null);
+  const [editedCommentText, setEditedCommentText] = useState('');
+  const [rating, setRating] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [parts, setParts] = useState([]); // Replace static parts with state
+  const [isFavorited, setIsFavorited] = useState(false);
+  const navigate = useNavigate();
+  const { novelID } = useParams();
+  const { isDarkMode, loggedInUser } = useContext(UserContext);
+  //rating
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalRatings, setTotalRatings] = useState(0);
+  const [ratingData, setRatingData] = useState({ average: 0, total: 0 });
+  const [userRating, setUserRating] = useState(0);
 
-    const [comments, setComments] = useState([]);
-    const [newComment, setNewComment] = useState('');
-    const [editingComment, setEditingComment] = useState(null);
-    const [editedCommentText, setEditedCommentText] = useState('');
-    const [rating, setRating] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [parts, setParts] = useState([]); // Replace static parts with state
-    const [isFavorited, setIsFavorited] = useState(false);
-    const navigate = useNavigate();
-    const { novelID } = useParams();
-    const { isDarkMode, loggedInUser } = useContext(UserContext);
-    //rating
-    const [averageRating, setAverageRating] = useState(0);
-    const [totalRatings, setTotalRatings] = useState(0);
-    const [ratingData, setRatingData] = useState({ average: 0, total: 0 });
-    const [userRating, setUserRating] = useState(0);
-
-   //rating
-   useEffect(() => {
+  //rating
+  useEffect(() => {
     const fetchRatings = async () => {
       try {
         const res = await axios.get(`http://localhost:5000/api/ratings/novel/${novelID}`);
@@ -83,33 +84,32 @@ import { fetchChaptersByNovelId, addExpToReader, createReadingHistory, toggleFav
     getUserRating();
   }, [novelID, loggedInUser]);
   
+  
+  
+  
   //comment
   useEffect(() => {
     const loadComments = async () => {
       try {
         const data = await fetchCommentsByNovel(novelID);
-        console.log('Dữ liệu bình luận trả về từ API:', data); // Thêm dòng này để xem dữ liệu
-        if (Array.isArray(data)) {
-          const enrichedComments = data.map(comment => ({
-            ...comment,
-            avatar: comment.idUser?.avatar,
-            fullname: comment.idUser?.fullname,
-          }));
-          setComments(enrichedComments);
-        } else {
-          setComments([]);
-          console.error('Dữ liệu bình luận không phải là mảng.');
-        }
+        
+        // Thêm thông tin người dùng vào mỗi bình luận nếu cần
+        const enrichedComments = data.map(comment => ({
+          ...comment,
+          avatar: comment.idUser.avatar,      // Thêm avatar nếu cần
+          fullname: comment.idUser.fullname,  // Đảm bảo fullname có trong comment
+        }));
+    
+        setComments(enrichedComments);  // Cập nhật state với bình luận đã được thêm thông tin người dùng
       } catch (error) {
         console.error('Lỗi khi tải bình luận:', error);
         setError('Lỗi khi tải bình luận.');
       }
-    };    
-  
+    };      
     loadComments();
-  }, [novelID]);
-  
-  
+  }, [novelID]); 
+    
+
   useEffect(() => {
     const fetchNovelDetails = async () => {
       try {
@@ -150,33 +150,31 @@ import { fetchChaptersByNovelId, addExpToReader, createReadingHistory, toggleFav
   if (loading) return <p>Đang tải dữ liệu...</p>;
   if (error) return <p>{error}</p>;
 
-  const handleCommentSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Lấy dữ liệu cần thiết từ state
-    const commentData = {
-      idNovel: novelID,  // ID tiểu thuyết
-      idUser: loggedInUser._id, // ID người dùng đã đăng nhập
-      content: newComment, // Nội dung bình luận
-    };
+  const handleCommentSubmit = async () => {
+    if (!newComment.trim() || !loggedInUser) return;
   
     try {
-      const response = await addComment(commentData); // Gọi API addComment
-      if (response?.success) {
-        console.log('Bình luận đã được thêm thành công');
-        
-        // Sau khi bình luận thành công, tải lại danh sách bình luận
-        const updatedComments = await fetchCommentsByNovel(novelID);
-        console.log('Phản hồi từ API:', updatedComments);
-        setComments(updatedComments);  // Cập nhật lại bình luận mới
+      // Gửi bình luận đến API
+      const response = await addComment(novelID, loggedInUser.id, newComment);
+      
   
-        // Đặt lại nội dung bình luận
-        setNewComment('');
+      if (response.success && response.data && response.data._id) {
+        // Thêm thông tin người dùng vào bình luận
+        const newCommentData = {
+          ...response.data,
+          fullname: loggedInUser.fullname,  // Thêm tên người dùng
+          avatar: loggedInUser.avatar,      // Thêm hình ảnh người dùng
+        };
+  
+        // Cập nhật lại state comments với bình luận mới
+        setComments([newCommentData, ...comments]);
+        setNewComment(''); // Reset lại ô nhập bình luận
       } else {
-        console.error('Lỗi khi gửi bình luận:', response?.message);
+        setError('Không thể thêm bình luận');
       }
-    } catch (err) {
-      console.error('Có lỗi xảy ra khi gửi bình luận:', err);
+    } catch (error) {
+      console.error('Lỗi khi gửi bình luận:', error);
+      setError('Có lỗi xảy ra, vui lòng thử lại.');
     }
   };
   
@@ -372,7 +370,7 @@ import { fetchChaptersByNovelId, addExpToReader, createReadingHistory, toggleFav
                       ))}
                     </div>
                     <span className="text-yellow-300 text-sm">
-                      {averageRating ? averageRating.toFixed(1) : 'Chưa có đánh giá'} / 5 ({totalRatings || 0} đánh giá)
+                      {averageRating ? averageRating.toFixed(1) : 'Chưa có đánh giá'} / 5 ({totalRatings ? totalRatings : 0} đánh giá)
                     </span>
                   </div>
                   <p className="text-sm mt-2 text-gray-200">
@@ -437,55 +435,56 @@ import { fetchChaptersByNovelId, addExpToReader, createReadingHistory, toggleFav
                 <h2 className="text-2xl font-bold mb-6">GIỚI THIỆU NỘI DUNG</h2>
                 <p className="mb-6 text-lg">{novel.description || 'Chưa có mô tả'}</p>
                 <div className="mt-8">
-                  <h3 className="text-xl font-semibold mb-4">Bình luận</h3>
-                  {loggedInUser ? (
-                    <div className="mb-4">
-                      <textarea
-                        className="w-full p-2 border rounded text-black"
-                        rows="3"
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Viết bình luận..."
-                      />
-                      <button
-                        onClick={handleCommentSubmit}
-                        className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
-                      >
-                        Gửi bình luận
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-gray-400">Vui lòng đăng nhập để bình luận.</p>
-                  )}
-  
-                  <ul className="space-y-4">
-                    {comments.map((comment) => {
-                      console.log('comment nè :', comment);
-                      console.log('loggedInUser nè :', loggedInUser);
-                      return (
-                        <li key={comment._id} className="bg-gray-100 dark:bg-gray-800 p-4 rounded shadow">
-                          <div className="flex items-center mb-2">
-                            <img
-                              src={comment.avatar || '/default-avatar.png'}
-                              alt="Avatar"
-                              className="w-8 h-8 rounded-full mr-2"
-                            />
-                            <span className="font-semibold text-sm">{comment.fullname || 'Ẩn danh'}</span>
-                            {(loggedInUser._id || loggedInUser.id) === (comment.idUser?._id || comment.idUser) && (
-                              <button
-                                onClick={() => handleDeleteComment(comment._id)}
-                                className="ml-auto text-red-500 hover:text-red-700 text-sm"
-                              >
-                                Xóa
-                              </button>
-                            )}
-                          </div>
-                          <p className="text-sm">{comment.content}</p>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                <h3 className="text-xl font-semibold mb-4">Bình luận</h3>
+                {loggedInUser ? (
+                  <div className="mb-4">
+                    <textarea
+                      className="w-full p-2 border rounded text-black"
+                      rows="3"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Viết bình luận..."
+                    />
+                    <button
+                      onClick={handleCommentSubmit}
+                      className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                    >
+                      Gửi bình luận
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-gray-400">Vui lòng đăng nhập để bình luận.</p>
+                )}
+
+                <ul className="space-y-4">
+                {comments.map((comment) => {
+                  console.log('comment nè :' , comment);  // Kiểm tra cấu trúc của mỗi comment
+                  console.log("loggedInUser nè :", loggedInUser);
+                  return (
+                    <li key={comment._id} className="bg-gray-100 dark:bg-gray-800 p-4 rounded shadow">
+                      <div className="flex items-center mb-2">
+                        <img
+                          src={comment.avatar || '/default-avatar.png'}
+                          alt="Avatar"
+                          className="w-8 h-8 rounded-full mr-2"
+                        />
+                        <span className="font-semibold text-sm">{comment.fullname || 'Ẩn danh'}</span>
+                        {(loggedInUser._id || loggedInUser.id) === (comment.idUser?._id || comment.idUser) && (
+                          <button
+                            onClick={() => handleDeleteComment(comment._id)}
+                            className="ml-auto text-red-500 hover:text-red-700 text-sm"
+                          >
+                            Xóa
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-sm">{comment.content}</p>
+                    </li>
+                  );
+                })}
+
+                </ul>
+              </div>
               </div>
               <div className="flex-1 md:ml-12">
                 <Recommend

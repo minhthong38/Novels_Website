@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { UserContext } from '../../context/UserContext'; // Import UserContext/ Import UserNotification component
 import axios from 'axios'; // Import axios
 import {fetchReaderExp} from '../../services/apiService';
+import { registerAsAuthor, checkAuthorRequestStatus  } from '../../services/apiService'; //đăng ký tác giả
 import { Link } from 'react-router-dom';
 
 export default function UserAccount() {
@@ -196,13 +197,31 @@ export default function UserAccount() {
     }
   };
   
+  const handleAuthorRequest = async () => {
+    try {
+      // 1. Kiểm tra trạng thái yêu cầu trước
+      const statusData = await checkAuthorRequestStatus(loggedInUser._id);
   
-  const handleAuthorRequest = () => {
-    const updatedUser = { ...loggedInUser, authorRequest: true };
-    setLoggedInUser(updatedUser);
-    updateGlobalUser(updatedUser); // Update global context
-    setShowAuthorRequestPopup(false);
-    setNotification({ message: 'Yêu cầu làm tác giả đã được gửi.', type: 'success' });
+      if (statusData.status === 'pending') {
+        // Nếu đang chờ xét duyệt thì không gửi yêu cầu nữa
+        setNotification({ message: 'Yêu cầu của bạn đang được xét duyệt.', type: 'info' });
+        setShowAuthorRequestPopup(false);
+        return;
+      }
+  
+      // 2. Nếu chưa có yêu cầu, thực hiện đăng ký
+      const userData = { idUser: loggedInUser._id };
+      const result = await registerAsAuthor(userData);
+  
+      setShowAuthorRequestPopup(false);
+      setNotification({ message: 'Yêu cầu của bạn đã được gửi cho admin để xét duyệt.', type: 'success' });
+  
+      // Không thay đổi vai trò ở đây. Chỉ thay đổi khi yêu cầu được phê duyệt
+  
+    } catch (error) {
+      console.error('Error registering as author:', error);
+      setNotification({ message: error.message || 'Đăng ký thất bại, vui lòng thử lại.', type: 'error' });
+    }
   };
 
   const handleAuthorSpaceClick = () => {
@@ -244,6 +263,14 @@ export default function UserAccount() {
         >
           NẠP COIN
         </button>
+        {loggedInUser.role !== 'author' && (
+        <button
+          className={`mt-4 w-full py-2 rounded-lg ${isDarkMode ? 'bg-green-600 text-white' : 'bg-green-500 text-black'}`}
+          onClick={() => setShowAuthorRequestPopup(true)}
+        >
+          ĐĂNG KÝ LÀM TÁC GIẢ
+        </button>
+        )}
         <div className="space-y-4 mt-4">
           <ul className="space-y-2">
             <li className="flex items-center">

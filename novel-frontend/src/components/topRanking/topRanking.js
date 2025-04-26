@@ -130,20 +130,11 @@ export default function TopRanking() {
                 <span className="text-center mt-2">{readerRankings[0].idUser.fullname} 🥇</span>
               </div>
               <div className="overflow-y-auto h-64">
-                {readerRankings.map((reader, index) => (
-                  <div key={reader.idUser._id} className="flex items-center mb-4 cursor-pointer" onClick={() => handleReaderClick(reader)}>
-                    {index !== 0 && (
-                      <>
-                        <span className="flex-1 text-left">{index + 1}. {reader.idUser.fullname} {index === 1 ? '🥈' : index === 2 ? '🥉' : ''}</span>
-                        {index < 3 && (
-                          <span className={`text-2xl ${index === 1 ? 'text-gray-400' : 'text-orange-500'}`}>
-                            <i className="fas fa-medal"></i>
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
+              {readerRankings.slice(1).map((reader, index) => (
+                <div key={reader.idUser._id} className="flex items-center mb-4 cursor-pointer" onClick={() => handleReaderClick(reader)}>
+                  <span className="flex-1 text-left">{index + 2}. {reader.idUser.fullname} {index === 0 ? '🥈' : index === 1 ? '🥉' : ''}</span>
+                </div>
+              ))}
               </div>
             </>
           ) : (
@@ -169,20 +160,12 @@ export default function TopRanking() {
                 <span className="text-center mt-2">{novelRankings[0].idNovel.title} 🥇</span>
               </div>
               <div className="overflow-y-auto h-64">
-                {novelRankings.map((novel, index) => (
-                  <div key={novel.idNovel._id} className="flex items-center mb-4 cursor-pointer" onClick={() => handleNovelClick(novel.idNovel._id)}>
-                    {index !== 0 && (
-                      <>
-                        <span className="flex-1 text-left">{index + 1}. {novel.idNovel.title} {index === 1 ? '🥈' : index === 2 ? '🥉' : ''}</span>
-                        {index < 3 && (
-                          <span className={`text-2xl ${index === 1 ? 'text-gray-400' : 'text-orange-500'}`}>
-                            <i className="fas fa-medal"></i>
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
+              {novelRankings.slice(1).map((novel, index) => (
+                <div key={novel.idNovel._id} className="flex items-center mb-4 cursor-pointer" onClick={() => handleNovelClick(novel.idNovel._id)}>
+                  <span className="flex-1 text-left">{index + 2}. {novel.idNovel.title} {index === 0 ? '🥈' : index === 1 ? '🥉' : ''}</span>
+                </div>
+              ))}
+
               </div>
             </>
           ) : (

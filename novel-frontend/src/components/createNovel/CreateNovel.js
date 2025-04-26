@@ -55,17 +55,21 @@ function CreateNovel() {
     }
 
     try {
+
+      
       setLoading(true);
       const newNovel = {
         title,
         description,
         idCategories: selectedCategories,
-        idUser: loggedInUser._id,
+        idUser: loggedInUser.id,
         status,
         imageUrl: defaultCoverImage,
         view: 0,
         rate: 0
       };
+
+console.log('novelData gửi đi:', newNovel);
 
       const response = await createNovel(newNovel);
       setSuccessMessage('Tạo truyện thành công!');

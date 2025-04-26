@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api';
-
 const USERS_API = `${API_URL}/users`;
 const READER_EXP = `${API_URL}/readerExps`;
 const AUTHOR_EXP = `${API_URL}/authorExps`;
@@ -12,10 +11,10 @@ const NOVEL_API = `${API_URL}/novels`;
 const CATEGORY_API = `${API_URL}/categories`;
 const CHAPTER_API = `${API_URL}/chapters`;
 const READING_HISTORIES_API = `${API_URL}/readingHistories`;
-const FAVORITE_API = `${API_URL}/favorites`;
-const BOOKMARK_API = `${API_URL}/bookmarks`;
 const COMMENT_API = `${API_URL}/comments`;
+const BOOKMARK_API = `${API_URL}/bookmarks`;
 const RATING_API = `${API_URL}/ratings`;
+const AUTHOR_REGISTER_API = `${API_URL}/authorRegisters`; // Đăng Ký làm tác giả
 
 // ===================== USER =====================
 export const loginUser = async (email, password) => {
@@ -291,73 +290,6 @@ export const toggleFavorite = async (idUser, idNovel) => {
   }
 };
 
-// ===================== BOOKMARK =====================
-export const fetchBookmarks = async (idUser) => {
-  try {
-    const response = await axios.get(`${BOOKMARK_API}/user/${idUser}`);
-    return response.data.data;
-  } catch (error) {
-    throw error.response?.data || 'Lỗi khi lấy bookmark';
-  }
-};
-
-export const createBookmark = async (data) => {
-  try {
-    const response = await axios.post(`${BOOKMARK_API}`, data);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || 'Lỗi khi tạo bookmark';
-  }
-};
-
-export const deleteBookmark = async (idUser, idNovel) => {
-  try {
-    const response = await axios.delete(`${BOOKMARK_API}/user/${idUser}/novel/${idNovel}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || 'Lỗi khi xóa bookmark';
-  }
-};
-
-// ===================== COMMENT =====================
-export const fetchCommentsByNovel = async (idNovel) => {
-  try {
-    const response = await axios.get(`${COMMENT_API}/novel/${idNovel}`);
-    console.log('✅ Dữ liệu từ API bình luận:', response.data);
-    
-    // Vì response.data là một mảng, nên trả về luôn
-    if (Array.isArray(response.data)) {
-      return response.data;
-    } else {
-      throw new Error('Dữ liệu bình luận không hợp lệ hoặc không có bình luận.');
-    }
-  } catch (error) {
-    console.error('❌ Lỗi từ API:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Lỗi khi lấy bình luận');
-  }
-};
-
-
-
-
-export const addComment = async (data) => {
-  try {
-    const response = await axios.post(COMMENT_API, data);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || 'Lỗi khi tạo bình luận';
-  }
-};
-
-export const deleteComment = async (commentId) => {
-  try {
-    const response = await axios.delete(`${COMMENT_API}/${commentId}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || 'Lỗi khi xoá bình luận';
-  }
-};
-
 // ===================== READING HISTORY =====================
 export const fetchReadingHistories = async (userId) => {
   try {
@@ -386,10 +318,108 @@ export const deleteAllReadingHistory = async (userId) => {
   }
 };
 
+// ===================== COMMENT =====================
+
+// Thêm bình luận
+export const addComment = async (idNovel, idUser, content) => {
+  try {
+    const response = await axios.post(COMMENT_API, {
+      idNovel,
+      idUser,
+      content,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi thêm bình luận:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+// Lấy tất cả bình luận của một novel
+export const fetchCommentsByNovel = async (novelId) => {
+  try {
+    const response = await axios.get(`${COMMENT_API}/novel/${novelId}`);
+    console.log('API response:', response);  // Xem chi tiết phản hồi
+    return response.data || []; // Kiểm tra lại cấu trúc và trả về dữ liệu
+  } catch (error) {
+    console.error('Error fetching comments by novel:', error);
+    throw error.response?.data || 'Unknown error occurred';
+  }
+};
+
+//Xóa bình luận
+export const deleteComment = async (commentId) => {
+try {
+  const response = await axios.delete(`${COMMENT_API}/${commentId}`);
+  return response.data;
+} catch (error) {
+  console.error('Error deleting comment:', error);
+  throw error.response?.data || 'Unknown error occurred';
+}
+};
+
+// Cập nhật bình luận
+export const updateComment = async (commentId, content) => {
+try {
+  const response = await axios.put(`${COMMENT_API}/${commentId}`, {
+    content,
+  });
+  return response.data;
+} catch (error) {
+  console.error('Error updating comment:', error);
+  throw error.response?.data || 'Unknown error occurred';
+}
+};
+
+// ===================== BOOKMARK =====================
+// Thêm bookmark
+export const createBookmark = async (bookmarkData) => {
+  try {
+    const response = await axios.post(BOOKMARK_API, bookmarkData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating bookmark:', error.response?.data || error.message);
+    throw error; // Ném lỗi ra ngoài để có thể xử lý ở nơi gọi API
+  }
+};
+
+export const deleteBookmarkByChapter = async (idChapter) => {
+  try {
+    const response = await axios.delete(`${BOOKMARK_API}/chapter/${idChapter}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting bookmark by chapter:', error.response?.data || error.message);
+    throw error; // Ném lỗi ra ngoài để có thể xử lý ở nơi gọi API
+  }
+};
+
+export const getBookmarkByChapter = async (idChapter) => {
+  try {
+    const response = await axios.get(`${BOOKMARK_API}/chapter/${idChapter}`);
+    if (response.data.message === 'Chưa có bookmark cho chương này') {
+      // Nếu không có bookmark, bạn có thể xử lý theo cách khác
+      console.log('Chưa có bookmark cho chương này');
+      return null;
+    }
+    return response.data; // Trả về bookmark nếu có
+  } catch (error) {
+    console.error('Error fetching bookmark by chapter:', error.response?.data || error.message);
+    throw error.response?.data || 'Failed to fetch bookmark by chapter';
+  }
+};
+
+
 // ===================== RATING =====================
+
+// Gửi đánh giá (POST request)
 export const submitRating = async (novelId, userId, rating) => {
   try {
-    const response = await axios.post(`${RATING_API}`, { userId, novelId, rating });
+    const response = await axios.post(`${RATING_API}`, {
+      userId,
+      novelId,
+      rating,
+    });
     console.log('Rating submitted successfully');
     return response.data;
   } catch (error) {
@@ -398,6 +428,7 @@ export const submitRating = async (novelId, userId, rating) => {
   }
 };
 
+//Lấy rating tổng
 export const fetchRatingsByNovel = async (novelId) => {
   try {
     const response = await axios.get(`${RATING_API}/novel/${novelId}`);
@@ -408,11 +439,13 @@ export const fetchRatingsByNovel = async (novelId) => {
   }
 };
 
+// Xóa đánh giá
 export const deleteRating = async (novelId, userId) => {
   try {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     console.log('Gọi API xóa đánh giá với novelId:', novelId, 'userId:', userId);
 
+    // Gửi yêu cầu DELETE tới API
     const response = await axios.delete(`${RATING_API}/novel/${novelId}/user/${userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -425,12 +458,39 @@ export const deleteRating = async (novelId, userId) => {
   }
 };
 
+//Lấy rating của của User dựa vào novelId và userId
 export const fetchUserRatingForNovel = async (novelId, userId) => {
   try {
     const response = await axios.get(`${RATING_API}/novel/${novelId}/user/${userId}`);
-    return response.data;
+    return response.data; // response là object chứa thông tin rating
   } catch (error) {
     console.error('Lỗi khi lấy đánh giá của user:', error);
     throw error.response?.data || 'Không thể lấy đánh giá';
   }
 };
+
+// ===================== AUTHOR REGISTER =====================
+// Đăng ký làm tác giả (dành cho reader)
+export const registerAsAuthor = async (data) => {
+  try {
+    const response = await axios.post(`${AUTHOR_REGISTER_API}/register`, {
+      userId: data.idUser   // <-- map lại đúng tên key server yêu cầu
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error during author registration:', error.response?.data || error.message);
+    throw error.response?.data || error;
+  }
+};
+
+//Kiểm tra trạng thái yêu cầu đăng ký tác giả
+export const checkAuthorRequestStatus = async (userId) => {
+  try {
+    const response = await axios.get(`${AUTHOR_REGISTER_API}/check/${userId}`);
+    return response.data;  // trả về status: pending, approved, rejected
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+
