@@ -13,6 +13,9 @@ const CATEGORY_API = `${API_URL}/categories`;
 const CHAPTER_API = `${API_URL}/chapters`;
 const READING_HISTORIES_API = `${API_URL}/readingHistories`;
 const FAVORITE_API = `${API_URL}/favorites`;
+const BOOKMARK_API = `${API_URL}/bookmarks`;
+const COMMENT_API = `${API_URL}/comments`;
+const RATING_API = `${API_URL}/ratings`;
 
 // ===================== USER =====================
 export const loginUser = async (email, password) => {
@@ -24,6 +27,15 @@ export const loginUser = async (email, password) => {
   }
 };
 
+export const registerUser = async (userData) => {
+  try {
+    const response = await axios.post(`${USERS_API}/register`, userData);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || 'Registration failed';
+  }
+};
+
 export const fetchUserDetails = async (token) => {
   try {
     const response = await axios.get(`${USERS_API}/me`, {
@@ -32,6 +44,18 @@ export const fetchUserDetails = async (token) => {
     return response.data;
   } catch (error) {
     throw error.response?.data || 'Failed to fetch user details';
+  }
+};
+
+export const updateUserProfile = async (userId, updateData) => {
+  try {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const response = await axios.put(`${USERS_API}/${userId}`, updateData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || 'Failed to update profile';
   }
 };
 
@@ -61,6 +85,15 @@ export const fetchAuthorExp = async (userId) => {
   try {
     if (!userId) return;
     const response = await axios.get(`${AUTHOR_EXP}/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addExpToAuthor = async (userId) => {
+  try {
+    const response = await axios.post(`${AUTHOR_EXP}/add-exp`, { userId });
     return response.data;
   } catch (error) {
     throw error;
@@ -138,6 +171,18 @@ export const createNovel = async (novelData) => {
     return response.data;
   } catch (error) {
     throw error.response?.data || 'Failed to create novel';
+  }
+};
+
+export const updateNovel = async (novelId, data) => {
+  try {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const response = await axios.put(`${NOVEL_API}/${novelId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || 'Failed to update novel';
   }
 };
 
@@ -246,6 +291,73 @@ export const toggleFavorite = async (idUser, idNovel) => {
   }
 };
 
+// ===================== BOOKMARK =====================
+export const fetchBookmarks = async (idUser) => {
+  try {
+    const response = await axios.get(`${BOOKMARK_API}/user/${idUser}`);
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || 'Lỗi khi lấy bookmark';
+  }
+};
+
+export const createBookmark = async (data) => {
+  try {
+    const response = await axios.post(`${BOOKMARK_API}`, data);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || 'Lỗi khi tạo bookmark';
+  }
+};
+
+export const deleteBookmark = async (idUser, idNovel) => {
+  try {
+    const response = await axios.delete(`${BOOKMARK_API}/user/${idUser}/novel/${idNovel}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || 'Lỗi khi xóa bookmark';
+  }
+};
+
+// ===================== COMMENT =====================
+export const fetchCommentsByNovel = async (idNovel) => {
+  try {
+    const response = await axios.get(`${COMMENT_API}/novel/${idNovel}`);
+    console.log('✅ Dữ liệu từ API bình luận:', response.data);
+    
+    // Vì response.data là một mảng, nên trả về luôn
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      throw new Error('Dữ liệu bình luận không hợp lệ hoặc không có bình luận.');
+    }
+  } catch (error) {
+    console.error('❌ Lỗi từ API:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || 'Lỗi khi lấy bình luận');
+  }
+};
+
+
+
+
+export const addComment = async (data) => {
+  try {
+    const response = await axios.post(COMMENT_API, data);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || 'Lỗi khi tạo bình luận';
+  }
+};
+
+export const deleteComment = async (commentId) => {
+  try {
+    const response = await axios.delete(`${COMMENT_API}/${commentId}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || 'Lỗi khi xoá bình luận';
+  }
+};
+
 // ===================== READING HISTORY =====================
 export const fetchReadingHistories = async (userId) => {
   try {
@@ -271,5 +383,54 @@ export const deleteAllReadingHistory = async (userId) => {
     return response.data;
   } catch (error) {
     throw error.response?.data || 'Failed to delete all reading history';
+  }
+};
+
+// ===================== RATING =====================
+export const submitRating = async (novelId, userId, rating) => {
+  try {
+    const response = await axios.post(`${RATING_API}`, { userId, novelId, rating });
+    console.log('Rating submitted successfully');
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting rating', error);
+    throw error;
+  }
+};
+
+export const fetchRatingsByNovel = async (novelId) => {
+  try {
+    const response = await axios.get(`${RATING_API}/novel/${novelId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching ratings by novel:', error);
+    throw error.response?.data || 'Unknown error occurred';
+  }
+};
+
+export const deleteRating = async (novelId, userId) => {
+  try {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    console.log('Gọi API xóa đánh giá với novelId:', novelId, 'userId:', userId);
+
+    const response = await axios.delete(`${RATING_API}/novel/${novelId}/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log('Rating deleted successfully', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi xóa đánh giá:', error);
+    throw error.response?.data || 'Không thể xóa đánh giá';
+  }
+};
+
+export const fetchUserRatingForNovel = async (novelId, userId) => {
+  try {
+    const response = await axios.get(`${RATING_API}/novel/${novelId}/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy đánh giá của user:', error);
+    throw error.response?.data || 'Không thể lấy đánh giá';
   }
 };
