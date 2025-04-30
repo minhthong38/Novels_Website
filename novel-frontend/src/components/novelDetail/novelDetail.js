@@ -30,6 +30,9 @@ export default function NovelDetail() {
   const [ratingData, setRatingData] = useState({ average: 0, total: 0 });
   const [userRating, setUserRating] = useState(0);
 
+  const [showPurchasePopup, setShowPurchasePopup] = useState(false);
+  const [selectedChapter, setSelectedChapter] = useState(null);
+
   //rating
   useEffect(() => {
     const fetchRatings = async () => {
@@ -120,7 +123,7 @@ export default function NovelDetail() {
 
         // Fetch chapters for the novel
         const chapters = await fetchChaptersByNovelId(novelID);
-        setParts(chapters.map((chapter) => ({ label: chapter.title, id: chapter._id }))); // Include chapter ID
+        setParts(chapters.map((chapter) => ({ label: chapter.title, id: chapter._id, price: chapter.price || 0 }))); // Include chapter ID
       } catch (err) {
         setError('Không thể lấy thông tin tiểu thuyết.');
       } finally {
@@ -191,29 +194,37 @@ export default function NovelDetail() {
 
   const handlePartClick = async (label) => {
     const selectedChapter = parts.find((part) => part.label === label);
-    if (selectedChapter && loggedInUser?.id) {
-      try {
-        // 👇 Gọi API cộng EXP
-        await addExpToReader(loggedInUser.id);
+    if (!selectedChapter) return;
   
-        // 👇 Tạo lịch sử đọc
+    const isAuthor = loggedInUser?._id === novel?.idUser?._id || loggedInUser?.id === novel?.idUser?._id;
+  
+    // Nếu chương có phí và người dùng không phải tác giả => hiển thị popup mua
+    if (selectedChapter.price > 0 && !isAuthor) {
+      setSelectedChapter(selectedChapter);
+      setShowPurchasePopup(true);
+      return;
+    }
+  
+    // Nếu là tác giả hoặc chương miễn phí => đọc luôn
+    try {
+      const userId = loggedInUser?._id || loggedInUser?.id;
+      if (userId) {
+        await addExpToReader(userId);
         await createReadingHistory({
-          idUser: loggedInUser.id,
+          idUser: userId,
           idNovel: novelID,
           idChapter: selectedChapter.id,
-          lastReadAt: new Date()
+          lastReadAt: new Date(),
         });
-  
-        // 👉 Điều hướng tới chương
-        navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
-      } catch (error) {
-        console.error('Lỗi khi cộng EXP hoặc tạo lịch sử đọc:', error);
-        navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
       }
-    } else if (selectedChapter) {
+      navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
+    } catch (error) {
+      console.error('Lỗi khi đọc chương:', error);
       navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
     }
   };
+  
+  
 
   const glowEffect = {
     boxShadow: "0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #00f, 0 0 50px #00f, 0 0 60px #00f, 0 0 70px #00f",
@@ -221,6 +232,26 @@ export default function NovelDetail() {
     borderRadius: "5px",
     transition: "all 0.3s ease-in-out",
     padding: "8px 16px"
+  };
+  
+  const proceedToReadChapter = async (chapter) => {
+    try {
+      if (loggedInUser?.id) {
+        await addExpToReader(loggedInUser.id);
+  
+        await createReadingHistory({
+          idUser: loggedInUser._id || loggedInUser.id,
+          idNovel: novelID,
+          idChapter: chapter.id,
+          lastReadAt: new Date(),
+        });
+      }
+  
+      navigate(`/novelView/${novelID}?chapterId=${chapter.id}`);
+    } catch (error) {
+      console.error('Lỗi khi đọc chương:', error);
+      navigate(`/novelView/${novelID}?chapterId=${chapter.id}`);
+    }
   };
   
 
@@ -412,20 +443,21 @@ export default function NovelDetail() {
                 </div>
               </div>
               <div className="flex-1 mt-6 md:mt-0 md:ml-36 w-full md:w-auto">
-                <div className="bg-gradient-to-r from-purple-800 to-indigo-700 p-10 rounded-lg flex justify-center md:justify-start w-full md:w-68 shadow-md">
-                  <ul className="text-white text-lg text-left space-y-2">
-                    {parts.map((part, index) => (
-                      <li key={index}>
-                        <button
-                          style={activePart === part.label ? glowEffect : null}
-                          className="hover:text-yellow-400 transition duration-300 ease-in-out transform"
-                          onClick={() => handlePartClick(part.label)}
-                        >
-                          {part.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="bg-gradient-to-r from-purple-800 to-indigo-700 p-10 rounded-lg flex justify-center md:justify-start w-full md:w-68 shadow-md overflow-y-auto max-h-64">
+                <ul className="text-white text-lg text-left space-y-2">
+                  {parts.map((part, index) => (
+                    <li key={index} className="flex items-center space-x-2">
+                      <button
+                        style={activePart === part.label ? glowEffect : null}
+                        className="hover:text-yellow-400 transition duration-300 ease-in-out transform flex items-center gap-1"
+                        onClick={() => handlePartClick(part.label)}
+                      >
+                        {part.label}
+                        {part.price > 0 && <span title="Chương tính phí">💰</span>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
                 </div>
               </div>
             </div>
@@ -495,6 +527,35 @@ export default function NovelDetail() {
             </div>
           </>
         )}
+
+          {showPurchasePopup && selectedChapter && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <div className="bg-white text-black p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h2 className="text-xl font-semibold mb-4">Mua chương</h2>
+                <p>
+                  Bạn có muốn mua chương <strong>{selectedChapter.label}</strong> với giá{' '}
+                  <strong>{selectedChapter.price} xu</strong> không?
+                </p>
+                <div className="mt-4 flex justify-end space-x-4">
+                  <button
+                    className="bg-gray-400 text-white px-4 py-2 rounded"
+                    onClick={() => setShowPurchasePopup(false)}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                    onClick={async () => {
+                      setShowPurchasePopup(false);
+                      await proceedToReadChapter(selectedChapter); // Điều hướng ở đây
+                    }}
+                  >
+                    Mua và đọc
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
       </div>
     </div>
   );

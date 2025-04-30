@@ -18,11 +18,13 @@ export default function UpdateNovel() {
   const [filteredChapters, setFilteredChapters] = useState([]);
   const [showCreateChapter, setShowCreateChapter] = useState(false);
   const [newChapter, setNewChapter] = useState({
+    chapterNumber: 1,
     title: '',
     content: '',
-    chapterNumber: 1,
-    banners: [null, null, null]
+    price: 0,
+    banners: ['', '', ''],
   });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [contentSource, setContentSource] = useState('write'); // 'write' or 'upload'
@@ -146,6 +148,7 @@ export default function UpdateNovel() {
         title: fullTitle,
         content: newChapter.content,
         chapterNumber: newChapter.chapterNumber,
+        price: newChapter.price,
         banners: newChapter.banners || [null, null, null]
       });
       
@@ -446,6 +449,22 @@ export default function UpdateNovel() {
                         isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
                       }`}
                       placeholder="Nhập tên chương"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Giá chương (VNĐ)
+                      <span className="text-gray-500 ml-1">(nếu chương này có thu phí)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={newChapter.price}
+                      onChange={(e) => setNewChapter({ ...newChapter, price: parseInt(e.target.value) || 0 })}
+                      className={`w-full p-2 rounded-lg border ${
+                        isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
+                      }`}
+                      placeholder="Nhập giá chương (0 nếu miễn phí)"
                     />
                   </div>
                 </div>

@@ -15,6 +15,8 @@ const COMMENT_API = `${API_URL}/comments`;
 const BOOKMARK_API = `${API_URL}/bookmarks`;
 const RATING_API = `${API_URL}/ratings`;
 const AUTHOR_REGISTER_API = `${API_URL}/authorRegisters`; // Đăng Ký làm tác giả
+const TRANSACTION_API = `${API_URL}/transactions`;
+const WALLET_API = `${API_URL}/wallets`;
 
 // ===================== USER =====================
 export const loginUser = async (email, password) => {
@@ -490,6 +492,102 @@ export const checkAuthorRequestStatus = async (userId) => {
     return response.data;  // trả về status: pending, approved, rejected
   } catch (error) {
     throw error.response?.data || error;
+  }
+};
+
+// ===================== MOMO QR =====================
+//Thanh toán quét QR Momo
+export const createMomoPayment = async (paymentData, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/payments/create-payment`, paymentData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log("response",response.data);
+    
+    return response.data; // Trả về link QR hoặc thông tin giao dịch
+  } catch (error) {
+    console.error('Error creating MoMo payment:', error);
+    throw error;
+  }
+};
+
+// ===================== Transaction =====================
+// Tạo giao dịch và số coin nhận được
+export const createTransaction = async (paymentData, token) => {
+  try {
+    const response = await axios.post(`${TRANSACTION_API}/create-transaction`, paymentData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json', // BẮT BUỘC CÓ
+      },
+    });
+    console.log('Transaction created:', response.data);
+    return response.data;  // Trả về thông tin giao dịch và số coin nhận được
+  } catch (error) {
+    console.error('Error creating transaction:', error);
+    throw error.response?.data || 'Failed to create transaction';
+  }
+};
+
+// Lấy lịch sử giao dịch của người dùng
+export const fetchUserTransactions = async (idUser) => {
+  try {
+    const response = await axios.get(`${TRANSACTION_API}/transactions/${idUser}`);
+    return response.data;  // Trả về danh sách giao dịch của người dùng
+  } catch (error) {
+    console.error('Error fetching user transactions:', error);
+    throw error.response?.data || 'Failed to fetch user transactions';
+  }
+};
+
+// ===================== Wallet USer =====================
+// API Client: Tạo ví cho người dùng mới
+export const createWallet = async (userId, token) => {
+  try {
+    const response = await axios.post(`${WALLET_API}/create/${userId}`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json', // BẮT BUỘC CÓ
+      },
+    });
+    console.log('Wallet created:', response.data);
+    return response.data; // Trả về thông tin ví mới tạo
+  } catch (error) {
+    console.error('Error creating wallet:', error);
+    throw error.response?.data || 'Failed to create wallet';
+  }
+};
+
+// API Client: Lấy thông tin ví của người dùng
+export const getWallet = async (userId, token) => {
+  try {
+    const response = await axios.get(`${WALLET_API}/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log('Wallet details:', response.data);
+    return response.data; // Trả về thông tin ví của người dùng
+  } catch (error) {
+    console.error('Error fetching wallet:', error);
+    throw error.response?.data || 'Failed to fetch wallet';
+  }
+};
+
+// API Client: Cập nhật số dư ví của người dùng
+export const updateWallet = async (userId, amount, token) => {
+  try {
+    const response = await axios.put(`${WALLET_API}/update/${userId}`, { amount }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Wallet updated:', response.data);
+    return response.data; // Trả về thông tin ví sau khi cập nhật
+  } catch (error) {
+    console.error('Error updating wallet:', error);
+    throw error.response?.data || 'Failed to update wallet';
   }
 };
 

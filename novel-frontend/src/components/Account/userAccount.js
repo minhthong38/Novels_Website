@@ -3,7 +3,11 @@ import { UserContext } from '../../context/UserContext'; // Import UserContext/ 
 import axios from 'axios'; // Import axios
 import {fetchReaderExp} from '../../services/apiService';
 import { registerAsAuthor, checkAuthorRequestStatus  } from '../../services/apiService'; //đăng ký tác giả
+import { createMomoPayment, createTransaction } from '../../services/apiService'; // Import API thanh toán MoMo
+import { updateWallet, getWallet } from '../../services/apiService'; //Cập nhật Coin
 import { Link } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
+import jwt_decode from 'jwt-decode';
 
 export default function UserAccount() {
   const { setLoggedInUser: updateGlobalUser, isDarkMode } = useContext(UserContext); // Access context to update global user and dark mode state
@@ -20,7 +24,9 @@ export default function UserAccount() {
   const [showCoinRechargePopup, setShowCoinRechargePopup] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [activePaymentMethod, setActivePaymentMethod] = useState('momo'); // 'momo', 'card', 'bank'
-  const [showQRCode, setShowQRCode] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState(null); // Trạng thái lưu link QR
+  const [spendingWallet, setSpendingWallet] = useState(0);
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
   const coinPackages = [
     { id: 1, coins: 4, price: 20000, bonus: 0 },
@@ -64,14 +70,13 @@ export default function UserAccount() {
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  
       if (!token) {
-        console.error('No token found. Please log in.');
+        console.error('Không tìm thấy token. Vui lòng đăng nhập.');
         return;
       }
   
       try {
-        // Gọi API để lấy user info
+        // Lấy thông tin người dùng
         const response = await axios.get('http://localhost:5000/api/users/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -85,23 +90,101 @@ export default function UserAccount() {
           setNewGender(user.gender || "other");
           setNewFullName(user.fullname || "");
   
-          // Gọi API exp riêng biệt
+          // Lấy dữ liệu ví từ API
+          const walletData = await getWallet(user._id, token);
+          console.log('Wallet data:', walletData); // Log dữ liệu ví để kiểm tra
+          if (walletData) {
+            setSpendingWallet(walletData.wallet.balance || 0); // Cập nhật state
+          } else {
+            console.error('Không có dữ liệu ví!');
+          }
+  
+          // Lấy dữ liệu EXP
           const expData = await fetchReaderExp(user._id);
           if (expData) {
             setExp(expData.totalExp);
             setLevel(expData.idLevel?.title || "Chưa có cấp độ");
           }
         } else {
-          console.error('User data is incomplete or _id is missing.');
+          console.error('Dữ liệu người dùng không đầy đủ hoặc thiếu _id.');
         }
       } catch (error) {
-        console.error('Failed to fetch user data or exp:', error);
+        if (error.response && error.response.status === 401) {
+          console.error('Token không hợp lệ hoặc đã hết hạn.');
+        } else {
+          console.error('Lỗi khi lấy thông tin người dùng hoặc ví:', error);
+        }
       }
     };
   
     fetchUserData();
-  }, []);
+  }, []);  
+
+  //Xử lý thanh toán momo
+  const handlePackageSelect = (pkg) => {
+    setSelectedPackage(pkg);
+  };
+
+  // 2. Tạo thanh toán
+  const handleCreateMomoPayment = async () => {
+    if (!selectedPackage) {
+      alert('Vui lòng chọn gói nạp!');
+      return;
+    }
   
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      alert('Vui lòng đăng nhập!');
+      return;
+    }
+  
+    try {
+      // Dữ liệu thanh toán MoMo
+      const paymentData = {
+        amount: selectedPackage.price,
+        orderInfo: `Nạp ${selectedPackage.coins} coin cho user ${loggedInUser.fullname}`,
+        idUser: loggedInUser._id,
+        bonus: selectedPackage.bonus,
+      };    
+  
+      // Gọi API MoMo để tạo thanh toán
+      const result = await createMomoPayment(paymentData, token);
+      console.log('MoMo payment result:', result);
+  
+      if (result && result.deeplink) {
+        console.log('Deeplink:', result.deeplink); // In deeplink ra để kiểm tra
+      
+        // Kiểm tra nếu deeplink là một đối tượng và lấy đúng URL
+        const deeplinkUrl = result.deeplink && typeof result.deeplink === 'object' ? result.deeplink.payUrl : result.deeplink;
+  
+          window.location.href = deeplinkUrl;
+        
+        // Gửi yêu cầu tạo giao dịch vào server của bạn sau khi thanh toán
+        const transactionData = {
+          amount: selectedPackage.price,
+          orderInfo: paymentData.orderInfo,
+          idUser: loggedInUser._id,
+          orderId: result.deeplink.orderId,
+        };       
+        if (!transactionData.orderId) {
+          alert('Lỗi: Không nhận được orderId từ MoMo.');
+          return;
+        }
+  
+        // Gọi API để tạo giao dịch
+        const transactionResult = await createTransaction(transactionData, token);
+  
+        // Sau khi thanh toán thành công, bạn có thể cập nhật giao dịch là 'completed' từ callback hoặc webhook.
+      } else {
+        console.error('Không nhận được deeplink từ MoMo:', result);
+        alert('Không nhận được link thanh toán. Vui lòng thử lại.');
+      }
+    } catch (error) {
+      console.error('Lỗi khi tạo thanh toán MoMo:', error);
+      alert('Tạo thanh toán thất bại.');
+    }
+  };    
+
   const handleAvatarUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -248,10 +331,15 @@ export default function UserAccount() {
           <p className="text-gray-600">{loggedInUser.gender}</p>
         </div>
         <div className="mt-4">
-          <div className="flex justify-between items-center">
-            <span>Ví chi tiêu</span>
-            <span>0.00 <i className="fas fa-coins text-yellow-500"></i></span>
-          </div>
+        <div className="flex justify-between items-center">
+          <span>Ví chi tiêu : </span>
+          <span>
+            {Number.isInteger(spendingWallet) 
+              ? spendingWallet 
+              : spendingWallet.toFixed(2)} 
+            <i className="fas fa-coins text-yellow-500"> Coin</i>
+          </span>
+        </div>
           <div className="flex justify-between items-center mt-2">
             <span>Ví doanh thu</span>
             <span>0.00 <i className="fas fa-coins text-yellow-500"></i></span>
@@ -472,8 +560,8 @@ export default function UserAccount() {
       {/* Coin Recharge Popup */}
       {showCoinRechargePopup && (
         <div className={`fixed inset-0 flex items-center justify-center ${isDarkMode ? 'bg-black bg-opacity-75' : 'bg-black bg-opacity-50'}`}>
-          <div className={`p-4 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
-            <div className="flex justify-between items-center mb-3">
+        <div className={`p-4 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} w-[90%] max-w-lg`}>
+          <div className="flex justify-between items-center mb-3">
               <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Nạp Coin</h2>
               <button
                 onClick={() => setShowCoinRechargePopup(false)}
@@ -484,35 +572,47 @@ export default function UserAccount() {
             </div>
 
             {/* Package Selection */}
+            {/* Chọn gói coin */}
             <div className="mb-3">
               <h3 className={`text-sm font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Chọn gói Coin</h3>
               <div className="grid grid-cols-3 gap-2">
                 {coinPackages.map((pkg) => (
                   <div
                     key={pkg.id}
-                    className={`p-2 rounded-lg border cursor-pointer transition-all ${
-                      selectedPackage?.id === pkg.id
-                        ? isDarkMode
-                          ? 'border-green-500 bg-gray-700'
-                          : 'border-green-500 bg-green-50'
-                        : isDarkMode
-                        ? 'border-gray-600 hover:border-green-500'
-                        : 'border-gray-300 hover:border-green-500'
-                    }`}
-                    onClick={() => setSelectedPackage(pkg)}
+                    className={`p-2 rounded-lg border cursor-pointer transition-all ${selectedPackage?.id === pkg.id ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-green-500'}`}
+                    onClick={() => handlePackageSelect(pkg)} // Chọn gói khi click
                   >
                     <div className="text-center">
-                      <div className={`text-lg font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-500'}`}>{pkg.coins}</div>
-                      <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Coin</div>
-                      <div className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>{pkg.price.toLocaleString()}đ</div>
+                      <div className="text-lg font-bold text-yellow-500">{pkg.coins}</div>
+                      <div className="text-xs text-gray-600">Coin</div>
+                      <div className="text-sm font-semibold">{pkg.price.toLocaleString()}đ</div>
                       {pkg.bonus > 0 && (
-                        <div className={`text-xs ${isDarkMode ? 'text-green-400' : 'text-green-500'}`}>+{pkg.bonus}</div>
+                        <div className="text-xs text-green-500">+{pkg.bonus}</div>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* Hiển thị QR Code nếu có */}
+            {qrCodeUrl && (
+              <div className="flex justify-center mt-4">
+                <div className="p-2 bg-white rounded-lg">
+                <QRCodeSVG
+                  value={qrCodeUrl}  // URL tạo từ API MoMo
+                  size={200}         // Kích thước QR code
+                  fgColor="#000000"  // Màu của QR code
+                  bgColor="#ffffff"  // Màu nền của QR code
+                />
+                </div>
+              </div>
+            )}
+
+            {/* Button thanh toán MoMo */}
+            <button onClick={handleCreateMomoPayment} className="btn btn-primary mt-4">
+              Thanh toán MoMo
+            </button>
 
             {/* Payment Methods Tabs */}
             <div className="mb-3">
@@ -662,13 +762,10 @@ export default function UserAccount() {
                     : 'bg-green-500 text-white hover:bg-green-600'
                 } ${!selectedPackage ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={!selectedPackage}
-                onClick={() => {
+                onClick={async () => {
                   setShowCoinRechargePopup(false);
-                  setNotification({
-                    message: `Đã chọn gói ${selectedPackage.coins} Coin (${selectedPackage.price.toLocaleString()}đ)`,
-                    type: 'success'
-                  });
-                }}
+                  await handleCreateMomoPayment(); // Gọi thanh toán Momo luôn
+                }}                
               >
                 Xác nhận
               </button>
