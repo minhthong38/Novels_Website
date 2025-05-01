@@ -15,12 +15,12 @@ const COMMENT_API = `${API_URL}/comments`;
 const BOOKMARK_API = `${API_URL}/bookmarks`;
 const RATING_API = `${API_URL}/ratings`;
 const AUTHOR_REGISTER_API = `${API_URL}/authorRegisters`; // Đăng Ký làm tác giả
-<<<<<<< HEAD
+
 const TRANSACTION_API = `${API_URL}/transactions`;
 const WALLET_API = `${API_URL}/wallets`;
-=======
+
 const AUTHOR_TASK_API = `${API_URL}/authorTasks`; 
->>>>>>> 8486a35 (exp + task)
+
 
 // ===================== USER =====================
 export const loginUser = async (email, password) => {
@@ -514,7 +514,7 @@ export const fetchAllTasks = async () => {
   }
 };
 
-<<<<<<< HEAD
+
 // ===================== MOMO QR =====================
 //Thanh toán quét QR Momo
 export const createMomoPayment = async (paymentData, token) => {
@@ -611,7 +611,7 @@ export const updateWallet = async (userId, amount, token) => {
   }
 };
 
-=======
+
 // ===================== AUTHOR TASK =====================
 /**
  * Lấy danh sách nhiệm vụ của tác giả theo authorExpId
@@ -632,7 +632,7 @@ export const fetchAuthorTask = async (authorExpId) => {
     throw error.response?.data || "Failed to fetch author task";
   }
 };
->>>>>>> 8486a35 (exp + task)
+
 
 /**
  * Hoàn thành nhiệm vụ tác giả hiện tại

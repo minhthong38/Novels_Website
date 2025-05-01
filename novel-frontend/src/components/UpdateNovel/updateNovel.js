@@ -17,18 +17,9 @@ export default function UpdateNovel() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredChapters, setFilteredChapters] = useState([]);
   const [showCreateChapter, setShowCreateChapter] = useState(false);
-<<<<<<< HEAD
-  const [newChapter, setNewChapter] = useState({
-    chapterNumber: 1,
-    title: '',
-    content: '',
-    price: 0,
-    banners: ['', '', ''],
-  });
-  
-=======
+
   const [newChapter, setNewChapter] = useState({ title: '', content: '', chapterNumber: 1, banners: [null, null, null] });
->>>>>>> 8486a35 (exp + task)
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [contentSource, setContentSource] = useState('write'); 
@@ -263,16 +254,16 @@ export default function UpdateNovel() {
             </svg>
           </div>
           <button
-  onClick={() => setShowCreateChapter(true)}
-  className={`flex items-center gap-2 px-5 py-2.5 rounded-md shadow-md transition-all duration-300 text-sm sm:text-base font-medium ${
-    isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'
-  }`}
->
-  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-  </svg>
-  <span>Thêm Chương</span>
-</button>
+            onClick={() => setShowCreateChapter(true)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-md shadow-md transition-all duration-300 text-sm sm:text-base font-medium ${
+              isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+          >
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Thêm Chương</span>
+          </button>
         </div>
 
         {/* Chapters Table */}
@@ -338,7 +329,7 @@ export default function UpdateNovel() {
               </div>
             )}
 
-<<<<<<< HEAD
+
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -387,120 +378,85 @@ export default function UpdateNovel() {
                       placeholder="Nhập giá chương (0 nếu miễn phí)"
                     />
                   </div>
-=======
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Số chương
+                    Nội dung chương
                     <span className="text-red-500 ml-1">(thông tin bắt buộc)</span>
                   </label>
-                  <input
-                    type="text"
-                    value={`Chương ${newChapter.chapterNumber}:`}
-                    className={`w-full p-2 rounded-lg border ${
-                      isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
-                    }`}
-                    disabled
-                  />
->>>>>>> 8486a35 (exp + task)
+                  <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg overflow-hidden`}>
+                    <ReactQuill
+                      theme="snow"
+                      value={newChapter.content}
+                      onChange={(content) => setNewChapter({...newChapter, content})}
+                      modules={modules}
+                      formats={formats}
+                      className="h-64"
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Tên chương
-                    <span className="text-red-500 ml-1">(thông tin bắt buộc)</span>
+                    Banner cho chương (3 ảnh)
+                    <span className="text-gray-500 ml-1">(nếu có)</span>
                   </label>
-                  <input
-                    type="text"
-                    value={newChapter.title}
-                    onChange={(e) => setNewChapter({...newChapter, title: e.target.value})}
-                    className={`w-full p-2 rounded-lg border ${
-                      isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
+                  <div className="grid grid-cols-3 gap-4">
+                    {[0, 1, 2].map((index) => (
+                      <div key={index} className="relative">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleBannerUpload(index, e)}
+                          className="hidden"
+                          id={`banner-upload-${index}`}
+                        />
+                        <label
+                          htmlFor={`banner-upload-${index}`}
+                          className={`block w-full h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer ${
+                            isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          {newChapter.banners[index] ? (
+                            <img 
+                              src={newChapter.banners[index]} 
+                              alt={`Banner ${index + 1}`}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                          ) : (
+                            <div className="text-center">
+                              <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <p className="mt-2 text-sm">Tải lên banner {index + 1}</p>
+                            </div>
+                          )}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-4">
+                  <button
+                    onClick={() => setShowCreateChapter(false)}
+                    className={`px-4 py-2 rounded-lg border ${
+                      isDarkMode ? 'border-gray-600 text-white' : 'border-gray-300 text-black'
                     }`}
-                    placeholder="Nhập tên chương"
-                  />
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={handleCreateChapter}
+                    disabled={loading}
+                    className={`px-6 py-2 rounded-lg ${
+                      isDarkMode 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                    } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {loading ? 'Đang tạo...' : 'Tạo Chương'}
+                  </button>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Nội dung chương
-                  <span className="text-red-500 ml-1">(thông tin bắt buộc)</span>
-                </label>
-                <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg overflow-hidden`}>
-                  <ReactQuill
-                    theme="snow"
-                    value={newChapter.content}
-                    onChange={(content) => setNewChapter({...newChapter, content})}
-                    modules={modules}
-                    formats={formats}
-                    className="h-64"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Banner cho chương (3 ảnh)
-                  <span className="text-gray-500 ml-1">(nếu có)</span>
-                </label>
-                <div className="grid grid-cols-3 gap-4">
-                  {[0, 1, 2].map((index) => (
-                    <div key={index} className="relative">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleBannerUpload(index, e)}
-                        className="hidden"
-                        id={`banner-upload-${index}`}
-                      />
-                      <label
-                        htmlFor={`banner-upload-${index}`}
-                        className={`block w-full h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer ${
-                          isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                      >
-                        {newChapter.banners[index] ? (
-                          <img 
-                            src={newChapter.banners[index]} 
-                            alt={`Banner ${index + 1}`}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                        ) : (
-                          <div className="text-center">
-                            <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <p className="mt-2 text-sm">Tải lên banner {index + 1}</p>
-                          </div>
-                        )}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-4">
-                <button
-                  onClick={() => setShowCreateChapter(false)}
-                  className={`px-4 py-2 rounded-lg border ${
-                    isDarkMode ? 'border-gray-600 text-white' : 'border-gray-300 text-black'
-                  }`}
-                >
-                  Hủy
-                </button>
-                <button
-                  onClick={handleCreateChapter}
-                  disabled={loading}
-                  className={`px-6 py-2 rounded-lg ${
-                    isDarkMode 
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
-                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {loading ? 'Đang tạo...' : 'Tạo Chương'}
-                </button>
               </div>
             </div>
           </div>
