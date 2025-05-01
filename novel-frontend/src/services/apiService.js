@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = "http://localhost:5000/api";
 const USERS_API = `${API_URL}/users`;
 const READER_EXP = `${API_URL}/readerExps`;
 const AUTHOR_EXP = `${API_URL}/authorExps`;
@@ -15,8 +15,12 @@ const COMMENT_API = `${API_URL}/comments`;
 const BOOKMARK_API = `${API_URL}/bookmarks`;
 const RATING_API = `${API_URL}/ratings`;
 const AUTHOR_REGISTER_API = `${API_URL}/authorRegisters`; // Đăng Ký làm tác giả
+<<<<<<< HEAD
 const TRANSACTION_API = `${API_URL}/transactions`;
 const WALLET_API = `${API_URL}/wallets`;
+=======
+const AUTHOR_TASK_API = `${API_URL}/authorTasks`; 
+>>>>>>> 8486a35 (exp + task)
 
 // ===================== USER =====================
 export const loginUser = async (email, password) => {
@@ -168,7 +172,10 @@ export const fetchNovelContent = async (novelID) => {
 
 export const createNovel = async (novelData) => {
   try {
-    const response = await axios.post(NOVEL_API, novelData);
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const response = await axios.post(NOVEL_API, novelData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data;
   } catch (error) {
     throw error.response?.data || 'Failed to create novel';
@@ -494,7 +501,20 @@ export const checkAuthorRequestStatus = async (userId) => {
     throw error.response?.data || error;
   }
 };
+// ===================== TASK =====================
+/**
+ * Lấy tất cả Task mẫu
+ */
+export const fetchAllTasks = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/tasks`);
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || 'Failed to fetch all tasks';
+  }
+};
 
+<<<<<<< HEAD
 // ===================== MOMO QR =====================
 //Thanh toán quét QR Momo
 export const createMomoPayment = async (paymentData, token) => {
@@ -591,4 +611,41 @@ export const updateWallet = async (userId, amount, token) => {
   }
 };
 
+=======
+// ===================== AUTHOR TASK =====================
+/**
+ * Lấy danh sách nhiệm vụ của tác giả theo authorExpId
+ * @param {string} authorExpId - ID của bảng authorExp (kinh nghiệm tác giả)
+ * @returns {Promise<Array>} - Mảng nhiệm vụ
+ */
+export const fetchAuthorTask = async (authorExpId) => {
+  try {
+    const response = await axios.get(`${AUTHOR_TASK_API}/${authorExpId}`);
+    console.log('[API] fetchAuthorTask response:', response.data);
+    // Đảm bảo luôn trả về mảng (ngay cả khi chỉ có 1 object hoặc null)
+    const data = response.data.data;
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    return [data];
+  } catch (error) {
+    console.error('[API] fetchAuthorTask error:', error);
+    throw error.response?.data || "Failed to fetch author task";
+  }
+};
+>>>>>>> 8486a35 (exp + task)
 
+/**
+ * Hoàn thành nhiệm vụ tác giả hiện tại
+ * @param {string} authorTaskId - ID của AuthorTask
+ * @returns {Promise<Object>} - Kết quả hoàn thành nhiệm vụ
+ */
+export const completeAuthorTask = async (authorTaskId) => {
+  try {
+    const response = await axios.put(`${AUTHOR_TASK_API}/${authorTaskId}`);
+    console.log('[API] completeAuthorTask response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] completeAuthorTask error:', error);
+    throw error.response?.data || "Failed to complete author task";
+  }
+};

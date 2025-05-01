@@ -55,21 +55,21 @@ function CreateNovel() {
     }
 
     try {
-
-      
       setLoading(true);
+      // Sử dụng _id nếu có, nếu không thì dùng id
+      const userId = loggedInUser._id || loggedInUser.id;
       const newNovel = {
         title,
         description,
         idCategories: selectedCategories,
-        idUser: loggedInUser.id,
+        idUser: userId,
         status,
         imageUrl: defaultCoverImage,
         view: 0,
         rate: 0
       };
 
-console.log('novelData gửi đi:', newNovel);
+      console.log('novelData gửi đi:', newNovel);
 
       const response = await createNovel(newNovel);
       setSuccessMessage('Tạo truyện thành công!');
@@ -82,7 +82,16 @@ console.log('novelData gửi đi:', newNovel);
       }, 3000);
     } catch (error) {
       console.error('Error creating novel:', error);
-      setError('Không thể tạo truyện. Vui lòng thử lại sau.');
+      // Hiển thị lỗi chi tiết nếu có phản hồi từ backend
+      if (error && error.response && error.response.data) {
+        setError(
+          error.response.data.message || JSON.stringify(error.response.data)
+        );
+      } else if (typeof error === 'string') {
+        setError(error);
+      } else {
+        setError('Không thể tạo truyện. Vui lòng thử lại sau.');
+      }
     } finally {
       setLoading(false);
     }
