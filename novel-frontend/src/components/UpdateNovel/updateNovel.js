@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { UserContext } from '../../context/UserContext';
 import AuthorSidebar from '../sidebar/AuthorSidebar';
-import { fetchChaptersByNovelId, createChapter, updateChapter, uploadFile } from '../../services/apiService';
+import { fetchChaptersByNovelId, createChapter, updateChapter, uploadFile, updateNovel, fetchNovelContent } from '../../services/apiService';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import mammoth from 'mammoth';
@@ -11,7 +11,8 @@ export default function UpdateNovel() {
   const { loggedInUser, isDarkMode } = useContext(UserContext);
   const location = useLocation();
   const navigate = useNavigate();
-  const novel = location.state?.novel;
+  const [novel, setNovel] = useState(location.state?.novel || {});
+  const [loadingNovel, setLoadingNovel] = useState(true);
 
   const [chapters, setChapters] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,6 +25,7 @@ export default function UpdateNovel() {
   const [error, setError] = useState('');
   const [contentSource, setContentSource] = useState('write'); 
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [status, setStatus] = useState(novel?.status || 'ongoing');
 
   // Quill editor configurations
   const modules = {
@@ -78,6 +80,26 @@ export default function UpdateNovel() {
       document.head.removeChild(style);
     };
   }, [isDarkMode]);
+
+  useEffect(() => {
+    if (location.state?.novel) {
+      setNovel(location.state.novel);
+      setLoadingNovel(false);
+    } else {
+      // Fetch novel details if not passed through location state
+      const fetchNovelDetails = async () => {
+        try {
+          const response = await fetchNovelContent(location.state?.novelId);
+          setNovel(response.data);
+        } catch (error) {
+          console.error('Error fetching novel details:', error);
+        } finally {
+          setLoadingNovel(false);
+        }
+      };
+      fetchNovelDetails();
+    }
+  }, [location.state?.novel]);
 
   const handleBannerUpload = async (index, e) => {
     const file = e.target.files[0];
@@ -205,21 +227,82 @@ export default function UpdateNovel() {
     }
   };
 
+  const handleUpdateNovel = async () => {
+    if (!novel || !novel._id) return;
+    try {
+      setLoading(true);
+      const updatedNovel = {
+        ...novel,
+        status
+      };
+      await updateNovel(novel._id, updatedNovel);
+      setNovel((prev) => ({ ...prev, status })); // Update only the status in the state
+      alert('Trạng thái truyện đã được cập nhật thành công!');
+    } catch (error) {
+      console.error('Error updating novel:', error);
+      setError('Failed to update novel status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loadingNovel) {
+    return <div>Loading novel details...</div>;
+  }
+
   return (
     <div className={`flex flex-col md:flex-row min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
       <AuthorSidebar activeView="updateNovel" />
       <main className="w-full md:w-3/4 p-6 space-y-6">
         {/* Novel Card */}
         <div className={`p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            <img src={novel.imageUrl} alt="Book cover" className="w-48 h-64 object-cover rounded-lg shadow-md mx-auto md:mx-0" />
-            <div>
-              <h1 className="text-3xl font-bold">{novel.title}</h1>
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <p><span className="text-gray-500">Thể loại:</span> {novel.idCategories?.map(cat => cat.titleCategory).join(', ')}</p>
-                <p><span className="text-gray-500">Trạng thái:</span> <span className="font-semibold text-green-600">{novel.status || 'Đang cập nhật'}</span></p>
-                <p><span className="text-gray-500">Số chương:</span> {chapters.length}</p>
-                <p><span className="text-gray-500">Lượt xem:</span> {novel.view || 0}</p>
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+            <img src={novel.imageUrl} alt="Book cover" className="w-48 h-64 object-cover rounded-xl shadow-lg border border-gray-200 dark:border-gray-700" />
+            <div className="flex-1 w-full">
+              <h2 className="text-3xl font-bold mb-4 text-blue-700 dark:text-blue-300">{novel.title}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8 mb-6">
+                <div>
+                  <span className="font-semibold text-gray-600 dark:text-gray-300">Thể loại:</span>
+                  <span className="ml-2">{Array.isArray(novel.idCategories) ? novel.idCategories.map(cat => typeof cat === 'object' && cat !== null && cat.titleCategory ? cat.titleCategory : cat).join(', ') : novel.idCategories}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-600 dark:text-gray-300">Số chương:</span>
+                  <span className="ml-2">{chapters.length}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-600 dark:text-gray-300">Lượt xem:</span>
+                  <span className="ml-2">{novel.view || 0}</span>
+                </div>
+              </div>
+              <div className="border-t border-gray-300 dark:border-gray-600 pt-4 mt-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <label className="block text-lg font-medium">
+                    Trạng thái truyện
+                    <span className="text-red-500 ml-1">(bắt buộc)</span>
+                  </label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className={`p-2 rounded-lg border w-56 ${
+                      isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
+                    }`}
+                  >
+                    <option value="ongoing">Đang tiến hành</option>
+                    <option value="completed">Đã hoàn thành</option>
+                    <option value="hiatus">Tạm ngưng</option>
+                  </select>
+                  <button
+                    onClick={handleUpdateNovel}
+                    disabled={loading}
+                    className={`px-6 py-2 rounded-lg font-semibold shadow transition-colors duration-150 ${
+                      isDarkMode 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                    } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {loading ? 'Đang cập nhật...' : 'Cập nhật Trạng Thái'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -305,7 +388,6 @@ export default function UpdateNovel() {
             </tbody>
           </table>
         </div>
-      </main>
 
       {/* Create Chapter Modal */}
       {showCreateChapter && (
@@ -462,6 +544,7 @@ export default function UpdateNovel() {
           </div>
         </div>
       )}
+      </main>
     </div>
   );
 }

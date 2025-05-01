@@ -56,6 +56,61 @@ export default function ListNovels() {
     fetchData();
   }, [loggedInUser?._id]); // Add dependency on loggedInUser._id
 
+  // Add this useEffect to listen for novel updates
+  useEffect(() => {
+    const handleNovelUpdate = () => {
+      if (loggedInUser?.id) {
+        const fetchData = async () => {
+          if (!loggedInUser || !loggedInUser.id) return;
+          
+          try {
+            setLoading(true);
+            const data = await fetchNovelsByAuthor(loggedInUser.id);
+            console.log('Fetched novels:', data); // Debug log
+            
+            if (data && Array.isArray(data)) {
+              setNovels(data);
+              setFilteredNovels(data);
+              
+              // Fetch chapter count for each novel
+              const counts = {};
+              await Promise.all(data.map(async (novel) => {
+                try {
+                  const chapters = await fetchChaptersByNovelId(novel._id);
+                  const maxOrder = chapters.reduce((max, ch) => ch.order > max ? ch.order : max, 0);
+                  counts[novel._id] = maxOrder;
+                } catch (error) {
+                  console.error(`Error fetching chapters for novel ${novel._id}:`, error);
+                  counts[novel._id] = 0;
+                }
+              }));
+              setChapterCounts(counts);
+            } else {
+              console.error('Invalid novels data format:', data);
+              setError('Không thể tải danh sách truyện. Vui lòng thử lại sau.');
+            }
+          } catch (error) {
+            console.error('Error fetching novels:', error);
+            setError('Không thể tải danh sách truyện. Vui lòng thử lại sau.');
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        fetchData();
+      }
+    };
+    
+    // Listen for custom events when novels are created/updated
+    window.addEventListener('novel-created', handleNovelUpdate);
+    window.addEventListener('novel-updated', handleNovelUpdate);
+    
+    return () => {
+      window.removeEventListener('novel-created', handleNovelUpdate);
+      window.removeEventListener('novel-updated', handleNovelUpdate);
+    };
+  }, [loggedInUser?.id]);
+
   // Filter novels based on search term
   useEffect(() => {
     if (searchTerm.trim() === '') {
@@ -160,6 +215,7 @@ export default function ListNovels() {
                             ).join(', ')
                           : novel.idCategories}
                       </p>
+                      <p>Trạng thái: <span className="font-bold">{novel.status || 'ongoing'}</span></p>
                       <p>Số chương: {chapterCounts[novel._id] !== undefined ? chapterCounts[novel._id] : 'Đang tải...'}</p>
                       <div className="flex gap-2">
                         <button 

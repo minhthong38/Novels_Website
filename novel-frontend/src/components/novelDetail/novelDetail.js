@@ -29,6 +29,7 @@ export default function NovelDetail() {
   const [totalRatings, setTotalRatings] = useState(0);
   const [ratingData, setRatingData] = useState({ average: 0, total: 0 });
   const [userRating, setUserRating] = useState(0);
+  const [status, setStatus] = useState('');
 
   const [showPurchasePopup, setShowPurchasePopup] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState(null);
@@ -120,6 +121,7 @@ export default function NovelDetail() {
         const novelData = response.data.data;
         novelData.Views += 1; // Increment the views count
         setNovel(novelData);
+        setStatus(novelData.status);
 
         // Fetch chapters for the novel
         const chapters = await fetchChaptersByNovelId(novelID);
@@ -407,6 +409,9 @@ export default function NovelDetail() {
                   <p className="text-sm mt-2 text-gray-200">
                     Lượt xem: <span className="font-bold text-yellow-400">{novel.view || 0}</span>
                   </p>
+                  <p className="text-sm mt-2 text-gray-200">
+                    Trạng thái: <span className="font-bold text-yellow-400">{status}</span>
+                  </p>
                   <p className="text-lg mt-2 text-gray-300"> Thể loại / {categoryName}</p>
                   <div className="flex items-center justify-center md:justify-start mt-2">
                     {author?.avatar && (
@@ -524,6 +529,8 @@ export default function NovelDetail() {
                   excludeNovelId={novelID}
                 />
               </div>
+            </div>
+            <div className="mt-4">
             </div>
           </>
         )}

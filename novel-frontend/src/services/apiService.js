@@ -173,9 +173,18 @@ export const fetchNovelContent = async (novelID) => {
 export const createNovel = async (novelData) => {
   try {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const response = await axios.post(NOVEL_API, novelData, {
+    // Ensure status is set to ongoing if not provided
+    const dataToSend = {
+      ...novelData,
+      status: novelData.status || 'ongoing'
+    };
+    const response = await axios.post(NOVEL_API, dataToSend, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    
+    // Dispatch event after successful creation
+    window.dispatchEvent(new Event('novel-created'));
+    
     return response.data;
   } catch (error) {
     throw error.response?.data || 'Failed to create novel';
