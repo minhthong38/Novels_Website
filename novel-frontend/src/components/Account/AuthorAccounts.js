@@ -28,6 +28,7 @@ function AuthorAccounts() {
   const [authorTasks, setAuthorTasks] = useState([]);
   const [taskLoading, setTaskLoading] = useState(false);
   const [allTasks, setAllTasks] = useState([]);
+  const [wallet, setWallet] = useState(null);
 
   // Helper to refresh tasks and exp
   const refreshAuthorTaskAndExp = async (expId, userId) => {
@@ -49,16 +50,18 @@ function AuthorAccounts() {
   useEffect(() => {
     // Fetch all tasks mẫu
     fetchAllTasks().then(setAllTasks).catch(() => setAllTasks([]));
+    
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         if (!token) throw new Error('No token found. Please log in.');
-
+  
         const { data: user } = await axios.get('http://localhost:5000/api/users/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
-
+  
         if (user) {
+          // Cập nhật thông tin người dùng
           setUserData(prev => ({
             ...prev,
             displayName: user.fullName || user.username,
@@ -67,16 +70,13 @@ function AuthorAccounts() {
             introduction: user.introduction || '',
             avatar: user.avatar || 'https://via.placeholder.com/150'
           }));
-
+  
+          // Lấy thông tin EXP
           const expData = await fetchAuthorExp(user._id);
           setTotalExp(expData.totalExp || 0);
           setCurrentLevel(expData.idLevel?.level || 1);
-          setTitleLevel(expData.idLevel?.title || '');
-
-          // DEBUG: Log expData và expData._id
-          console.log('expData:', expData);
-          console.log('expData._id:', expData._id);
-
+          setTitleLevel(expData.idLevel?.title || '');          
+  
           // Lấy danh sách author tasks
           if (expData._id) {
             try {
@@ -89,12 +89,13 @@ function AuthorAccounts() {
           } else {
             console.warn('Không có authorExpId (expData._id) để lấy nhiệm vụ tác giả!');
           }
-
+  
+          // Lấy danh sách tiểu thuyết của tác giả
           const novelsData = await fetchNovelsByAuthor(user._id);
           setNovels(novelsData || []);
           setTotalViews((novelsData || []).reduce((sum, n) => sum + (n.view || 0), 0));
-
-          // Calculate total chapters
+  
+          // Tính số chương tổng
           const chapterCounts = await Promise.all(
             (novelsData || []).map(async (novel) => {
               const chapters = await fetchChaptersByNovelId(novel._id);
@@ -107,8 +108,10 @@ function AuthorAccounts() {
         console.error('Error fetching data:', error);
       }
     };
+    
     fetchData();
   }, []);
+  
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -203,77 +206,77 @@ function AuthorAccounts() {
         </div>
 
         {/* Danh sách tất cả Task mẫu (đẹp) */}
-<div className="mt-8">
-  <h4 className="text-base font-semibold mb-2 text-blue-700 dark:text-blue-300">Tất cả nhiệm vụ mẫu</h4>
-  {allTasks && allTasks.length > 0 ? (() => {
-  // Sắp xếp nhiệm vụ theo order tăng dần
-  const sortedTasks = [...allTasks].sort((a, b) => (a.order || 0) - (b.order || 0));
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full shadow-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-        <thead>
-          <tr className="bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-white">
-            <th className="px-5 py-3 text-center font-bold tracking-wide">Thứ tự</th>
-            <th className="px-5 py-3 text-left font-bold tracking-wide">Tên nhiệm vụ</th>
-            <th className="px-5 py-3 text-left font-bold tracking-wide">Mô tả</th>
-            <th className="px-5 py-3 text-center font-bold tracking-wide">EXP</th>
-            <th className="px-5 py-3 text-center font-bold tracking-wide">Trạng thái</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedTasks.map((task, idx) => {
-            const totalNovels = novels ? novels.length : 0;
-            const totalTasks = sortedTasks.length;
-            const currentIndex = totalNovels % totalTasks;
-            const isFullCycle = currentIndex === 0 && totalNovels > 0;
-            const isCompleted = isFullCycle ? true : idx < currentIndex;
-            let status = isCompleted ? 'Đã hoàn thành' : 'Chưa hoàn thành';
-            return (
-              <tr
-                key={task._id}
-                className={`transition-all duration-200 group ${idx % 2 === 0 ? 'bg-gray-50 dark:bg-gray-800' : 'bg-white dark:bg-gray-900'} hover:bg-blue-50 dark:hover:bg-blue-900`}
-              >
-                <td className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 text-center text-gray-700 dark:text-gray-200 font-bold">
-                  {task.order}
-                </td>
-                <td className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-300">
-                  {task.taskName || task.title || task.name}
-                </td>
-                <td className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">
-                  {task.description}
-                </td>
-                <td className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 text-center text-blue-700 dark:text-blue-300 font-bold">
-                  {task.expPoint}
-                </td>
-                <td className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 text-center">
-                  <span
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold shadow transition-all duration-300
-                      ${status === 'Đã hoàn thành' ? 'bg-green-500 text-white group-hover:scale-105' : 'bg-gray-300 text-gray-700 group-hover:scale-105 dark:bg-gray-700 dark:text-gray-200'}`}
-                  >
-                    {status === 'Đã hoàn thành' ? (
-                      <svg className="w-4 h-4 mr-1 inline-block" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                    ) : (
-                      <svg className="w-4 h-4 mr-1 inline-block" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3" /></svg>
-                    )}
-                    {status}
-                  </span>
-                </td>
-              </tr>
+        <div className="mt-8">
+          <h4 className="text-base font-semibold mb-2 text-blue-700 dark:text-blue-300">Tất cả nhiệm vụ mẫu</h4>
+          {allTasks && allTasks.length > 0 ? (() => {
+          // Sắp xếp nhiệm vụ theo order tăng dần
+          const sortedTasks = [...allTasks].sort((a, b) => (a.order || 0) - (b.order || 0));
+          return (
+            <div className="overflow-x-auto">
+              <table className="min-w-full shadow-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                <thead>
+                  <tr className="bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-white">
+                    <th className="px-5 py-3 text-center font-bold tracking-wide">Thứ tự</th>
+                    <th className="px-5 py-3 text-left font-bold tracking-wide">Tên nhiệm vụ</th>
+                    <th className="px-5 py-3 text-left font-bold tracking-wide">Mô tả</th>
+                    <th className="px-5 py-3 text-center font-bold tracking-wide">EXP</th>
+                    <th className="px-5 py-3 text-center font-bold tracking-wide">Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedTasks.map((task, idx) => {
+                    const totalNovels = novels ? novels.length : 0;
+                    const totalTasks = sortedTasks.length;
+                    const currentIndex = totalNovels % totalTasks;
+                    const isFullCycle = currentIndex === 0 && totalNovels > 0;
+                    const isCompleted = isFullCycle ? true : idx < currentIndex;
+                    let status = isCompleted ? 'Đã hoàn thành' : 'Chưa hoàn thành';
+                    return (
+                      <tr
+                        key={task._id}
+                        className={`transition-all duration-200 group ${idx % 2 === 0 ? 'bg-gray-50 dark:bg-gray-800' : 'bg-white dark:bg-gray-900'} hover:bg-blue-50 dark:hover:bg-blue-900`}
+                      >
+                        <td className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 text-center text-gray-700 dark:text-gray-200 font-bold">
+                          {task.order}
+                        </td>
+                        <td className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-300">
+                          {task.taskName || task.title || task.name}
+                        </td>
+                        <td className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">
+                          {task.description}
+                        </td>
+                        <td className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 text-center text-blue-700 dark:text-blue-300 font-bold">
+                          {task.expPoint}
+                        </td>
+                        <td className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 text-center">
+                          <span
+                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold shadow transition-all duration-300
+                              ${status === 'Đã hoàn thành' ? 'bg-green-500 text-white group-hover:scale-105' : 'bg-gray-300 text-gray-700 group-hover:scale-105 dark:bg-gray-700 dark:text-gray-200'}`}
+                          >
+                            {status === 'Đã hoàn thành' ? (
+                              <svg className="w-4 h-4 mr-1 inline-block" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                            ) : (
+                              <svg className="w-4 h-4 mr-1 inline-block" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3" /></svg>
+                            )}
+                            {status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          );
+        })() : (
+            <div className="text-xs text-gray-500 italic">Không có nhiệm vụ mẫu nào.</div>
+          )}
+        </div>
+              </div>
+
+
             );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-})() : (
-    <div className="text-xs text-gray-500 italic">Không có nhiệm vụ mẫu nào.</div>
-  )}
-</div>
-      </div>
-
-
-    );
-  };
+          };
 
 
   const renderMainContent = () => {
@@ -353,7 +356,7 @@ function AuthorAccounts() {
 
   return (
     <div className={`flex flex-col md:flex-row ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
-      <AuthorSidebar activeView={activeView} setActiveView={setActiveView} />
+      <AuthorSidebar activeView={activeView} wallet={wallet} setActiveView={setActiveView} />
       <div className={`w-full md:w-3/4 p-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'}`}>
         {renderMainContent()}
       </div>

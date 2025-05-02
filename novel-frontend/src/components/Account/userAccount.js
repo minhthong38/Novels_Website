@@ -340,10 +340,6 @@ export default function UserAccount() {
             <i className="fas fa-coins text-yellow-500"> Coin</i>
           </span>
         </div>
-          <div className="flex justify-between items-center mt-2">
-            <span>Ví doanh thu</span>
-            <span>0.00 <i className="fas fa-coins text-yellow-500"></i></span>
-          </div>
         </div>
         <button 
           className={`mt-4 w-full py-2 rounded-lg ${isDarkMode ? 'bg-green-600 text-white' : 'bg-green-500 text-black'}`}

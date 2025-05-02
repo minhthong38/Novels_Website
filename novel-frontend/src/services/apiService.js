@@ -18,6 +18,10 @@ const AUTHOR_REGISTER_API = `${API_URL}/authorRegisters`; // Đăng Ký làm tá
 
 const TRANSACTION_API = `${API_URL}/transactions`;
 const WALLET_API = `${API_URL}/wallets`;
+const WALLETAUTHOR_API = `${API_URL}/walletAuthors`;
+const BUY_CHAPTER = `${API_URL}/purchaseChapters`;
+const PURCHASE_HISTORY = `${API_URL}/purchaseHistories`;
+const WITHDRAWAL_API = `${API_URL}/withdrawalTransactions`; // Rút tiền
 
 const AUTHOR_TASK_API = `${API_URL}/authorTasks`; 
 
@@ -569,7 +573,7 @@ export const fetchUserTransactions = async (idUser) => {
   }
 };
 
-// ===================== Wallet USer =====================
+// ===================== Wallet User =====================
 // API Client: Tạo ví cho người dùng mới
 export const createWallet = async (userId, token) => {
   try {
@@ -620,6 +624,111 @@ export const updateWallet = async (userId, amount, token) => {
   }
 };
 
+// ===================== Wallet Author =====================
+// Lấy thông tin ví của author
+export const getWalletByUserId = async (userId) => {
+  try {
+    const response = await axios.get(`${WALLETAUTHOR_API}/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin ví:', error);
+    throw error.response?.data || 'Không thể lấy thông tin ví';
+  }
+};
+
+// ===================== BUY CHAPTER =====================
+export const buyChapter = async (data) => {
+  try {
+    const token = localStorage.getItem('token');  // Lấy token từ localStorage
+    const response = await axios.post(`${BUY_CHAPTER}/purchase`, 
+data, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}`  // Thêm token vào header
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Lỗi không xác định khi mua chapter' };
+  }
+};
+
+// ===================== PURCHASE HISTORY =====================
+export const createPurchaseHistory = async ({ idUser, idNovel, idChapter, price }) => {
+  try {
+    const response = await fetch(`${PURCHASE_HISTORY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ idUser, idNovel, idChapter, price }),
+    });
+
+    if (!response.ok) throw new Error('Failed to create purchase history');
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating purchase history:', error);
+    throw error;
+  }
+};
+
+export const checkChapterPurchased = async (userId, chapterId) => {
+  try {
+    const response = await fetch(`${PURCHASE_HISTORY}/check?userId=${userId}&chapterId=${chapterId}`);
+
+    if (!response.ok) throw new Error('Failed to check purchase status');
+
+    const data = await response.json();
+    return data.isPurchased;
+  } catch (error) {
+    console.error('Error checking purchase status:', error);
+    throw error;
+  }
+};
+
+// ===================== WITHDRWAL TRANSACTION =====================
+// Rút tiền ngay (chỉ gửi amount)
+export const requestImmediateWithdrawal = async (amount) => {
+  if (amount < 10000) {
+    throw new Error('Số tiền rút tối thiểu là 10,000 VNĐ');
+  }
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.post(
+      WITHDRAWAL_API, // Giữ đúng endpoint
+      { amount },      // 👈 Gửi đúng body cần thiết
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error withdrawing immediately:", error);
+    throw error.response?.data || "Error withdrawing";
+  }
+};
+
+
+// Hàm lấy danh sách yêu cầu rút tiền của người dùng
+export const getUserWithdrawals = async () => {
+  try {
+    const token = localStorage.getItem('token'); // Lấy token từ localStorage
+    const response = await axios.get(`${WITHDRAWAL_API}/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Thêm token vào header
+      },
+    });
+    return response.data; // Trả về dữ liệu danh sách yêu cầu rút tiền
+  } catch (error) {
+    console.error("Error fetching user withdrawals:", error);
+    throw error.response?.data || "Error fetching withdrawals";
+  }
+};
 
 // ===================== AUTHOR TASK =====================
 /**
@@ -658,3 +767,4 @@ export const completeAuthorTask = async (authorTaskId) => {
     throw error.response?.data || "Failed to complete author task";
   }
 };
+

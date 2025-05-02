@@ -7,6 +7,10 @@ import { fetchChaptersByNovelId, addExpToReader,
   createReadingHistory, toggleFavorite,fetchFavoriteNovels,
   addComment, fetchCommentsByNovel, deleteComment, submitRating, fetchRatingsByNovel,deleteRating
 ,fetchUserRatingForNovel } from '../../services/apiService'; // Import API services
+import {buyChapter} from '../../services/apiService'; // Import buyChapter service
+import { checkChapterPurchased, createPurchaseHistory } from '../../services/apiService';
+import { fetchUserDetails } from '../../services/apiService';
+import { getWallet } from '../../services/apiService';
 
 export default function NovelDetail() {
   const [activePart, setActivePart] = useState(null);
@@ -38,11 +42,8 @@ export default function NovelDetail() {
   useEffect(() => {
     const fetchRatings = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/ratings/novel/${novelID}`);
+        const ratings = await fetchRatingsByNovel(novelID); // Sử dụng hàm từ apiService
         
-        // Lấy danh sách các đánh giá từ response
-        const ratings = res.data;
-  
         // Tính tổng số lượt đánh giá
         const totalRatings = ratings.length;
   
@@ -59,7 +60,7 @@ export default function NovelDetail() {
           const existing = ratings.find(r => r.idUser._id === loggedInUser._id);
           if (existing) {
             setUserRating(existing.rating);
-            setRating(existing.rating); // để hiển thị highlight sao
+            setRating(existing.rating); // Để hiển thị highlight sao
           }
         }
   
@@ -73,9 +74,13 @@ export default function NovelDetail() {
 
   useEffect(() => {
     const getUserRating = async () => {
+      console.log("loggedInUser in rating", loggedInUser);
+      
       if (loggedInUser) {
         try {
           const res = await fetchUserRatingForNovel(novelID, loggedInUser._id || loggedInUser.id);
+          console.log("res in rating", res);
+          
           if (res?.rating) {
             setUserRating(res.rating);
             setRating(res.rating); // để highlight sao
@@ -88,21 +93,20 @@ export default function NovelDetail() {
     getUserRating();
   }, [novelID, loggedInUser]);
   
-  
-  
-  
   //comment
   useEffect(() => {
     const loadComments = async () => {
       try {
         const data = await fetchCommentsByNovel(novelID);
+        console.log('Bình luận:', data); // Kiểm tra dữ liệu bình luận
+        
         
         // Thêm thông tin người dùng vào mỗi bình luận nếu cần
         const enrichedComments = data.map(comment => ({
           ...comment,
-          avatar: comment.idUser.avatar,      // Thêm avatar nếu cần
-          fullname: comment.idUser.fullname,  // Đảm bảo fullname có trong comment
-        }));
+          avatar: comment.idUser ? comment.idUser.avatar : null,
+          fullname: comment.idUser ? comment.idUser.fullname : 'Người dùng ẩn danh',
+        }));        
     
         setComments(enrichedComments);  // Cập nhật state với bình luận đã được thêm thông tin người dùng
       } catch (error) {
@@ -160,7 +164,9 @@ export default function NovelDetail() {
   
     try {
       // Gửi bình luận đến API
-      const response = await addComment(novelID, loggedInUser.id, newComment);
+      const response = await addComment(novelID, loggedInUser._id, newComment);
+      console.log('Kết quả gửi bình luận:', response); // Kiểm tra phản hồi từ API
+      
       
   
       if (response.success && response.data && response.data._id) {
@@ -195,38 +201,31 @@ export default function NovelDetail() {
   };
 
   const handlePartClick = async (label) => {
-    const selectedChapter = parts.find((part) => part.label === label);
-    if (!selectedChapter) return;
+    const selected = parts.find((part) => part.label === label);
+    if (!selected) return;
   
-    const isAuthor = loggedInUser?._id === novel?.idUser?._id || loggedInUser?.id === novel?.idUser?._id;
+    const userId = loggedInUser?._id || loggedInUser?.id;
+    const isAuthor = userId === novel?.idUser?._id;
   
-    // Nếu chương có phí và người dùng không phải tác giả => hiển thị popup mua
-    if (selectedChapter.price > 0 && !isAuthor) {
-      setSelectedChapter(selectedChapter);
-      setShowPurchasePopup(true);
-      return;
-    }
+    setSelectedChapter(selected);
   
-    // Nếu là tác giả hoặc chương miễn phí => đọc luôn
     try {
-      const userId = loggedInUser?._id || loggedInUser?.id;
-      if (userId) {
-        await addExpToReader(userId);
-        await createReadingHistory({
-          idUser: userId,
-          idNovel: novelID,
-          idChapter: selectedChapter.id,
-          lastReadAt: new Date(),
-        });
+      if (selected.price > 0 && !isAuthor) {
+        const hasPurchased = await checkChapterPurchased(userId, selected.id);
+  
+        if (!hasPurchased) {
+          setShowPurchasePopup(true);
+          return;
+        }
       }
-      navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
+  
+      // Nếu miễn phí, là tác giả hoặc đã mua => đọc luôn
+      await proceedToReadChapter(selected);
     } catch (error) {
-      console.error('Lỗi khi đọc chương:', error);
-      navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
+      console.error('Lỗi kiểm tra mua chương:', error);
+      navigate(`/novelView/${novelID}?chapterId=${selected.id}`);
     }
   };
-  
-  
 
   const glowEffect = {
     boxShadow: "0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #00f, 0 0 50px #00f, 0 0 60px #00f, 0 0 70px #00f",
@@ -237,12 +236,53 @@ export default function NovelDetail() {
   };
   
   const proceedToReadChapter = async (chapter) => {
-    try {
-      if (loggedInUser?.id) {
-        await addExpToReader(loggedInUser.id);
+    const userId = loggedInUser?._id || loggedInUser?.id;
+    const isAuthor = userId === novel?.idUser?._id;
   
+    try {
+      if (chapter.price > 0 && !isAuthor) {
+        const hasPurchased = await checkChapterPurchased(userId, chapter.id);
+  
+        if (!hasPurchased) {
+          // ✅ Lấy token từ localStorage (hoặc context nếu bạn lưu ở đó)
+          const token = localStorage.getItem('token'); // hoặc từ UserContext
+          const user = await fetchUserDetails(token);
+          const wallet = await getWallet(user._id, token);
+          const currentCoins = wallet?.wallet?.balance;
+          
+          if (currentCoins < chapter.price) {
+            alert('Bạn không đủ coin để mua chương này.');
+            return;
+          }
+  
+          // ✅ Tiến hành mua nếu đủ coin
+          const result = await buyChapter({
+            idUser: userId,
+            idChapter: chapter.id,
+            idNovel: novelID,
+            price: chapter.price,
+          });
+  
+          if (!result.success) {
+            alert('Không thể mua chương. Vui lòng thử lại.');
+            return;
+          }
+  
+          await createPurchaseHistory({
+            idUser: userId,
+            idChapter: chapter.id,
+            idNovel: novelID,
+            price: chapter.price,
+            purchaseDate: new Date(),
+          });
+        }
+      }
+  
+      // Cộng EXP và tạo lịch sử đọc
+      if (userId) {
+        await addExpToReader(userId);
         await createReadingHistory({
-          idUser: loggedInUser._id || loggedInUser.id,
+          idUser: userId,
           idNovel: novelID,
           idChapter: chapter.id,
           lastReadAt: new Date(),
@@ -252,10 +292,9 @@ export default function NovelDetail() {
       navigate(`/novelView/${novelID}?chapterId=${chapter.id}`);
     } catch (error) {
       console.error('Lỗi khi đọc chương:', error);
-      navigate(`/novelView/${novelID}?chapterId=${chapter.id}`);
+      alert('Đã xảy ra lỗi khi đọc chương.');
     }
   };
-  
 
   const handleReadBookClick = async () => {
     console.log('doc o day ne',loggedInUser);
@@ -535,34 +574,34 @@ export default function NovelDetail() {
           </>
         )}
 
-          {showPurchasePopup && selectedChapter && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-              <div className="bg-white text-black p-6 rounded-lg shadow-lg max-w-md w-full">
-                <h2 className="text-xl font-semibold mb-4">Mua chương</h2>
-                <p>
-                  Bạn có muốn mua chương <strong>{selectedChapter.label}</strong> với giá{' '}
-                  <strong>{selectedChapter.price} xu</strong> không?
-                </p>
-                <div className="mt-4 flex justify-end space-x-4">
-                  <button
-                    className="bg-gray-400 text-white px-4 py-2 rounded"
-                    onClick={() => setShowPurchasePopup(false)}
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    className="bg-blue-600 text-white px-4 py-2 rounded"
-                    onClick={async () => {
-                      setShowPurchasePopup(false);
-                      await proceedToReadChapter(selectedChapter); // Điều hướng ở đây
-                    }}
-                  >
-                    Mua và đọc
-                  </button>
-                </div>
+        {showPurchasePopup && selectedChapter && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white text-black p-6 rounded-lg shadow-lg max-w-md w-full">
+              <h2 className="text-xl font-semibold mb-4">Mua chương {selectedChapter.title}</h2>
+              <p className="mb-4">
+                Bạn có muốn mua chương <strong>{selectedChapter.title}</strong> với giá{' '}
+                <strong>{selectedChapter.price} xu</strong> để tiếp tục đọc?
+              </p>
+              <div className="mt-6 flex justify-end space-x-4">
+                <button
+                  className="bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400 transition duration-300"
+                  onClick={() => setShowPurchasePopup(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300"
+                  onClick={async () => {
+                    setShowPurchasePopup(false);
+                    await proceedToReadChapter(selectedChapter);
+                  }}
+                >
+                  Mua và đọc
+                </button>
               </div>
             </div>
-          )}
+          </div>
+        )}
       </div>
     </div>
   );

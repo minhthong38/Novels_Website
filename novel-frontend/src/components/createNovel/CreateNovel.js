@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { UserContext } from '../../context/UserContext';
 import { fetchCategories, createNovel } from '../../services/apiService';
 import AuthorSidebar from '../sidebar/AuthorSidebar';
+import axios from 'axios'; // Để sử dụng axios cho việc gửi ảnh lên backend
 
 function CreateNovel() {
   const { loggedInUser, isDarkMode } = useContext(UserContext);
@@ -9,30 +10,21 @@ function CreateNovel() {
   const [description, setDescription] = useState('');
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [coverImage, setCoverImage] = useState(null); // Lưu trữ ảnh tải lên
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Default cover image
-  const defaultCoverImage = 'https://imgur.com/zOuGi1m.jpg';
+  const defaultCoverImage = "/path/to/your/default/cover/image.jpg";
 
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        console.log('Fetching categories...');
         const response = await fetchCategories();
-        console.log('Categories response:', response);
-        
         if (response && Array.isArray(response)) {
           setCategories(response);
-        } else if (response && response.data && Array.isArray(response.data)) {
-          setCategories(response.data);
-        } else {
-          console.error('Invalid categories data format:', response);
-          setError('Không thể tải danh mục. Vui lòng thử lại sau.');
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
         setError('Không thể tải danh mục. Vui lòng thử lại sau.');
       }
     };
@@ -47,14 +39,31 @@ function CreateNovel() {
     );
   };
 
+  const handleCoverImageChange = (e) => {
+    const file = e.target.files[0];
+    setCoverImage(file); // Lưu trữ file ảnh
+  };
+
   const handleSave = async () => {
     if (!title || !description || selectedCategories.length === 0) {
       setError('Vui lòng điền đầy đủ thông tin bắt buộc');
       return;
     }
-
+  
     try {
       setLoading(true);
+  
+      let imageUrl = ''; // URL của ảnh đã upload
+      if (coverImage) {
+        const formData = new FormData();
+        formData.append('file', coverImage);
+        formData.append('upload_preset', 'novel_img'); // Đảm bảo preset đúng
+  
+        // Đảm bảo API endpoint đúng
+        const res = await axios.post('http://localhost:5000/api/uploads/upload', formData);// Thay đổi đường dẫn nếu cần
+        imageUrl = res.data.url; // Lấy URL ảnh từ phản hồi
+      }
+  
       // Sử dụng _id nếu có, nếu không thì dùng id
       const userId = loggedInUser._id || loggedInUser.id;
       const newNovel = {
@@ -62,42 +71,28 @@ function CreateNovel() {
         description,
         idCategories: selectedCategories,
         idUser: userId,
-        imageUrl: defaultCoverImage,
+        imageUrl: imageUrl || defaultCoverImage, // Dùng ảnh tải lên hoặc ảnh mặc định
         view: 0,
         rate: 0
       };
-
-      console.log('novelData gửi đi:', newNovel);
-
+  
+      // Gửi yêu cầu tạo truyện mới
       const response = await createNovel(newNovel);
       setSuccessMessage('Tạo truyện thành công!');
+      console.log(response);  // In ra phản hồi để kiểm tra
       setTimeout(() => {
         setSuccessMessage('');
-        // Reset form
         setTitle('');
         setDescription('');
         setSelectedCategories([]);
       }, 3000);
     } catch (error) {
-      console.error('Error creating novel:', error);
-      // Hiển thị lỗi chi tiết nếu có phản hồi từ backend
-      if (error && error.response && error.response.data) {
-        setError(
-          error.response.data.message || JSON.stringify(error.response.data)
-        );
-      } else if (typeof error === 'string') {
-        setError(error);
-      } else {
-        setError('Không thể tạo truyện. Vui lòng thử lại sau.');
-      }
+      setError('Không thể tạo truyện. Vui lòng thử lại sau.');
+      console.error(error); // Ghi lại lỗi để debug
     } finally {
       setLoading(false);
     }
   };
-
-  if (!loggedInUser) {
-    return <div className="text-center mt-10">Vui lòng đăng nhập để tạo truyện mới.</div>;
-  }
 
   return (
     <div className={`flex flex-col md:flex-row ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-red-500'} min-h-screen`}>
@@ -112,12 +107,18 @@ function CreateNovel() {
           <div className="md:col-span-1 flex flex-col items-center">
             <div className={`w-full aspect-[3/4] rounded-lg overflow-hidden shadow-md ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} border`}>
               <img 
-                src={defaultCoverImage} 
-                alt="Default cover" 
+                src={coverImage ? URL.createObjectURL(coverImage) : defaultCoverImage} // Hiển thị ảnh tải lên hoặc ảnh mặc định
+                alt="Cover"
                 className="w-full h-full object-cover"
               />
             </div>
-            <p className="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400">ẢNH BÌA MẶC ĐỊNH</p>
+            <p className="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400">ẢNH BÌA</p>
+            <input 
+              type="file" 
+              accept="image/*"
+              onChange={handleCoverImageChange} 
+              className="mt-2 text-sm text-gray-500" 
+            />
           </div>
           
           {/* Right Column - Form */}
