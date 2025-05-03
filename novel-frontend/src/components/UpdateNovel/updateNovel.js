@@ -19,7 +19,7 @@ export default function UpdateNovel() {
   const [filteredChapters, setFilteredChapters] = useState([]);
   const [showCreateChapter, setShowCreateChapter] = useState(false);
 
-  const [newChapter, setNewChapter] = useState({ title: '', content: '', chapterNumber: 1, banners: [null, null, null] });
+  const [newChapter, setNewChapter] = useState({ title: '', content: '', chapterNumber: 1, banners: [null, null, null], price: 0 });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -132,6 +132,24 @@ export default function UpdateNovel() {
     }
   };
 
+  const handleWordUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const result = await mammoth.extractRawText({arrayBuffer: event.target.result});
+        setNewChapter({...newChapter, content: result.value});
+        setContentSource('word');
+      } catch (error) {
+        setError('Lỗi khi đọc file Word');
+        console.error('Error reading Word file:', error);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   useEffect(() => {
     if (!novel || !novel._id || !loggedInUser) return;
 
@@ -215,7 +233,8 @@ export default function UpdateNovel() {
         title: '',
         content: '',
         chapterNumber: nextChapterNumber,
-        banners: [null, null, null]
+        banners: [null, null, null],
+        price: 0
       });
       setShowCreateChapter(false);
       setError('');
@@ -391,153 +410,274 @@ export default function UpdateNovel() {
 
       {/* Create Chapter Modal */}
       {showCreateChapter && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`p-4 rounded-lg shadow-lg max-w-3xl w-full mx-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Thêm Chương Mới</h3>
-              <button 
-                onClick={() => setShowCreateChapter(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            {error && (
-              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
-                {error}
-              </div>
-            )}
-
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Số chương
-                      <span className="text-red-500 ml-1">(thông tin bắt buộc)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={`Chương ${newChapter.chapterNumber}:`}
-                      className={`w-full p-2 rounded-lg border ${
-                        isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
-                      }`}
-                      disabled
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Tên chương
-                      <span className="text-red-500 ml-1">(thông tin bắt buộc)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={newChapter.title}
-                      onChange={(e) => setNewChapter({...newChapter, title: e.target.value})}
-                      className={`w-full p-2 rounded-lg border ${
-                        isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
-                      }`}
-                      placeholder="Nhập tên chương"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Giá chương (VNĐ)
-                      <span className="text-gray-500 ml-1">(nếu chương này có thu phí)</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={newChapter.price}
-                      onChange={(e) => setNewChapter({ ...newChapter, price: parseInt(e.target.value) || 0 })}
-                      className={`w-full p-2 rounded-lg border ${
-                        isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'
-                      }`}
-                      placeholder="Nhập giá chương (0 nếu miễn phí)"
-                    />
-                  </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Nội dung chương
-                    <span className="text-red-500 ml-1">(thông tin bắt buộc)</span>
-                  </label>
-                  <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg overflow-hidden`}>
-                    <ReactQuill
-                      theme="snow"
-                      value={newChapter.content}
-                      onChange={(content) => setNewChapter({...newChapter, content})}
-                      modules={modules}
-                      formats={formats}
-                      className="h-64"
-                    />
-                  </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className={`w-full max-w-2xl rounded-xl shadow-xl overflow-hidden ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="p-1 bg-gradient-to-r from-blue-500 to-purple-600">
+              {/* Fixed Header */}
+              <div className={`p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-white">Tạo Chương Mới</h3>
+                  <button 
+                    onClick={() => setShowCreateChapter(false)}
+                    className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                  >
+                    <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Banner cho chương (3 ảnh)
-                    <span className="text-gray-500 ml-1">(nếu có)</span>
-                  </label>
-                  <div className="grid grid-cols-3 gap-4">
-                    {[0, 1, 2].map((index) => (
-                      <div key={index} className="relative">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleBannerUpload(index, e)}
-                          className="hidden"
-                          id={`banner-upload-${index}`}
-                        />
-                        <label
-                          htmlFor={`banner-upload-${index}`}
-                          className={`block w-full h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer ${
-                            isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'
-                          }`}
-                        >
-                          {newChapter.banners[index] ? (
-                            <img 
-                              src={newChapter.banners[index]} 
-                              alt={`Banner ${index + 1}`}
-                              className="w-full h-full object-cover rounded-lg"
+              {/* Scrollable Content */}
+              <div className={`max-h-[60vh] overflow-y-auto p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="space-y-4">
+                  {/* Chapter Info Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Số chương
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={newChapter.chapterNumber}
+                        onChange={(e) => setNewChapter({...newChapter, chapterNumber: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        min="1"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Tiêu đề chương
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={newChapter.title}
+                        onChange={(e) => setNewChapter({...newChapter, title: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        placeholder="Nhập tiêu đề chương"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Chapter Price Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Giá chương (VNĐ)
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={newChapter.price || ''}
+                        onChange={(e) => setNewChapter({...newChapter, price: parseInt(e.target.value) || 0})}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        placeholder="Nhập giá chương"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Content Source Section */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Nguồn nội dung
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                      <div className="flex-1">
+                        <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-all ${contentSource === 'write' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}>
+                          <div className="text-center">
+                            <input
+                              type="radio"
+                              name="contentSource"
+                              value="write"
+                              checked={contentSource === 'write'}
+                              onChange={() => setContentSource('write')}
+                              className="hidden"
                             />
-                          ) : (
-                            <div className="text-center">
-                              <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              <p className="mt-2 text-sm">Tải lên banner {index + 1}</p>
-                            </div>
-                          )}
+                            <svg className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            <span className="font-medium text-gray-700 dark:text-gray-300">Viết trực tiếp</span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Soạn nội dung bằng trình biên tập</p>
+                          </div>
                         </label>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      
+                      <div className="flex-1">
+                        <label className={`flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-all ${contentSource === 'word' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}>
+                          <div className="text-center">
+                            <input
+                              type="radio"
+                              name="contentSource"
+                              value="word"
+                              checked={contentSource === 'word'}
+                              onChange={() => setContentSource('word')}
+                              className="hidden"
+                            />
+                            <svg className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0112.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            <span className="font-medium text-gray-700 dark:text-gray-300">Tải lên file Word</span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Nhập nội dung từ file .doc/.docx</p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  
+                    {contentSource === 'word' && (
+                      <div className="mb-4">
+                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                          <div className="space-y-1 text-center">
+                            <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" viewBox="0 0 48 48">
+                              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                              <label className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 focus-within:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <span>Tải lên file</span>
+                                <input 
+                                  type="file" 
+                                  accept=".doc,.docx" 
+                                  onChange={handleWordUpload}
+                                  className="sr-only"
+                                />
+                              </label>
+                              <p className="pl-1">hoặc kéo thả vào đây</p>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              DOC, DOCX (tối đa 10MB)
+                            </p>
+                          </div>
+                        </div>
+                        {newChapter.content && (
+                          <div className="mt-2 text-sm text-green-600 dark:text-green-400 flex items-center">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Đã tải lên thành công! Nội dung đã sẵn sàng.
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                <div className="flex justify-end gap-4">
-                  <button
-                    onClick={() => setShowCreateChapter(false)}
-                    className={`px-4 py-2 rounded-lg border ${
-                      isDarkMode ? 'border-gray-600 text-white' : 'border-gray-300 text-black'
-                    }`}
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    onClick={handleCreateChapter}
-                    disabled={loading}
-                    className={`px-6 py-2 rounded-lg ${
-                      isDarkMode 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                        : 'bg-blue-500 hover:bg-blue-600 text-white'
-                    } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {loading ? 'Đang tạo...' : 'Tạo Chương'}
-                  </button>
+                    {contentSource === 'write' && (
+                      <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600`}>
+                        <ReactQuill
+                          theme="snow"
+                          value={newChapter.content}
+                          onChange={(content) => setNewChapter({...newChapter, content})}
+                          modules={modules}
+                          formats={formats}
+                          className="h-64"
+                          placeholder="Nhập nội dung chương tại đây..."
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Banner Section */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Banner cho chương
+                      <span className="text-gray-500 ml-1">(tối đa 3 ảnh)</span>
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {[0, 1, 2].map((index) => (
+                        <div key={index} className="relative h-40">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleBannerUpload(index, e)}
+                            className="hidden"
+                            id={`banner-upload-${index}`}
+                          />
+                          <label
+                            htmlFor={`banner-upload-${index}`}
+                            className={`block w-full h-full border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer ${
+                              isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'
+                            }`}
+                          >
+                            {newChapter.banners[index] ? (
+                              <img 
+                                src={newChapter.banners[index]} 
+                                alt={`Banner ${index + 1}`}
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="text-center">
+                                <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <p className="mt-2 text-sm">Tải lên banner {index + 1}</p>
+                              </div>
+                            )}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Error Message */}
+                  {error && (
+                    <div className="p-3 text-sm text-red-700 bg-red-100 dark:text-red-100 dark:bg-red-900 rounded-lg">
+                      {error}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Fixed Footer */}
+              <div className={`p-4 border-t border-gray-200 dark:border-gray-700 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                {/* Action Buttons */}
+                <div className="mt-8 pt-5">
+                  <div className="flex flex-col sm:flex-row justify-end gap-3">
+                    <button
+                      onClick={() => setShowCreateChapter(false)}
+                      className={`px-6 py-3 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center
+                        ${isDarkMode 
+                          ? 'border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white' 
+                          : 'border border-gray-300 text-gray-700 hover:bg-gray-50'}
+                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Hủy bỏ
+                    </button>
+                    
+                    <button
+                      onClick={handleCreateChapter}
+                      disabled={loading}
+                      className={`px-6 py-3 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center
+                        ${isDarkMode 
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                          : 'bg-blue-600 hover:bg-blue-700 text-white'}
+                        ${loading ? 'opacity-70 cursor-not-allowed' : 'shadow-md hover:shadow-lg'}
+                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                    >
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Đang xử lý...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          Tạo Chương
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

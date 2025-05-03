@@ -297,36 +297,50 @@ export default function NovelDetail() {
   };
 
   const handleReadBookClick = async () => {
-    console.log('doc o day ne',loggedInUser);
-    
     try {
-      if (loggedInUser && loggedInUser.id) {
-        console.log('Gọi API cộng EXP...');
-        await addExpToReader(loggedInUser.id);
-  
-        const selectedChapter = parts.find((part) => part.label === activePart) || parts[0];
-  
-        if (selectedChapter) {
-          await createReadingHistory({
-            idUser: loggedInUser._id,
-            idNovel: novelID,
-            idChapter: selectedChapter.id,
-            lastReadAt: new Date()
-          });
-  
-          navigate(`/novelView/${novelID}?chapterId=${selectedChapter.id}`);
-        } else {
-          navigate(`/novelView/${novelID}`);
-        }
-      } else {
-        alert('Vui lòng đăng nhập để đọc sách.');
+      console.log('Starting read book flow...');
+      
+      if (loggedInUser && loggedInUser._id) {
+        console.log('Adding EXP to user:', loggedInUser._id);
+        await addExpToReader(loggedInUser._id);
       }
-    } catch (error) {
-      console.error('Lỗi khi đọc sách:', error);
+      
+      console.log('Fetching chapters for novel:', novelID);
+      const chapters = await fetchChaptersByNovelId(novelID);
+      console.log('Chapters received:', chapters);
+      
+      if (chapters && chapters.length > 0) {
+        const firstChapter = chapters[0];
+        console.log('First chapter:', firstChapter);
+        
+        if (firstChapter.price > 0 && loggedInUser) {
+          console.log('Checking purchase status for chapter:', firstChapter._id);
+          const isPurchased = await checkChapterPurchased(loggedInUser._id, firstChapter._id);
+          if (!isPurchased) {
+            console.log('Chapter not purchased, showing purchase popup');
+            setSelectedChapter(firstChapter);
+            setShowPurchasePopup(true);
+            return;
+          }
+        }
+        
+        if (loggedInUser) {
+          console.log('Creating reading history');
+          await createReadingHistory(loggedInUser._id, novelID, firstChapter._id);
+        }
+        
+        console.log('Navigating to chapter:', `/novel/${novelID}/read?chapterId=${firstChapter._id}`);
+        navigate(`/novel/${novelID}/read?chapterId=${firstChapter._id}`);
+      } else {
+        console.error('No chapters found for novel:', novelID);
+        setError('Không tìm thấy chương nào');
+      }
+    } catch (err) {
+      console.error('Error reading book:', err);
+      setError('Có lỗi xảy ra khi mở sách');
     }
   };
-  
-  
+
   const handleFavoriteClick = async () => {
     if (!loggedInUser) {
       alert('Vui lòng đăng nhập để thêm vào yêu thích');

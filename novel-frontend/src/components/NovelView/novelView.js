@@ -14,8 +14,9 @@ export default function NovelView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bannerIndex, setBannerIndex] = useState(0);
-  const [bookmarkedLines, setBookmarkedLines] = useState([]); // State for bookmarked lines
+  const [bookmarkedParagraphs, setBookmarkedParagraphs] = useState([]); // State for bookmarked paragraphs
   const [banners, setBanners] = useState([]); // Update banners to be dynamic
+  const [showExpNotification, setShowExpNotification] = useState(false);
   const { loggedInUser } = useContext(UserContext);
 
   useEffect(() => {
@@ -52,6 +53,12 @@ export default function NovelView() {
         const content = await fetchChapterContent(chapter._id);
         setChapterContent(content.content);
         localStorage.setItem(`checkpoint_${novelID}`, currentChapterIndex);
+        
+        // Hiển thị thông báo EXP khi load chapter
+        if (loggedInUser) {
+          setShowExpNotification(true);
+          setTimeout(() => setShowExpNotification(false), 2000);
+        }
       } catch (err) {
         setError('Không thể tải nội dung chương.');
       }
@@ -68,7 +75,7 @@ export default function NovelView() {
 
   useEffect(() => {
     const savedBookmarks = JSON.parse(localStorage.getItem(`bookmarks_${novelID}_${currentChapterIndex}`)) || [];
-    setBookmarkedLines(savedBookmarks);
+    setBookmarkedParagraphs(savedBookmarks);
   }, [novelID, currentChapterIndex]);
 
   useEffect(() => {
@@ -89,6 +96,8 @@ export default function NovelView() {
       try {
         if (loggedInUser && loggedInUser._id) {
           await addExpToReader(loggedInUser._id);
+          setShowExpNotification(true);
+          setTimeout(() => setShowExpNotification(false), 2000);
         }
         setCurrentChapterIndex(currentChapterIndex + 1);
       } catch (err) {
@@ -97,10 +106,13 @@ export default function NovelView() {
       }
     }
   };
-  
 
   const handlePreviousChapter = () => {
     if (currentChapterIndex > 0) {
+      if (loggedInUser) {
+        setShowExpNotification(true);
+        setTimeout(() => setShowExpNotification(false), 2000);
+      }
       setCurrentChapterIndex(currentChapterIndex - 1);
     }
   };
@@ -117,18 +129,20 @@ export default function NovelView() {
     setBannerIndex(index);
   };
 
-  const handleLineBookmarkToggle = (lineIndex) => {
-    const updatedBookmarks = bookmarkedLines.includes(lineIndex)
-      ? bookmarkedLines.filter((index) => index !== lineIndex) // Remove bookmark
-      : [...bookmarkedLines, lineIndex]; // Add bookmark
+  const handleParagraphBookmarkToggle = (paraIndex) => {
+    const updatedBookmarks = bookmarkedParagraphs.includes(paraIndex)
+      ? [] // Remove bookmark (only one allowed so clear all)
+      : [paraIndex]; // Set new bookmark (only one allowed)
 
-    setBookmarkedLines(updatedBookmarks);
+    setBookmarkedParagraphs(updatedBookmarks);
     localStorage.setItem(`bookmarks_${novelID}_${currentChapterIndex}`, JSON.stringify(updatedBookmarks));
   };
 
   if (loading) return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 mb-4"></div>
+      <p className="text-gray-600">Đang tải nội dung chương...</p>
+      <p className="text-sm text-gray-500 mt-2">NovelID: {novelID}</p>
     </div>
   );
   if (error) return (
@@ -137,8 +151,11 @@ export default function NovelView() {
     </div>
   );
 
+  // Split content into paragraphs instead of lines
+  const paragraphs = chapterContent.split('\n\n').filter(p => p.trim() !== '');
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white relative">
       {/* Banner Section */}
       <div className="relative h-72 bg-cover bg-center transition-all duration-1000 shadow-lg" style={{ backgroundImage: `url(${banners[bannerIndex] || '/images/default-banner.jpg'})` }}> {/* Use default image if no banners */}
         {/* Left Navigation Button */}
@@ -173,15 +190,15 @@ export default function NovelView() {
       <div className="p-5 max-w-4xl mx-auto bg-white shadow-lg rounded-lg mt-6">
         <h1 className="text-4xl font-bold text-center mb-6 text-black">{chapters[currentChapterIndex]?.title}</h1>
         <div className="prose max-w-none text-justify text-lg leading-relaxed space-y-4">
-          {chapterContent.split('<br/>').map((line, index) => (
+          {paragraphs.map((paragraph, index) => (
             <div
               key={index}
-              className={`flex items-center p-2 rounded-md ${bookmarkedLines.includes(index) ? 'bg-yellow-100' : ''} hover:bg-gray-100 transition`}
-              onClick={() => handleLineBookmarkToggle(index)}
-              title={bookmarkedLines.includes(index) ? 'Remove Bookmark' : 'Add Bookmark'}
+              className={`flex items-center p-2 rounded-md ${bookmarkedParagraphs.includes(index) ? 'bg-yellow-100' : ''} hover:bg-gray-100 transition`}
+              onClick={() => handleParagraphBookmarkToggle(index)}
+              title={bookmarkedParagraphs.includes(index) ? 'Remove Bookmark' : 'Add Bookmark (only one allowed)'}
             >
-              <p className="flex-1 cursor-pointer" dangerouslySetInnerHTML={{ __html: line }}></p>
-              {bookmarkedLines.includes(index) && (
+              <p className="flex-1 cursor-pointer" dangerouslySetInnerHTML={{ __html: paragraph.replace(/\n/g, '<br/>') }}></p>
+              {bookmarkedParagraphs.includes(index) && (
                 <span className="text-yellow-500 font-bold ml-2">★</span>
               )}
             </div>
@@ -206,6 +223,16 @@ export default function NovelView() {
           Chương sau
         </button>
       </div>
+
+      {/* EXP Notification */}
+      {showExpNotification && (
+        <div className="fixed bottom-4 left-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-bounce z-50">
+          <div className="flex items-center">
+            <span className="text-lg font-bold mr-2">+10 EXP</span>
+            <span className="text-2xl">✨</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

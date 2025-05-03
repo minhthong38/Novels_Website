@@ -32,7 +32,7 @@ import RevenueTracking from './components/RevenueTracking/RevenueTracking';
 import MessageAI from './components/messageAI/messageAI';
 import UnlockedNovels from './components/UnlockedNovels/UnlockedNovels';
 
-// ✅ Import thêm các component mới
+// Import thêm các component mới
 import PlaylistByCategory from './components/playlistByCategory/playlistByCategory';
 import PlaylistPage from './components/playlistPage/PlaylistPage';
 import FavoriteNovel from './pages/FavoriteNovel';
@@ -48,6 +48,7 @@ function App() {
           <Route path="/" element={<ClientRoute children={<Home />} />} />
           <Route path="/menu/:categoryID" element={<ClientRoute children={<Menu />} />} />
           <Route path="/novelDetail/:novelID" element={<ClientRoute children={<NovelDetail />} />} />
+          <Route path="/novel/:novelID/read" element={<ClientRoute children={<NovelView />} />} />
           <Route path="/novelView/:novelID" element={<ClientRoute children={<NovelView />} />} />
           <Route path="/recommend" element={<ClientRoute children={<Recommend />} />} />
           <Route path="/authors" element={<ClientRoute children={<Authors />} />} />
@@ -62,7 +63,7 @@ function App() {
           <Route path="/favorites" element={<ClientRoute children={<FavoriteNovel />} />} />
           <Route path="/unlockedNovels" element={<ClientRoute children={<UnlockedNovels />} />} />
 
-          {/* ✅ Playlist routes */}
+          {/* Playlist routes */}
           <Route path="/playlist" element={<ClientRoute children={<PlaylistByCategory />} />} />
           <Route path="/playlist/:categoryID" element={<ClientRoute children={<PlaylistPage />} />} />
 
