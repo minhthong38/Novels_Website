@@ -37,6 +37,7 @@ export default function NovelDetail() {
 
   const [showPurchasePopup, setShowPurchasePopup] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState(null);
+  const [pendingChapter, setPendingChapter] = useState(null);
 
   //rating
   useEffect(() => {
@@ -200,33 +201,6 @@ export default function NovelDetail() {
     }
   };
 
-  const handlePartClick = async (label) => {
-    const selected = parts.find((part) => part.label === label);
-    if (!selected) return;
-  
-    const userId = loggedInUser?._id || loggedInUser?.id;
-    const isAuthor = userId === novel?.idUser?._id;
-  
-    setSelectedChapter(selected);
-  
-    try {
-      if (selected.price > 0 && !isAuthor) {
-        const hasPurchased = await checkChapterPurchased(userId, selected.id);
-  
-        if (!hasPurchased) {
-          setShowPurchasePopup(true);
-          return;
-        }
-      }
-  
-      // Nếu miễn phí, là tác giả hoặc đã mua => đọc luôn
-      await proceedToReadChapter(selected);
-    } catch (error) {
-      console.error('Lỗi kiểm tra mua chương:', error);
-      navigate(`/novelView/${novelID}?chapterId=${selected.id}`);
-    }
-  };
-
   const glowEffect = {
     boxShadow: "0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #00f, 0 0 50px #00f, 0 0 60px #00f, 0 0 70px #00f",
     color: "#fff",
@@ -235,104 +209,102 @@ export default function NovelDetail() {
     padding: "8px 16px"
   };
   
-  const proceedToReadChapter = async (chapter) => {
+  const handleReadChapter = async (chapter) => {
     const userId = loggedInUser?._id || loggedInUser?.id;
     const isAuthor = userId === novel?.idUser?._id;
   
     try {
       if (chapter.price > 0 && !isAuthor) {
-        const hasPurchased = await checkChapterPurchased(userId, chapter.id);
-  
+        const hasPurchased = await checkChapterPurchased(userId, chapter.id || chapter._id);
         if (!hasPurchased) {
-          // ✅ Lấy token từ localStorage (hoặc context nếu bạn lưu ở đó)
-          const token = localStorage.getItem('token'); // hoặc từ UserContext
-          const user = await fetchUserDetails(token);
-          const wallet = await getWallet(user._id, token);
-          const currentCoins = wallet?.wallet?.balance;
-          
-          if (currentCoins < chapter.price) {
-            alert('Bạn không đủ coin để mua chương này.');
-            return;
-          }
-  
-          // ✅ Tiến hành mua nếu đủ coin
-          const result = await buyChapter({
-            idUser: userId,
-            idChapter: chapter.id,
-            idNovel: novelID,
-            price: chapter.price,
-          });
-  
-          if (!result.success) {
-            alert('Không thể mua chương. Vui lòng thử lại.');
-            return;
-          }
-  
-          await createPurchaseHistory({
-            idUser: userId,
-            idChapter: chapter.id,
-            idNovel: novelID,
-            price: chapter.price,
-            purchaseDate: new Date(),
-          });
+          // 👉 Hiển thị popup và lưu chương đang chờ xác nhận
+          setPendingChapter(chapter);
+          setShowPurchasePopup(true);
+          return;
         }
       }
   
-      // Cộng EXP và tạo lịch sử đọc
-      if (userId) {
-        await addExpToReader(userId);
-        await createReadingHistory({
-          idUser: userId,
-          idNovel: novelID,
-          idChapter: chapter.id,
-          lastReadAt: new Date(),
-        });
-      }
-  
-      navigate(`/novelView/${novelID}?chapterId=${chapter.id}`);
-    } catch (error) {
-      console.error('Lỗi khi đọc chương:', error);
+      await proceedToReadChapter(chapter); // ✅ nếu miễn phí hoặc đã mua
+    } catch (err) {
+      console.error('Lỗi khi xử lý đọc chương:', err);
       alert('Đã xảy ra lỗi khi đọc chương.');
     }
   };
 
+  const handleConfirmPurchase = async () => {
+    const chapter = pendingChapter;
+    const userId = loggedInUser?._id || loggedInUser?.id;
+  
+    try {
+      const token = localStorage.getItem('token');
+      const user = await fetchUserDetails(token);
+      const wallet = await getWallet(user._id, token);
+      const currentCoins = wallet?.wallet?.balance;
+  
+      if (currentCoins < chapter.price) {
+        setShowPurchasePopup(false);
+        alert('Bạn không đủ coin để mua chương này.');
+        setPendingChapter(null);
+        return;
+      }
+  
+      const result = await buyChapter({
+        idUser: userId,
+        idChapter: chapter.id || chapter._id,
+        idNovel: novelID,
+        price: chapter.price,
+      });
+  
+      if (!result.success) {
+        alert('Không thể mua chương. Vui lòng thử lại.');
+        return;
+      }
+  
+      await createPurchaseHistory({
+        idUser: userId,
+        idChapter: chapter.id || chapter._id,
+        idNovel: novelID,
+        price: chapter.price,
+        purchaseDate: new Date(),
+      });
+  
+      await proceedToReadChapter(chapter);
+      setShowPurchasePopup(false);
+      setPendingChapter(null);
+    } catch (err) {
+      console.error('Lỗi khi mua chương:', err);
+      alert('Đã xảy ra lỗi khi mua chương.');
+    }
+  };
+  
+
+  const proceedToReadChapter = async (chapter) => {
+    const userId = loggedInUser?._id || loggedInUser?.id;
+    await addExpToReader(userId);
+    await createReadingHistory({
+      idUser: userId,
+      idNovel: novelID,
+      idChapter: chapter.id || chapter._id,
+      lastReadAt: new Date(),
+    });
+    navigate(`/novel/${novelID}/read?chapterId=${chapter.id || chapter._id}`);
+  };
+
+  const handlePartClick = async (label) => {
+    const selected = parts.find((part) => part.label === label);
+    if (!selected) return;
+  
+    setSelectedChapter(selected);
+    await handleReadChapter(selected);
+  };
+  
   const handleReadBookClick = async () => {
     try {
-      console.log('Starting read book flow...');
-      
-      if (loggedInUser && loggedInUser._id) {
-        console.log('Adding EXP to user:', loggedInUser._id);
-        await addExpToReader(loggedInUser._id);
-      }
-      
-      console.log('Fetching chapters for novel:', novelID);
       const chapters = await fetchChaptersByNovelId(novelID);
-      console.log('Chapters received:', chapters);
-      
       if (chapters && chapters.length > 0) {
         const firstChapter = chapters[0];
-        console.log('First chapter:', firstChapter);
-        
-        if (firstChapter.price > 0 && loggedInUser) {
-          console.log('Checking purchase status for chapter:', firstChapter._id);
-          const isPurchased = await checkChapterPurchased(loggedInUser._id, firstChapter._id);
-          if (!isPurchased) {
-            console.log('Chapter not purchased, showing purchase popup');
-            setSelectedChapter(firstChapter);
-            setShowPurchasePopup(true);
-            return;
-          }
-        }
-        
-        if (loggedInUser) {
-          console.log('Creating reading history');
-          await createReadingHistory(loggedInUser._id, novelID, firstChapter._id);
-        }
-        
-        console.log('Navigating to chapter:', `/novel/${novelID}/read?chapterId=${firstChapter._id}`);
-        navigate(`/novel/${novelID}/read?chapterId=${firstChapter._id}`);
+        await handleReadChapter(firstChapter);
       } else {
-        console.error('No chapters found for novel:', novelID);
         setError('Không tìm thấy chương nào');
       }
     } catch (err) {
@@ -340,6 +312,7 @@ export default function NovelDetail() {
       setError('Có lỗi xảy ra khi mở sách');
     }
   };
+  
 
   const handleFavoriteClick = async () => {
     if (!loggedInUser) {
@@ -588,27 +561,27 @@ export default function NovelDetail() {
           </>
         )}
 
-        {showPurchasePopup && selectedChapter && (
+        {showPurchasePopup && pendingChapter && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white text-black p-6 rounded-lg shadow-lg max-w-md w-full">
-              <h2 className="text-xl font-semibold mb-4">Mua chương {selectedChapter.title}</h2>
+              <h2 className="text-xl font-semibold mb-4">Mua chương {pendingChapter.title}</h2>
               <p className="mb-4">
-                Bạn có muốn mua chương <strong>{selectedChapter.title}</strong> với giá{' '}
-                <strong>{selectedChapter.price} xu</strong> để tiếp tục đọc?
+                Bạn có muốn mua chương <strong>{pendingChapter.title}</strong> với giá{' '}
+                <strong>{pendingChapter.price} xu</strong> để tiếp tục đọc?
               </p>
               <div className="mt-6 flex justify-end space-x-4">
                 <button
                   className="bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400 transition duration-300"
-                  onClick={() => setShowPurchasePopup(false)}
+                  onClick={() => {
+                    setShowPurchasePopup(false);
+                    setPendingChapter(null);
+                  }}
                 >
                   Hủy
                 </button>
                 <button
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300"
-                  onClick={async () => {
-                    setShowPurchasePopup(false);
-                    await proceedToReadChapter(selectedChapter);
-                  }}
+                  onClick={handleConfirmPurchase} // ✅ Gọi đúng hàm xử lý thanh toán
                 >
                   Mua và đọc
                 </button>

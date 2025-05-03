@@ -81,7 +81,20 @@ export default function Register() {
       }
     } catch (error) {
       console.error("Lỗi khi đăng ký:", error);
-      setPopupError("Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.");
+      if (error.response && error.response.status === 400) {
+        const msg = error.response.data.message;
+        if (msg.includes("Email")) {
+          setEmailErrors([msg]);
+        } else if (msg.includes("Tên đăng nhập")) {
+          setUsernameError(msg);
+        } else if (msg.includes("Họ và tên")) {
+          setPopupError(msg); // hoặc tạo `fullnameError` nếu muốn
+        } else {
+          setPopupError(msg);
+        }
+      } else {
+        setPopupError("Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.");
+      }      
     }
   };
   
