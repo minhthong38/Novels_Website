@@ -298,6 +298,10 @@ export const fetchFavoriteNovels = async (idUser) => {
 };
 
 export const toggleFavorite = async (idUser, idNovel) => {
+  if (!idUser || !idNovel) {
+    throw new Error("Thiếu idUser hoặc idNovel");
+  }
+
   try {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     console.log("Gọi API cập nhật yêu thích với ID:", idUser, idNovel); // Kiểm tra
@@ -311,6 +315,7 @@ export const toggleFavorite = async (idUser, idNovel) => {
     throw error.response?.data || { message: "Không thể cập nhật yêu thích" };
   }
 };
+
 
 // ===================== READING HISTORY =====================
 export const fetchReadingHistories = async (userId) => {

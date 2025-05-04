@@ -142,10 +142,13 @@ export default function NovelDetail() {
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (!loggedInUser?._id) return;
+      const userId = loggedInUser?._id || loggedInUser?.id;
+      console.log("loggedInUser in checkFavoriteStatus", loggedInUser);
+      
+      if (!userId) return;
   
       try {
-        const favorites = await fetchFavoriteNovels(loggedInUser._id);
+        const favorites = await fetchFavoriteNovels(userId);
         const isNovelFavorited = favorites.some(fav => fav.idNovel?._id === novelID);
         console.log('Favorite status:', isNovelFavorited);
         setIsFavorited(isNovelFavorited);
@@ -315,19 +318,23 @@ export default function NovelDetail() {
   
 
   const handleFavoriteClick = async () => {
-    if (!loggedInUser) {
-      alert('Vui lòng đăng nhập để thêm vào yêu thích');
+    const userId = loggedInUser._id || loggedInUser.id;
+
+    if (!userId || !novelID) {
+      alert('Thiếu thông tin người dùng hoặc tiểu thuyết');
       return;
     }
+
+    console.log("Gọi toggleFavorite với:", loggedInUser._id, novelID);
   
     try {
-      await toggleFavorite(loggedInUser._id, novelID);
+      await toggleFavorite(userId, novelID);
       // Cập nhật trạng thái ngay lập tức
       setIsFavorited(!isFavorited);
       
       // Kiểm tra lại trạng thái từ server sau 1 giây
       setTimeout(async () => {
-        const favorites = await fetchFavoriteNovels(loggedInUser._id);
+        const favorites = await fetchFavoriteNovels(userId);
         const isNovelFavorited = favorites.some(fav => fav.idNovel?._id === novelID);
         setIsFavorited(isNovelFavorited);
       }, 1000);

@@ -3,32 +3,38 @@ import { Link } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 import { fetchFavoriteNovels, toggleFavorite } from "../services/apiService";
 
+
 export default function FavoriteNovel() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { loggedInUser, isDarkMode } = useContext(UserContext);
+  const { loggedInUser, isDarkMode, loadingUser } = useContext(UserContext);
 
   useEffect(() => {
+    const user = loggedInUser._id || loggedInUser.id;
+    console.log("User ID:", user);
+    if (!user) {
+      console.warn("Chưa có loggedInUser._id khi load favorite");
+      setLoading(false);
+      return;
+    }
+  
+    console.log("Đã có loggedInUser._id:", loggedInUser._id);
+    
+  
     const loadFavorites = async () => {
-      if (!loggedInUser?._id) {
-        console.warn("Người dùng chưa đăng nhập.");
-        setLoading(false);
-        return;
-      }
-
       try {
-        const data = await fetchFavoriteNovels(loggedInUser._id);
+        const data = await fetchFavoriteNovels(user);
         setFavorites(data);
       } catch (error) {
         console.error("Lỗi tải danh sách yêu thích:", error);
-        setFavorites([]);
       } finally {
         setLoading(false);
       }
     };
-
+  
     loadFavorites();
   }, [loggedInUser]);
+  
 
   const handleRemoveFavorite = async (novelId) => {
     try {
