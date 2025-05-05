@@ -41,11 +41,14 @@ export default function TopRanking() {
       try {
         const data = await fetchReaderRankings();
         if (data) {
-          // Filter out any invalid entries
-          const validReaders = data.filter(reader => 
-            reader?.idUser?._id && reader?.idUser?.fullname
-          );
-          setReaderRankings(validReaders);
+
+          console.log("Valid Readers:", data);
+          
+          // Sắp xếp theo totalExp giảm dần
+          data.sort((a, b) => b.idReaderExp.totalExp - a.idReaderExp.totalExp);
+ 
+    
+          setReaderRankings(data);
         } else {
           setReaderRankings([]);
         }
@@ -54,6 +57,7 @@ export default function TopRanking() {
         setReaderRankings([]);
       }
     };
+    
   
     const getAuthorRankings = async () => {
       try {
@@ -122,20 +126,24 @@ export default function TopRanking() {
           ) : readerRankings.length > 0 ? (
             <>
               <div className="flex flex-col items-center mb-4 cursor-pointer" onClick={() => handleReaderClick(readerRankings[0])}>
-                <img 
-                  src={readerRankings[0].idUser.avatar || 'https://via.placeholder.com/150'} 
-                  alt={readerRankings[0].idUser.fullname}
-                  className="w-24 h-24 rounded-full"
-                />
-                <span className="text-center mt-2">{readerRankings[0].idUser.fullname} 🥇</span>
-              </div>
-              <div className="overflow-y-auto h-64">
+              <img 
+                src={readerRankings[0].idUser.avatar || 'https://via.placeholder.com/150'} 
+                alt={readerRankings[0].idUser.fullname}
+                className="w-24 h-24 rounded-full"
+              />
+              <span className="text-center mt-2">{readerRankings[0].idUser.fullname} 🥇</span>
+            </div>
+            <div className="overflow-y-auto h-64">
               {readerRankings.slice(1).map((reader, index) => (
                 <div key={reader.idUser._id} className="flex items-center mb-4 cursor-pointer" onClick={() => handleReaderClick(reader)}>
-                  <span className="flex-1 text-left">{index + 2}. {reader.idUser.fullname} {index === 0 ? '🥈' : index === 1 ? '🥉' : ''}</span>
+                  <span className="flex-1 text-left">
+                    {index + 2}. {reader.idUser.fullname} 
+                    {index === 0 ? '🥈' : index === 1 ? '🥉' : ''}
+                  </span>
                 </div>
               ))}
-              </div>
+            </div>
+
             </>
           ) : (
             <p className="text-center">No rankings available</p>

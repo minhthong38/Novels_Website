@@ -38,7 +38,8 @@ export default function FavoriteNovel() {
 
   const handleRemoveFavorite = async (novelId) => {
     try {
-      await toggleFavorite(loggedInUser._id, novelId);
+      const user = loggedInUser._id || loggedInUser.id;
+      await toggleFavorite(user, novelId);
       setFavorites(favorites.filter((fav) => fav.idNovel._id !== novelId));
     } catch (error) {
       console.error("Lỗi khi xóa khỏi danh sách yêu thích:", error);
@@ -48,7 +49,8 @@ export default function FavoriteNovel() {
   const handleRemoveAllFavorites = async () => {
     try {
       for (const fav of favorites) {
-        await toggleFavorite(loggedInUser._id, fav.idNovel._id);
+        const user = loggedInUser._id || loggedInUser.id;
+        await toggleFavorite(user, fav.idNovel._id);
       }
       setFavorites([]);
     } catch (error) {

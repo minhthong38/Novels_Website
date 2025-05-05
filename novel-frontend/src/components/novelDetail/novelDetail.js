@@ -168,7 +168,8 @@ export default function NovelDetail() {
   
     try {
       // Gửi bình luận đến API
-      const response = await addComment(novelID, loggedInUser._id, newComment);
+      const user = loggedInUser._id || loggedInUser.id;
+      const response = await addComment(novelID, user, newComment);
       console.log('Kết quả gửi bình luận:', response); // Kiểm tra phản hồi từ API
       
       

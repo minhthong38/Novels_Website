@@ -24,6 +24,7 @@ const PURCHASE_HISTORY = `${API_URL}/purchaseHistories`;
 const WITHDRAWAL_API = `${API_URL}/withdrawalTransactions`; // Rút tiền
 
 const AUTHOR_TASK_API = `${API_URL}/authorTasks`; 
+const AUTHOR_LEVEL_API = `${API_URL}/authorLevels`; // Cấp độ tác giả
 
 
 // ===================== USER =====================
@@ -81,13 +82,18 @@ export const addExpToReader = async (userId) => {
 
 export const fetchReaderExp = async (readerExpId) => {
   try {
-    if (!readerExpId) return;
+    if (!readerExpId || typeof readerExpId !== 'string') return; // Thêm kiểm tra type
+    
     const response = await axios.get(`${READER_EXP}/${readerExpId}/user/iduser`);
     return response.data;
   } catch (error) {
+    console.error("Error fetching ReaderExp:", error);
     throw error;
   }
 };
+
+
+
 
 // ===================== AUTHOR EXP =====================
 export const fetchAuthorExp = async (userId) => {
@@ -122,11 +128,13 @@ export const fetchReaderRankings = async () => {
 export const fetchAuthorRankings = async () => {
   try {
     const response = await axios.get(AUTHOR_RANKINGS);
+    console.log(response.data); // Kiểm tra dữ liệu trả về
     return response.data.data;
   } catch (error) {
     throw error.response?.data || 'Unknown error occurred';
   }
 };
+
 
 export const fetchNovelRankings = async () => {
   try {
@@ -756,6 +764,28 @@ export const fetchAuthorTask = async (authorExpId) => {
   }
 };
 
+//Lấy AuthorTask theo idUser
+export const fetchAuthorTaskByUserId = async (userId) => {
+  try {
+    const response = await axios.get(`${AUTHOR_TASK_API}/user/${userId}`);
+    console.log('[API] fetchAuthorTaskByUserId response:', response.data);
+    
+    // Kiểm tra nếu response.data.data là mảng hoặc đối tượng
+    const data = response.data.data;
+    if (!data) return [];  // Trả về mảng rỗng nếu không có dữ liệu
+
+    // Nếu dữ liệu không phải là mảng, chuyển thành mảng chứa 1 đối tượng
+    if (!Array.isArray(data)) {
+      return [data];
+    }
+    return data;  // Trả về mảng nếu dữ liệu là mảng
+  } catch (error) {
+    console.error('[API] fetchAuthorTaskByUserId error:', error);
+    throw error.response?.data || "Failed to fetch author task";
+  }
+};
+
+
 
 /**
  * Hoàn thành nhiệm vụ tác giả hiện tại
@@ -772,4 +802,16 @@ export const completeAuthorTask = async (authorTaskId) => {
     throw error.response?.data || "Failed to complete author task";
   }
 };
+
+// ===================== AUTHOR LEVEL =====================\
+export const fetchAuthorLevel = async (authorExpId) => {  
+  try {
+    const response = await axios.get(`${AUTHOR_LEVEL_API}/${authorExpId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('[API] fetchAuthorLevel error:', error);
+    throw error.response?.data || "Failed to fetch author level";
+  }
+}
+
 

@@ -3,6 +3,7 @@ import { UserContext } from '../../context/UserContext';
 import { fetchCategories, createNovel } from '../../services/apiService';
 import AuthorSidebar from '../sidebar/AuthorSidebar';
 import axios from 'axios'; // Để sử dụng axios cho việc gửi ảnh lên backend
+import {completeAuthorTask, fetchAuthorTaskByUserId} from '../../services/apiService'; // Để sử dụng hàm completeAuthorTask
 
 function CreateNovel() {
   const { loggedInUser, isDarkMode } = useContext(UserContext);
@@ -59,13 +60,16 @@ function CreateNovel() {
         formData.append('file', coverImage);
         formData.append('upload_preset', 'novel_img'); // Đảm bảo preset đúng
   
-        // Đảm bảo API endpoint đúng
-        const res = await axios.post('http://localhost:5000/api/uploads/upload', formData);// Thay đổi đường dẫn nếu cần
+        const res = await axios.post('http://localhost:5000/api/uploads/upload', formData); // Thay đổi đường dẫn nếu cần
         imageUrl = res.data.url; // Lấy URL ảnh từ phản hồi
       }
   
-      // Sử dụng _id nếu có, nếu không thì dùng id
-      const userId = loggedInUser._id || loggedInUser.id;
+      const userId = loggedInUser?._id || loggedInUser?.id;
+      if (!userId) {
+        setError('Không có ID người dùng, vui lòng đăng nhập lại.');
+        return;
+      }
+  
       const newNovel = {
         title,
         description,
@@ -76,10 +80,20 @@ function CreateNovel() {
         rate: 0
       };
   
-      // Gửi yêu cầu tạo truyện mới
       const response = await createNovel(newNovel);
       setSuccessMessage('Tạo truyện thành công!');
       console.log(response);  // In ra phản hồi để kiểm tra
+  
+      // Lấy AuthorTask và hoàn thành nhiệm vụ
+      const authorTasks = await fetchAuthorTaskByUserId(userId); // Gửi userId đúng
+      if (authorTasks.length > 0) {
+        const currentTaskId = authorTasks[0]._id;
+        await completeAuthorTask(currentTaskId);
+        console.log('✅ Đã hoàn thành nhiệm vụ tạo truyện!');
+      } else {
+        console.warn('⚠️ Không tìm thấy nhiệm vụ để hoàn thành');
+      }
+  
       setTimeout(() => {
         setSuccessMessage('');
         setTitle('');
@@ -93,6 +107,7 @@ function CreateNovel() {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className={`flex flex-col md:flex-row ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-red-500'} min-h-screen`}>

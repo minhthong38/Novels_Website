@@ -101,6 +101,8 @@ export default function UserAccount() {
   
           // Lấy dữ liệu EXP
           const expData = await fetchReaderExp(user._id);
+          console.log("expData", expData); // Log dữ liệu EXP để kiểm tra
+          
           if (expData) {
             setExp(expData.totalExp);
             setLevel(expData.idLevel?.title || "Chưa có cấp độ");
