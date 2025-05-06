@@ -156,7 +156,7 @@ export default function Register() {
       <div className="border border-black p-4 rounded-lg w-full max-w-md bg-white">
         <h1 className="text-2xl font-bold mb-4 text-center">Đăng ký</h1>
         <div className="mb-4 flex flex-col items-center">
-          <label className="block mb-2">Upload Avatardd</label>
+          <label className="block mb-2">Upload Avatar</label>
           <label htmlFor="image-upload" className="cursor-pointer">
             <img
               src={uploadedImage || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcToyYhbHadbpodeEITznau3J5M6eBZVVyIDyg&s'}

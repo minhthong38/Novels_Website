@@ -47,24 +47,6 @@ export default function UserAccount() {
       accountNumber: '0987654321',
       accountName: 'NOVEL WEBSITE'
     },
-    {
-      id: 'card',
-      name: 'Thẻ cào',
-      icon: '💳',
-      description: 'Nạp bằng thẻ cào điện thoại',
-      cardTypes: ['Viettel', 'Mobifone', 'Vinaphone', 'Vietnamobile']
-    },
-    {
-      id: 'bank',
-      name: 'Chuyển khoản ngân hàng',
-      icon: '🏦',
-      description: 'Chuyển khoản qua ngân hàng',
-      banks: [
-        { name: 'Vietcombank', number: '1234567890', name: 'NOVEL WEBSITE' },
-        { name: 'Techcombank', number: '0987654321', name: 'NOVEL WEBSITE' },
-        { name: 'MB Bank', number: '1122334455', name: 'NOVEL WEBSITE' }
-      ]
-    }
   ];
 
   useEffect(() => {
@@ -339,7 +321,7 @@ export default function UserAccount() {
             {Number.isInteger(spendingWallet) 
               ? spendingWallet 
               : spendingWallet.toFixed(2)} 
-            <i className="fas fa-coins text-yellow-500"> Coin</i>
+            <i className="fas fa-coins text-yellow-500"> Coin✨</i>
           </span>
         </div>
         </div>
