@@ -215,6 +215,13 @@ export default function NovelDetail() {
   
   const handleReadChapter = async (chapter) => {
     const userId = loggedInUser?._id || loggedInUser?.id;
+
+    if (!userId) {
+      alert('Vui lòng đăng nhập để đọc và mua chương này!');
+      navigate('/login');
+      return;
+    }
+
     const isAuthor = userId === novel?.idUser?._id;
   
     try {
@@ -295,6 +302,12 @@ export default function NovelDetail() {
   };
 
   const handlePartClick = async (label) => {
+
+    const userId = loggedInUser?._id || loggedInUser?.id;
+    if (!userId) {
+      alert('Vui lòng đăng nhập để đọc truyện!');
+      return;
+    }
     const selected = parts.find((part) => part.label === label);
     if (!selected) return;
   
@@ -303,6 +316,13 @@ export default function NovelDetail() {
   };
   
   const handleReadBookClick = async () => {
+
+    const userId = loggedInUser?._id || loggedInUser?.id;
+    if (!userId) {
+      alert('Vui lòng đăng nhập để đọc truyện!');
+      return;
+    }
+
     try {
       const chapters = await fetchChaptersByNovelId(novelID);
       if (chapters && chapters.length > 0) {
@@ -319,6 +339,11 @@ export default function NovelDetail() {
   
 
   const handleFavoriteClick = async () => {
+    if (!loggedInUser) {
+      alert('Vui lòng đăng nhập để thực hiện lưu yêu thích!');
+      return;
+    }
+
     const userId = loggedInUser._id || loggedInUser.id;
 
     if (!userId || !novelID) {
@@ -342,21 +367,6 @@ export default function NovelDetail() {
     } catch (error) {
       console.error('Lỗi khi thay đổi trạng thái yêu thích:', error);
     }
-  };
-
-  const handleEditComment = (comment) => {
-    setEditingComment(comment.id);
-    setEditedCommentText(comment.text);
-  };
-
-  const handleSaveEditedComment = (id) => {
-    setComments(
-      comments.map((comment) =>
-        comment.id === id ? { ...comment, text: editedCommentText } : comment
-      )
-    );
-    setEditingComment(null);
-    setEditedCommentText('');
   };
 
   // Xử lý rating
@@ -540,7 +550,7 @@ export default function NovelDetail() {
                           className="w-8 h-8 rounded-full mr-2"
                         />
                         <span className="font-semibold text-sm">{comment.fullname || 'Ẩn danh'}</span>
-                        {(loggedInUser._id || loggedInUser.id) === (comment.idUser?._id || comment.idUser) && (
+                        {loggedInUser && (loggedInUser._id || loggedInUser.id) === (comment.idUser?._id || comment.idUser) && (
                           <button
                             onClick={() => handleDeleteComment(comment._id)}
                             className="ml-auto text-red-500 hover:text-red-700 text-sm"

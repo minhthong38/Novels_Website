@@ -187,7 +187,7 @@ function Header() {
                       <Link to="/authorAccounts" className="block px-4 py-2 hover:bg-gray-600">Author Profile</Link>
                     )}
                     <Link to="/history" className="block px-4 py-2 hover:bg-gray-600">History</Link>
-                    <Link to="/settings" className="block px-4 py-2 hover:bg-gray-600">Settings</Link>
+                    {/* <Link to="/settings" className="block px-4 py-2 hover:bg-gray-600">Settings</Link> */}
                     <button onClick={handleLogout} className="block w-full text-left px-4 py-2 hover:bg-gray-600">Logout</button>
                   </>
                 ) : (
@@ -361,7 +361,7 @@ function Header() {
                     <Link to="/authorAccounts" className="block px-4 py-2 hover:bg-gray-600">Author Profile</Link>
                   )}
                   <Link to="/history" className="block px-4 py-2 hover:bg-gray-600">History</Link>
-                  <Link to="/settings" className="block px-4 py-2 hover:bg-gray-600">Settings</Link>
+                  {/* <Link to="/settings" className="block px-4 py-2 hover:bg-gray-600">Settings</Link> */}
                   <button onClick={handleLogout} className="block w-full text-left px-4 py-2 hover:bg-gray-600">Logout</button>
                 </>
               ) : (

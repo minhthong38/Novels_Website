@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import {checkUsernameEmail} from '../services/apiService'; // Import the API function
 import axios from 'axios';
 
 export default function Register() {
@@ -48,11 +49,27 @@ export default function Register() {
       return;
     }
     if (error || usernameError || emailErrors.length > 0) {
-      setPopupError("Thông tin không hợp lệ. Vui lòng kiểm tra lại.");
       return;
     }
+    
   
     try {
+
+      // Kiểm tra username và email đã tồn tại chưa
+      const checkResponse = await checkUsernameEmail(username, email);
+      console.log("Check response:", checkResponse); // Log the response for debugging
+      
+      if (checkResponse.usernameExists || checkResponse.emailExists) {
+        if (checkResponse.usernameExists) {
+          setUsernameError("Tên đăng nhập đã tồn tại");
+        }
+        if (checkResponse.emailExists) {
+          setEmailErrors([ "Email đã tồn tại" ]);
+        }
+        setPopupError("Thông tin không hợp lệ. Vui lòng kiểm tra lại.");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("fullname", fullname);
       formData.append("username", username);

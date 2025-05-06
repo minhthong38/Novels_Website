@@ -18,8 +18,8 @@ export default function AuthorSidebar({ activeView }) {
     const fetchWallet = async () => {
       if (loggedInUser) {
         try {
-          const walletData = await getWalletByUserId(loggedInUser.id);
-          console.log("Ví doanh thu:", loggedInUser);
+          const userId = loggedInUser.id || loggedInUser._id; // Lấy userId từ loggedInUser
+          const walletData = await getWalletByUserId(userId);
           
           setWallet(walletData || null);
         } catch (error) {

@@ -12,15 +12,16 @@ export default function History() {
 
   useEffect(() => {
     const fetchHistory = async () => {
-      if (!loggedInUser || !loggedInUser._id) {
+      if (!loggedInUser.id) {
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        console.log('Fetching reading histories for user:', loggedInUser._id);
-        const response = await fetchReadingHistories(loggedInUser._id);
+        const userId = loggedInUser.id || loggedInUser._id;
+        
+        const response = await fetchReadingHistories(userId);
         
         if (response && Array.isArray(response)) {
           setReadNovels(response);

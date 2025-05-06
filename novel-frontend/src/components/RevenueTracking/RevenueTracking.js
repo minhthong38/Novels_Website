@@ -156,11 +156,11 @@ const RevenueTracking = () => {
           </div>
         )}
 
-        {loading ? (
+        {/* {loading ? (
           <div className="space-y-4">
             <Skeleton height={60} count={5} />
-          </div>
-        ) : (
+          </div> )*/}
+        : (
           <div className="overflow-x-auto">
             <div className="min-w-[800px] md:min-w-0">
               <table className="w-full divide-y">
@@ -232,7 +232,7 @@ const RevenueTracking = () => {
               </table>
             </div>
           </div>
-        )}
+        )
       </main>
     </div>
   );

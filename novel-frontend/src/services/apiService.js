@@ -69,6 +69,28 @@ export const updateUserProfile = async (userId, updateData) => {
   }
 };
 
+export const checkUsernameEmail = async (username, email) => {
+  try {
+    const response = await axios.post(`${USERS_API}/check-username-email`, { username, email });
+    const { usernameExists, emailExists } = response.data;
+
+    if (usernameExists && emailExists) {
+      return 'Username và email đều đã tồn tại';
+    }
+    if (usernameExists) {
+      return 'Username đã tồn tại';
+    }
+    if (emailExists) {
+      return 'Email đã tồn tại';
+    }
+
+    return 'Username và email hợp lệ';
+  } catch (error) {
+    throw error.response?.data || 'Kiểm tra username/email thất bại';
+  }
+};
+
+
 // ===================== READER EXP =====================
 export const addExpToReader = async (userId) => {
   try {
