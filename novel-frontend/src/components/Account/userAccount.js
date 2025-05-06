@@ -367,21 +367,15 @@ export default function UserAccount() {
               <i className="fas fa-heart mr-2"></i> 
               <Link to="/favorites">Yêu thích</Link>
             </li>
-            <li className="flex items-center">
-              <i className="fas fa-book mr-2"></i> 
-              <Link to="/unlockedNovels">Truyện đã mở khóa</Link>
-            </li>
-            <li className="flex items-center">
-              <i className="fas fa-bell mr-2"></i> 
-              <a href="#!" onClick={() => setNotification(null)}>Thông báo</a>
-            </li>
+           
+         
             <li className="flex items-center">
               <i className="fas fa-history mr-2"></i> 
               <Link to="/history">Lịch sử đọc</Link>
             </li>
             <li className="flex items-center">
               <i className="fas fa-receipt mr-2"></i> 
-              <a href="#!">Lịch sử thanh toán</a>
+              <Link to="/payment">Lịch sử thanh toán</Link>
             </li>
             <li className="flex items-center">
               <i className="fas fa-key mr-2"></i> 

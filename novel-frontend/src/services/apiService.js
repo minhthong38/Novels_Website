@@ -557,29 +557,60 @@ export const createMomoPayment = async (paymentData, token) => {
   }
 };
 
-// ===================== Transaction =====================
+// ===================== TRANSACTION =====================
 // Tạo giao dịch và số coin nhận được
 export const createTransaction = async (paymentData, token) => {
   try {
     const response = await axios.post(`${TRANSACTION_API}/create-transaction`, paymentData, {
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json', // BẮT BUỘC CÓ
+        'Content-Type': 'application/json',
       },
     });
+
     console.log('Transaction created:', response.data);
-    return response.data;  // Trả về thông tin giao dịch và số coin nhận được
+    return response.data;
   } catch (error) {
     console.error('Error creating transaction:', error);
     throw error.response?.data || 'Failed to create transaction';
   }
 };
 
-// Lấy lịch sử giao dịch của người dùng
-export const fetchUserTransactions = async (idUser) => {
+export const deleteTransaction = async (transactionId, token) => {
   try {
-    const response = await axios.get(`${TRANSACTION_API}/transactions/${idUser}`);
-    return response.data;  // Trả về danh sách giao dịch của người dùng
+    const response = await axios.delete(`http://localhost:5000/api/transactions/${transactionId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting transaction:', error);
+    throw error;
+  }
+};
+
+export const updateTransactionStatus = async (orderId, newStatus, token) => {
+  try {
+    const response = await axios.put(`${TRANSACTION_API}/update-transaction`, 
+      { orderId, newStatus },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error updating transaction status:', error);
+    throw error;
+  }
+};
+
+// Lấy lịch sử giao dịch của người dùng
+export const fetchUserTransactions = async (idUser, token) => {
+  try {
+    const response = await axios.get(`${TRANSACTION_API}/${idUser}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    return response.data; // Chỉ trả về giao dịch của idUser
   } catch (error) {
     console.error('Error fetching user transactions:', error);
     throw error.response?.data || 'Failed to fetch user transactions';
@@ -700,6 +731,18 @@ export const checkChapterPurchased = async (userId, chapterId) => {
     throw error;
   }
 };
+export const fetchUserPurchases = async (userId, token) => {
+  try {
+    const response = await axios.get(`${PURCHASE_HISTORY}/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    return response.data; // Trả về danh sách giao dịch mua của user
+  } catch (error) {
+    console.error('Error fetching user purchases:', error);
+    throw error.response?.data || 'Failed to fetch purchase history';
+  }
+};
 
 // ===================== WITHDRWAL TRANSACTION =====================
 // Rút tiền ngay (chỉ gửi amount)
@@ -813,5 +856,3 @@ export const fetchAuthorLevel = async (authorExpId) => {
     throw error.response?.data || "Failed to fetch author level";
   }
 }
-
-

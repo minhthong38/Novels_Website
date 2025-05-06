@@ -457,7 +457,7 @@ export default function NovelDetail() {
                     )}
                     <div className="ml-2">
                       <p className="font-semibold text-white">{author?.fullname}</p>
-                      <p className="text-sm text-gray-400">@{author?.username}</p>
+                      <p className="text-sm text-gray-400">{author?.username}</p>
                     </div>
                   </div>
                   <div className="mt-6 flex space-x-4">

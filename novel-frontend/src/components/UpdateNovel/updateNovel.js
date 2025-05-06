@@ -19,7 +19,7 @@ export default function UpdateNovel() {
   const [filteredChapters, setFilteredChapters] = useState([]);
   const [showCreateChapter, setShowCreateChapter] = useState(false);
 
-  const [newChapter, setNewChapter] = useState({ title: '', content: '', chapterNumber: 1, banners: [null, null, null], price: 0 });
+  const [newChapter, setNewChapter] = useState({ title: '', content: '', chapterNumber: 1, price: 0 });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -100,37 +100,6 @@ export default function UpdateNovel() {
       fetchNovelDetails();
     }
   }, [location.state?.novel]);
-
-  const handleBannerUpload = async (index, e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      // Create a temporary chapter to upload the banner
-      const tempChapter = {
-        idNovel: novel._id,
-        title: `Banner ${index + 1}`,
-        content: '',
-        chapterNumber: 0,
-        banners: [null, null, null]
-      };
-      
-      // Update the banner in the temporary chapter
-      tempChapter.banners[index] = URL.createObjectURL(file);
-      
-      // Update the state with the new banner
-      const updatedBanners = [...newChapter.banners];
-      updatedBanners[index] = tempChapter.banners[index];
-      
-      setNewChapter(prev => ({
-        ...prev,
-        banners: updatedBanners
-      }));
-    } catch (error) {
-      console.error('Error uploading banner:', error);
-      setError('Có lỗi khi tải lên banner');
-    }
-  };
 
   const handleWordUpload = (e) => {
     const file = e.target.files[0];
@@ -220,8 +189,7 @@ export default function UpdateNovel() {
         title: fullTitle,
         content: newChapter.content,
         chapterNumber: newChapter.chapterNumber,
-        price: newChapter.price,
-        banners: newChapter.banners || [null, null, null]
+        price: newChapter.price
       });
       
       const updatedChapters = await fetchChaptersByNovelId(novel._id);
@@ -233,7 +201,6 @@ export default function UpdateNovel() {
         title: '',
         content: '',
         chapterNumber: nextChapterNumber,
-        banners: [null, null, null],
         price: 0
       });
       setShowCreateChapter(false);
@@ -287,10 +254,6 @@ export default function UpdateNovel() {
                 <div>
                   <span className="font-semibold text-gray-600 dark:text-gray-300">Số chương:</span>
                   <span className="ml-2">{chapters.length}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-gray-600 dark:text-gray-300">Lượt xem:</span>
-                  <span className="ml-2">{novel.view || 0}</span>
                 </div>
               </div>
               <div className="border-t border-gray-300 dark:border-gray-600 pt-4 mt-4">
@@ -361,51 +324,59 @@ export default function UpdateNovel() {
               isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'
             }`}
           >
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <svg className="-ml-0.5 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
             </svg>
             <span>Thêm Chương</span>
           </button>
         </div>
 
         {/* Chapters Table */}
-        <div className={`rounded-lg shadow-lg overflow-x-auto ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <table className="min-w-full text-left border-separate border-spacing-0">
-            <thead className={`${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-100'}`}>
-              <tr>
-                <th className="p-4">STT</th>
-                <th className="p-4">Tên Chương</th>
-                <th className="p-4">Lượt Xem</th>
-                <th className="p-4">Thao Tác</th>
-                <th className="p-4">Khóa Chương</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredChapters.map((chapter, index) => (
-                <tr key={chapter._id} className={`${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'}`}>
-                  <td className="p-4">{index + 1}</td>
-                  <td className="p-4">{chapter.title}</td>
-                  <td className="p-4">{chapter.view || 0}</td>
-                  <td className="p-4">
-                    <button 
-                      onClick={() => navigate('/chapter', { state: { chapter } })}
-                      className={`px-4 py-2 rounded-lg ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
-                    >
-                      Cập Nhật
-                    </button>
-                  </td>
-                  <td className="p-5">
-                    <button 
-                      onClick={() => handleToggleLock(chapter._id)}
-                      className={`relative items-center inline-flex h-6 w-11 rounded-full transition ${chapter.isLocked ? 'bg-green-500' : 'bg-gray-400'}`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full transition ${chapter.isLocked ? 'translate-x-6' : 'translate-x-1'} bg-white`} />
-                    </button>
-                  </td>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20">STT</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider min-w-[180px]">TÊN CHƯƠNG</th>
+                  <th className="px-8 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-32">THAO TÁC</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {filteredChapters.map((chapter, index) => (
+                  <tr key={chapter._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center justify-center">
+                        <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 text-sm font-medium">
+                          {index + 1}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm font-medium text-gray-800 dark:text-gray-100 line-clamp-1">
+                        {chapter.title}
+                      </div>
+                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <span className="hidden sm:inline">Cập nhật: </span>
+                        {new Date(chapter.updatedAt).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right">
+                      <button
+                        onClick={() => navigate('/chapter', { state: { chapter } })}
+                        className="inline-flex items-center justify-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                      >
+                        <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Cập nhật
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
       {/* Create Chapter Modal */}
@@ -501,7 +472,7 @@ export default function UpdateNovel() {
                               className="hidden"
                             />
                             <svg className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             <span className="font-medium text-gray-700 dark:text-gray-300">Viết trực tiếp</span>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Soạn nội dung bằng trình biên tập</p>
@@ -521,7 +492,7 @@ export default function UpdateNovel() {
                               className="hidden"
                             />
                             <svg className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0112.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0112.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
                             <span className="font-medium text-gray-700 dark:text-gray-300">Tải lên file Word</span>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Nhập nội dung từ file .doc/.docx</p>
@@ -535,7 +506,7 @@ export default function UpdateNovel() {
                         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                           <div className="space-y-1 text-center">
                             <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" viewBox="0 0 48 48">
-                              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 015.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                             <div className="flex text-sm text-gray-600 dark:text-gray-400">
                               <label className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 focus-within:outline-none focus:ring-blue-500 focus:border-blue-500">
@@ -557,7 +528,7 @@ export default function UpdateNovel() {
                         {newChapter.content && (
                           <div className="mt-2 text-sm text-green-600 dark:text-green-400 flex items-center">
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                             </svg>
                             Đã tải lên thành công! Nội dung đã sẵn sàng.
                           </div>
@@ -578,48 +549,6 @@ export default function UpdateNovel() {
                         />
                       </div>
                     )}
-                  </div>
-
-                  {/* Banner Section */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      Banner cho chương
-                      <span className="text-gray-500 ml-1">(tối đa 3 ảnh)</span>
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {[0, 1, 2].map((index) => (
-                        <div key={index} className="relative h-40">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleBannerUpload(index, e)}
-                            className="hidden"
-                            id={`banner-upload-${index}`}
-                          />
-                          <label
-                            htmlFor={`banner-upload-${index}`}
-                            className={`block w-full h-full border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer ${
-                              isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'
-                            }`}
-                          >
-                            {newChapter.banners[index] ? (
-                              <img 
-                                src={newChapter.banners[index]} 
-                                alt={`Banner ${index + 1}`}
-                                className="w-full h-full object-cover rounded-lg"
-                              />
-                            ) : (
-                              <div className="text-center">
-                                <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <p className="mt-2 text-sm">Tải lên banner {index + 1}</p>
-                              </div>
-                            )}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
                   </div>
 
                   {/* Error Message */}
@@ -645,7 +574,7 @@ export default function UpdateNovel() {
                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                     >
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                       Hủy bỏ
                     </button>
@@ -662,16 +591,15 @@ export default function UpdateNovel() {
                     >
                       {loading ? (
                         <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                           </svg>
                           Đang xử lý...
                         </>
                       ) : (
                         <>
                           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           Tạo Chương
                         </>

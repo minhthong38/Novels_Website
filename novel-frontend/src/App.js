@@ -29,8 +29,8 @@ import Header from './components/Header';
 import { UserProvider } from './context/UserContext';
 import TopViewedNovels from './components/topViewedNovels/TopViewedNovels';
 import RevenueTracking from './components/RevenueTracking/RevenueTracking';
-import MessageAI from './components/messageAI/messageAI';
 import UnlockedNovels from './components/UnlockedNovels/UnlockedNovels';
+import PaymentHistory from './components/payment/payment';
 
 // Import thêm các component mới
 import PlaylistByCategory from './components/playlistByCategory/playlistByCategory';
@@ -41,7 +41,7 @@ function App() {
   return (
     <UserProvider>
       <BrowserRouter>
-        <MessageAI />
+
         <Routes>
 
           {/* ---------------- CLIENT ROUTES ---------------- */}
@@ -53,6 +53,7 @@ function App() {
           <Route path="/recommend" element={<ClientRoute children={<Recommend />} />} />
           <Route path="/authors" element={<ClientRoute children={<Authors />} />} />
           <Route path="/userAccount" element={<ClientRoute children={<UserAccount />} />} />
+          <Route path="/payment" element={<ClientRoute children={<PaymentHistory />} />} />
           <Route path="/history" element={<ClientRoute children={<History />} />} />
           <Route path="/UserStickyNote" element={<ClientRoute children={<UserStickyNote />} />} />
           <Route path="/blindbook" element={<ClientRoute children={<BlindBook />} />} /> 

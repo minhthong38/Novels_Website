@@ -156,36 +156,6 @@ export default function NovelView() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white relative">
-      {/* Banner Section */}
-      <div className="relative h-72 bg-cover bg-center transition-all duration-1000 shadow-lg" style={{ backgroundImage: `url(${banners[bannerIndex] || '/images/default-banner.jpg'})` }}> {/* Use default image if no banners */}
-        {/* Left Navigation Button */}
-        <button
-          onClick={() => handleBannerNavigation('prev')}
-          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-75 transition"
-        >
-          &#8249;
-        </button>
-
-        {/* Right Navigation Button */}
-        <button
-          onClick={() => handleBannerNavigation('next')}
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-75 transition"
-        >
-          &#8250;
-        </button>
-
-        {/* Dots for Manual Control */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-          {banners.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setBannerIndex(index)} // Update bannerIndex when a dot is clicked
-              className={`w-4 h-4 rounded-full ${index === bannerIndex ? 'bg-white' : 'bg-gray-400'} hover:bg-gray-200 transition`}
-            ></button>
-          ))}
-        </div>
-      </div>
-
       {/* Chapter Content */}
       <div className="p-5 max-w-4xl mx-auto bg-white shadow-lg rounded-lg mt-6">
         <h1 className="text-4xl font-bold text-center mb-6 text-black">{chapters[currentChapterIndex]?.title}</h1>

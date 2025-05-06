@@ -5,7 +5,6 @@ import Recommend from '../Recommend/recommend';
 import Released from '../released/released';
 import PlaylistByCategory from '../playlistByCategory/playlistByCategory';
 import { UserContext } from '../../context/UserContext'; // Corrected the import path
-import MessageAI from '../messageAI/messageAI'; // Import the MessageAI component
 
 export default function Home() {
   const { isDarkMode } = useContext(UserContext);
@@ -78,7 +77,7 @@ export default function Home() {
       </div>
 
       {/* MessageAI Chat Box */}
-      <MessageAI />
+    
     </div>
   );
 }

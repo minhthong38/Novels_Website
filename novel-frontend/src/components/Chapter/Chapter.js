@@ -113,19 +113,6 @@ export default function Chapter() {
     };
   }, [isDarkMode]);
 
-  const handleBannerUpload = (index, event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const newBanners = [...(chapter?.banners || [null, null, null])];
-        newBanners[index] = e.target.result;
-        setChapter(prev => ({ ...prev, banners: newBanners }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleSave = async () => {
     if (!chapter.title.trim() || !chapter.content.trim()) {
       setError('Vui lòng điền đầy đủ thông tin');
@@ -137,7 +124,6 @@ export default function Chapter() {
       const response = await updateChapter(chapter._id, {
         title: chapter.title,
         content: chapter.content,
-        banners: chapter.banners
       });
 
       if (response) {
@@ -180,54 +166,6 @@ export default function Chapter() {
         </div>
         <div className={`p-5 max-w-7xl mx-auto ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg rounded-lg`}>
           <h1 className="text-4xl font-bold text-center mb-6">{chapter?.title || 'Chỉnh Sửa Chương'}</h1>
-          
-          {error && (
-            <div className={`p-4 mb-4 rounded-lg ${isDarkMode ? 'bg-red-900 text-red-300' : 'bg-red-100 text-red-700'}`}>
-              {error}
-            </div>
-          )}
-
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">
-              Banner cho chương (3 ảnh)
-              <span className="text-gray-500 ml-1">(nếu có)</span>
-            </label>
-            <div className="grid grid-cols-3 gap-4">
-              {[0, 1, 2].map((index) => (
-                <div key={index} className="relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleBannerUpload(index, e)}
-                    className="hidden"
-                    id={`banner-upload-${index}`}
-                  />
-                  <label
-                    htmlFor={`banner-upload-${index}`}
-                    className={`block w-full h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer ${
-                      isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {chapter?.banners?.[index] ? (
-                      <img 
-                        src={chapter.banners[index]} 
-                        alt={`Banner ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    ) : (
-                      <div className="text-center">
-                        <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p className="mt-2 text-sm">Tải lên banner {index + 1}</p>
-                      </div>
-                    )}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg overflow-hidden`}>
             <ReactQuill
               theme="snow"

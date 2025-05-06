@@ -37,8 +37,7 @@ export default function AuthorSidebar({ activeView }) {
     { label: 'Hồ sơ cá nhân', icon: '👤', view: 'profile', path: '/authorAccounts' },
     { label: 'Truyện của tôi', icon: '📚', view: 'listNovels', path: '/listNovels' },
     { label: 'Thêm truyện mới', icon: '➕', view: 'createNovel', path: '/createNovel' },
-    { label: 'Cập nhật truyện', icon: '✏️', view: 'updateNovel', path: '/updateNovel' },
-    { label: 'Theo dõi doanh thu', icon: '📈', view: 'revenueTracking', path: '/revenueTracking' },
+    // { label: 'Theo dõi doanh thu', icon: '📈', view: 'createNovel', path: '/revenueTracking' },
   ];
 
   const handleWithdrawClick = () => setIsModalOpen(true);
