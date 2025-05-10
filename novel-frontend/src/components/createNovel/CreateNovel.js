@@ -16,7 +16,7 @@ function CreateNovel() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const defaultCoverImage = "/path/to/your/default/cover/image.jpg";
+  const defaultCoverImage = "https://bakerpublishinggroup.com/covers/original/missing.png";
 
   useEffect(() => {
     const loadCategories = async () => {

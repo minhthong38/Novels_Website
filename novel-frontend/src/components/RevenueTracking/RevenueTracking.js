@@ -1,241 +1,208 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { UserContext } from '../../context/UserContext';
-import AuthorSidebar from '../sidebar/AuthorSidebar';
 import { fetchUserPurchases } from '../../services/apiService';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
-import { FiBookOpen, FiUser, FiBook, FiCalendar } from 'react-icons/fi';
-// import Skeleton from '../Skeleton';
+import { FiBookOpen, FiBook, FiCalendar, FiDollarSign, FiChevronRight } from 'react-icons/fi';
+import AuthorSidebar from '../sidebar/AuthorSidebar';
 
-// Register ChartJS components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
-const RevenueTracking = () => {
-  const { loggedInUser, isDarkMode } = useContext(UserContext);
-  const [purchaseHistory, setPurchaseHistory] = useState([]);
+export default function UnlockedNovels() {
+  const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
-  const chartRef = useRef(null);
+  const [error, setError] = useState('');
+  const { isDarkMode, loggedInUser } = useContext(UserContext);
+  const navigate = useNavigate();
 
-  // Calculate totals
-  const totalRevenue = purchaseHistory.reduce((sum, purchase) => sum + purchase.price, 0);
-  const totalChapters = purchaseHistory.length;
-
-  // Process data for chart
-  const processChartData = () => {
-    const groupedData = {};
-    
-    purchaseHistory.forEach(purchase => {
-      const date = new Date(purchase.purchaseDate).toLocaleDateString('vi-VN');
-      if (!groupedData[date]) {
-        groupedData[date] = {
-          revenue: 0,
-          chapters: 0
-        };
-      }
-      groupedData[date].revenue += purchase.price;
-      groupedData[date].chapters += 1;
-    });
-    
-    const labels = Object.keys(groupedData).sort();
-    const revenueData = labels.map(date => groupedData[date].revenue);
-    const chaptersData = labels.map(date => groupedData[date].chapters);
-    
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Doanh thu (VNĐ)',
-          data: revenueData,
-          backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.7)' : 'rgba(59, 130, 246, 0.5)',
-          yAxisID: 'y',
-        },
-        {
-          label: 'Số chương bán',
-          data: chaptersData,
-          backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.7)' : 'rgba(16, 185, 129, 0.5)',
-          yAxisID: 'y1',
-        }
-      ]
-    };
-  };
-
-  const chartData = processChartData();
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: {
-          color: isDarkMode ? '#f3f4f6' : '#111827',
-        }
-      },
-      title: {
-        display: true,
-        text: 'Biểu đồ doanh thu và số chương bán',
-        color: isDarkMode ? '#f3f4f6' : '#111827',
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: isDarkMode ? '#f3f4f6' : '#111827',
-        },
-        grid: {
-          color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-        }
-      },
-      y: {
-        type: 'linear',
-        display: true,
-        position: 'left',
-        ticks: {
-          color: isDarkMode ? '#f3f4f6' : '#111827',
-          callback: function(value) {
-            return value.toLocaleString('vi-VN') + ' VNĐ';
-          }
-        },
-        grid: {
-          color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-        }
-      },
-      y1: {
-        type: 'linear',
-        display: true,
-        position: 'right',
-        ticks: {
-          color: isDarkMode ? '#f3f4f6' : '#111827',
-        },
-        grid: {
-          drawOnChartArea: false,
-        }
-      }
+  const loadData = async () => {
+    try {
+      if (!loggedInUser) return;
+      
+      setLoading(true);
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const purchases = await fetchUserPurchases(loggedInUser._id, token);
+      console.log('Purchases:', purchases);
+      setChapters(purchases);
+      setError('');
+    } catch (err) {
+      console.error('Error loading unlocked chapters:', err);
+      setError('Không thể tải danh sách chương đã mở khóa');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!loggedInUser) return;
-      
-      try {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        const purchases = await fetchUserPurchases(loggedInUser._id, token);
-        setPurchaseHistory(purchases);
-      } catch (error) {
-        console.error("Error fetching purchase history:", error);
-      } finally {
-        setLoading(false);
+    loadData();
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadData();
       }
     };
 
-    fetchData();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [loggedInUser]);
 
-  return (
-    <div className={`flex flex-col md:flex-row ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'} min-h-screen`}>
-      <AuthorSidebar activeView="revenueTracking" />
-      <main className="w-full md:w-3/4 p-4">
-        <h1 className="text-2xl font-bold mb-4 text-center">Thống Kê Doanh Thu</h1>
+  if (!loggedInUser) {
+    return (
+      <div className={`flex flex-col items-center justify-center min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
+        <FiBookOpen className="text-4xl mb-4 text-blue-500" />
+        <h2 className="text-xl font-semibold mb-2">Yêu cầu đăng nhập</h2>
+        <p className="mb-4">Vui lòng đăng nhập để xem danh sách chương đã mở khóa</p>
+        <Link 
+          to="/login" 
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+        >
+          Đăng nhập ngay
+        </Link>
+      </div>
+    );
+  }
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className={`p-4 rounded-lg shadow ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'} text-center`}>
-            <h2 className="text-lg font-bold">Tổng Doanh Thu</h2>
-            <p className="text-xl font-semibold">{totalRevenue.toLocaleString('vi-VN')} VNĐ</p>
-          </div>
-          <div className={`p-4 rounded-lg shadow ${isDarkMode ? 'bg-green-900' : 'bg-green-100'} text-center`}>
-            <h2 className="text-lg font-bold">Tổng Chương Đã Bán</h2>
-            <p className="text-xl font-semibold">{totalChapters}</p>
-          </div>
+  if (loading) {
+    return (
+      <div className={`flex flex-col items-center justify-center min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+          <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Đang tải danh sách chương...</p>
         </div>
+      </div>
+    );
+  }
 
-        {/* Chart */}
-        {purchaseHistory.length > 0 && (
-          <div className={`p-4 mb-6 rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-            <Bar ref={chartRef} data={chartData} options={chartOptions} />
+  if (error) {
+    return (
+      <div className={`flex flex-col items-center justify-center min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 max-w-md w-full" role="alert">
+          <div className="flex items-center">
+            <FiBookOpen className="text-red-500 mr-2" />
+            <p className="font-bold">Lỗi tải dữ liệu</p>
           </div>
-        )}
+          <p className="mt-2">{error}</p>
+          <button 
+            onClick={loadData}
+            className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors text-sm"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-        {/* {loading ? (
-          <div className="space-y-4">
-            <Skeleton height={60} count={5} />
-          </div> )*/}
-        : (
-          <div className="overflow-x-auto">
-            <div className="min-w-[800px] md:min-w-0">
-              <table className="w-full divide-y">
-                <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider md:px-6">Mã GD</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider md:px-6">Người Mua</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider md:px-6">Truyện</th>
-                    <th className="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider md:px-6">Chương</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider md:px-6">Giá</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider md:px-6">Ngày Mua</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider md:px-6">Trạng Thái</th>
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700 bg-gray-900' : 'divide-gray-200 bg-white'}`}>
-                  {purchaseHistory.length === 0 ? (
+  return (
+    <div className="flex">
+      <AuthorSidebar activeView="revenueTracking" />
+      <div className={`min-h-screen flex-1 ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold">
+              <FiBookOpen className="inline mr-2 text-blue-500" />
+              Chương Đã Mở Khóa
+            </h1>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-100 text-blue-800'}`}>
+              {chapters.length} chương
+            </span>
+          </div>
+
+          {chapters.length === 0 ? (
+            <div className={`flex flex-col items-center justify-center py-12 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow`}>
+              <FiBook className="text-4xl text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium mb-2">Bạn chưa mở khóa chương nào</h3>
+              <p className="text-gray-500 mb-6">Khi bạn mở khóa chương, chúng sẽ xuất hiện ở đây</p>
+              <Link 
+                to="/" 
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+              >
+                Khám phá truyện ngay
+              </Link>
+            </div>
+          ) : (
+            <div className={`shadow overflow-hidden border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} rounded-lg`}>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
                     <tr>
-                      <td colSpan="7" className="px-6 py-4 text-center">
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <FiBookOpen className={`text-4xl mb-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-                          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Không có giao dịch nào</p>
-                        </div>
-                      </td>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Truyện</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Chương</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Giá</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ngày mua</th>
+                      <th scope="col" className="relative px-6 py-3"><span className="sr-only">Xem</span></th>
                     </tr>
-                  ) : (
-                    purchaseHistory.map((purchase) => (
+                  </thead>
+                  <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700 bg-gray-900' : 'divide-gray-200 bg-white'}`}>
+                    {chapters.map((purchase) => (
                       <tr 
                         key={purchase._id} 
                         className={`${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} transition-colors duration-150`}
                       >
-                        <td className="px-4 py-4 whitespace-nowrap text-xs font-mono md:text-sm md:px-6">
-                          {purchase._id.slice(-6)}
-                        </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-xs md:text-sm md:px-6">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <FiUser className="mr-1 md:mr-2 text-gray-500" />
-                            <span className="truncate max-w-[80px] md:max-w-none">{purchase.idUser}</span>
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <img 
+                                className="h-10 w-10 rounded object-cover" 
+                                src={purchase.idNovel.imageUrl || 'https://via.placeholder.com/40'} 
+                                alt={purchase.idNovel.title} 
+                              />
+                            </div>
+                            <div className="ml-4">
+                              <Link 
+                                to={`/novelDetail/${purchase.idNovel._id}`} 
+                                className="text-sm font-medium hover:text-blue-500 transition-colors"
+                              >
+                                {purchase.idNovel.title}
+                              </Link>
+                              <div className="flex items-center mt-1">
+                                <img 
+                                  className="h-4 w-4 rounded-full mr-1" 
+                                  src={purchase.idUser?.avatar || 'https://via.placeholder.com/16'} 
+                                  alt={purchase.idUser?.fullname} 
+                                />
+                                <Link 
+                                  to={`/author/${purchase.idUser?._id}`}
+                                  className="text-xs text-gray-500 hover:text-blue-500 hover:underline"
+                                >
+                                  {purchase.idUser?.fullname || 'Tác giả chưa rõ'}
+                                </Link>
+                              </div>
+                            </div>
                           </div>
                         </td>
-                        <td className="px-3 py-4 text-xs md:text-sm md:px-6">
-                          <div className="flex items-center">
-                            <FiBook className="mr-1 md:mr-2 text-gray-500" />
-                            <span className="truncate max-w-[100px] md:max-w-none">{purchase.idNovel.title}</span>
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Link 
+                            to={`/novel/${purchase.idNovel._id}/read?chapterId=${purchase.idChapter._id}`}
+                            className="text-sm font-medium hover:text-blue-500 transition-colors"
+                          >
+                            Chương {purchase.idChapter.order}
+                          </Link>
                         </td>
-                        <td className="px-2 py-4 whitespace-nowrap text-xs md:text-sm md:px-6">
-                          Ch. {purchase.idChapter.order}
-                        </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-xs font-medium md:text-sm md:px-6">
-                          {purchase.price.toLocaleString('vi-VN')} VNĐ
-                        </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-xs md:text-sm md:px-6">
-                          <div className="flex items-center">
-                            <FiCalendar className="mr-1 md:mr-2 text-gray-500" />
-                            <span className="truncate max-w-[100px] md:max-w-none">
-                              {new Date(purchase.purchaseDate).toLocaleString('vi-VN')}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-xs md:text-sm md:px-6">
-                          <span className={`px-2 py-1 rounded-full text-xxs md:text-xs font-medium ${isDarkMode ? 'bg-green-800 text-green-100' : 'bg-green-100 text-green-800'}`}>
-                            Hoàn thành
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${isDarkMode ? 'bg-green-900 text-green-100' : 'bg-green-100 text-green-800'}`}>
+                            {purchase.price?.toLocaleString('vi-VN') || '0'} VNĐ
                           </span>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {new Date(purchase.purchaseDate).toLocaleString('vi-VN')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <Link 
+                            to={`/novel/${purchase.idNovel._id}/read?chapterId=${purchase.idChapter._id}`}
+                            className="text-blue-600 hover:text-blue-900 flex items-center justify-end"
+                          >
+                            Xem <FiChevronRight className="ml-1" />
+                          </Link>
+                        </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )
-      </main>
+          )}
+        </div>
+      </div>
     </div>
   );
-};
-
-export default RevenueTracking;
+}

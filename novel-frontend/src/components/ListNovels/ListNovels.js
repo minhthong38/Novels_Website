@@ -169,7 +169,7 @@ export default function ListNovels() {
             Truyện sau khi đăng đủ 5 chương mới có thể gửi duyệt.
           </div>
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-xl font-bold">TỈ LỆ CHIA SẺ DOANH THU: 60% - 40%</h1>
+            <h1 className="text-xl font-bold">TRUYỆN CỦA TÔI</h1>
             <button 
               className={`px-4 py-2 rounded ${isDarkMode ? 'bg-red-600 text-white' : 'bg-red-500 text-white'}`}
               onClick={() => navigate('/createNovel')}

@@ -51,7 +51,8 @@ function App() {
           <Route path="/novel/:novelID/read" element={<ClientRoute children={<NovelView />} />} />
           <Route path="/novelView/:novelID" element={<ClientRoute children={<NovelView />} />} />
           <Route path="/recommend" element={<ClientRoute children={<Recommend />} />} />
-          <Route path="/authors" element={<ClientRoute children={<Authors />} />} />
+          <Route path="/authors/:userId" element={<ClientRoute children={<Authors />} />} />
+<Route path="/authors" element={<ClientRoute children={<Authors />} />} />
           <Route path="/userAccount" element={<ClientRoute children={<UserAccount />} />} />
           <Route path="/payment" element={<ClientRoute children={<PaymentHistory />} />} />
           <Route path="/history" element={<ClientRoute children={<History />} />} />

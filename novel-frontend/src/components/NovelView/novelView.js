@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { fetchChaptersByNovelId, fetchChapterContent, addExpToReader } from '../../services/apiService';
 import { useContext } from 'react';
 import { UserContext } from '../../context/UserContext';
+import { ArrowLeftIcon } from '@heroicons/react/24/solid';
 
 export default function NovelView() {
+  // Theme mode state
+  const [themeMode, setThemeMode] = useState('light');
+  const handleThemeToggle = (mode) => setThemeMode(mode);
   const { novelID } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -14,10 +18,11 @@ export default function NovelView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bannerIndex, setBannerIndex] = useState(0);
-  const [bookmarkedParagraphs, setBookmarkedParagraphs] = useState([]); // State for bookmarked paragraphs
+  const [bookmarkedParagraph, setBookmarkedParagraph] = useState(null);
   const [banners, setBanners] = useState([]); // Update banners to be dynamic
   const [showExpNotification, setShowExpNotification] = useState(false);
   const { loggedInUser } = useContext(UserContext);
+  const location = useLocation();
 
   useEffect(() => {
     const loadChapters = async () => {
@@ -74,9 +79,18 @@ export default function NovelView() {
   }, [banners.length]);
 
   useEffect(() => {
-    const savedBookmarks = JSON.parse(localStorage.getItem(`bookmarks_${novelID}_${currentChapterIndex}`)) || [];
-    setBookmarkedParagraphs(savedBookmarks);
-  }, [novelID, currentChapterIndex]);
+    const userID = loggedInUser?._id || loggedInUser?.id || '';
+    const savedBookmark = localStorage.getItem(`bookmark_${userID}_${novelID}_${currentChapterIndex}`);
+    setBookmarkedParagraph(savedBookmark ? parseInt(savedBookmark) : null);
+    
+    // Auto-scroll to bookmark when coming from history
+    if (savedBookmark && location.state?.scrollToBookmark) {
+      setTimeout(() => {
+        const element = document.querySelector(`[data-bookmark-index="${savedBookmark}"]`);
+        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [novelID, currentChapterIndex, location.state, loggedInUser]);
 
   useEffect(() => {
     const loadBanners = async () => {
@@ -90,6 +104,43 @@ export default function NovelView() {
     };
     loadBanners();
   }, [novelID, currentChapterIndex]);
+
+  const getParagraphs = () => {
+    if (!chapterContent) return [];
+    
+    // Xử lý HTML
+    if (chapterContent.includes('<')) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(chapterContent, 'text/html');
+      return Array.from(doc.body.children)
+        .filter(el => ['P', 'DIV', 'BLOCKQUOTE'].includes(el.tagName))
+        .filter(el => el.textContent.trim() !== '')
+        .map(el => ({
+          innerHTML: el.innerHTML,
+          textContent: el.textContent
+        }));
+    }
+    
+    // Xử lý text thuần
+    return chapterContent.split('\n\n')
+      .filter(text => text.trim() !== '')
+      .map(text => ({
+        innerHTML: text.replace(/\n/g, '<br/>'),
+        textContent: text
+      }));
+  };
+
+  const handleParagraphBookmark = (index) => {
+    const para = paragraphs[index];
+    if (!para.textContent.trim()) return;
+    
+    const newBookmark = bookmarkedParagraph === index ? null : index;
+    setBookmarkedParagraph(newBookmark);
+    const userID = loggedInUser?._id || loggedInUser?.id || '';
+    localStorage.setItem(`bookmark_${userID}_${novelID}_${currentChapterIndex}`, newBookmark);
+  };
+
+  const paragraphs = getParagraphs();
 
   const handleNextChapter = async () => {
     if (currentChapterIndex < chapters.length - 1) {
@@ -117,6 +168,10 @@ export default function NovelView() {
     }
   };
 
+  const handleBackClick = () => {
+    navigate(-1);
+  };
+
   const handleBannerNavigation = (direction) => {
     if (direction === 'prev') {
       setBannerIndex((prevIndex) => (prevIndex - 1 + banners.length) % banners.length);
@@ -127,15 +182,6 @@ export default function NovelView() {
 
   const handleDotClick = (index) => {
     setBannerIndex(index);
-  };
-
-  const handleParagraphBookmarkToggle = (paraIndex) => {
-    const updatedBookmarks = bookmarkedParagraphs.includes(paraIndex)
-      ? [] // Remove bookmark (only one allowed so clear all)
-      : [paraIndex]; // Set new bookmark (only one allowed)
-
-    setBookmarkedParagraphs(updatedBookmarks);
-    localStorage.setItem(`bookmarks_${novelID}_${currentChapterIndex}`, JSON.stringify(updatedBookmarks));
   };
 
   if (loading) return (
@@ -151,58 +197,92 @@ export default function NovelView() {
     </div>
   );
 
-  // Split content into paragraphs instead of lines
-  const paragraphs = chapterContent.split('\n\n').filter(p => p.trim() !== '');
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white relative">
-      {/* Chapter Content */}
-      <div className="p-5 max-w-4xl mx-auto bg-white shadow-lg rounded-lg mt-6">
-        <h1 className="text-4xl font-bold text-center mb-6 text-black">{chapters[currentChapterIndex]?.title}</h1>
-        <div className="prose max-w-none text-justify text-lg leading-relaxed space-y-4">
-          {paragraphs.map((paragraph, index) => (
+    <div className="flex flex-col h-screen">
+      {/* Header + Theme Toggle */}
+      <div className={`sticky top-0 z-10 shadow-sm py-2 px-4 flex flex-col gap-2 ${themeMode === 'dark' ? 'bg-gray-900' : themeMode === 'read' ? 'bg-yellow-100' : 'bg-white'}`}>
+        <div className="flex justify-between items-center">
+          <button 
+            onClick={handleBackClick}
+            className={`flex items-center ${themeMode === 'dark' ? 'text-gray-200 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+          >
+            <ArrowLeftIcon className="h-5 w-5 mr-1" />
+            Quay lại
+          </button>
+          <h2 className={`text-lg font-medium text-center flex-1 ${themeMode === 'dark' ? 'text-white' : 'text-black'}`}>{chapters[currentChapterIndex]?.title}</h2>
+          <div className="w-8"></div> {/* For balance */}
+        </div>
+        {/* Theme Mode Toggle */}
+        <div className="flex gap-2 justify-center items-center mt-1">
+          <button
+            onClick={() => handleThemeToggle('light')}
+            className={`px-3 py-1 rounded ${themeMode === 'light' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'} transition`}
+          >Light</button>
+          <button
+            onClick={() => handleThemeToggle('dark')}
+            className={`px-3 py-1 rounded ${themeMode === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-800'} transition`}
+          >Dark</button>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className={`flex-1 overflow-y-auto px-4 pb-4 transition-colors duration-300 ${
+        themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'
+      }`}>
+        <div className="max-w-3xl mx-auto space-y-4">
+          {paragraphs.map((para, index) => (
             <div
               key={index}
-              className={`flex items-center p-2 rounded-md ${bookmarkedParagraphs.includes(index) ? 'bg-yellow-100' : ''} hover:bg-gray-100 transition`}
-              onClick={() => handleParagraphBookmarkToggle(index)}
-              title={bookmarkedParagraphs.includes(index) ? 'Remove Bookmark' : 'Add Bookmark (only one allowed)'}
+              data-bookmark-index={index}
+              className={`relative p-4 rounded-lg border-l-4 ${
+                bookmarkedParagraph === index
+                  ? (themeMode === 'dark' ? 'bg-gray-700 border-gray-400' : 'bg-blue-50 border-blue-400')
+                  : (themeMode === 'dark' ? 'border-transparent hover:bg-gray-700' : 'border-transparent hover:bg-gray-50')
+              } transition-all`}
+              onClick={() => handleParagraphBookmark(index)}
             >
-              <p className="flex-1 cursor-pointer" dangerouslySetInnerHTML={{ __html: paragraph.replace(/\n/g, '<br/>') }}></p>
-              {bookmarkedParagraphs.includes(index) && (
-                <span className="text-yellow-500 font-bold ml-2">★</span>
+              <div 
+                className="content"
+                dangerouslySetInnerHTML={{ __html: para.innerHTML }} 
+              />
+              {bookmarkedParagraph === index && (
+                <div className={`absolute -right-2 -top-2 rounded-full w-6 h-6 flex items-center justify-center ${themeMode === 'dark' ? 'bg-gray-600 text-white' : 'bg-blue-400 text-white'}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  </svg>
+                </div>
               )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between items-center max-w-4xl mx-auto m-10">
-        <button
-          onClick={handlePreviousChapter}
-          disabled={currentChapterIndex === 0}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 disabled:opacity-50 transition"
-        >
-          Chương trước
-        </button>
-        <button
-          onClick={handleNextChapter}
-          disabled={currentChapterIndex === chapters.length - 1}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 disabled:opacity-50 transition"
-        >
-          Chương sau
-        </button>
-      </div>
-
-      {/* EXP Notification */}
+      {/* Exp notification */}
       {showExpNotification && (
-        <div className="fixed bottom-4 left-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-bounce z-50">
-          <div className="flex items-center">
-            <span className="text-lg font-bold mr-2">+10 EXP</span>
-            <span className="text-2xl">✨</span>
-          </div>
+        <div className="fixed bottom-20 left-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-bounce">
+          +10 EXP đã được cộng!
         </div>
       )}
+
+      {/* Chapter navigation */}
+      <div className={`sticky bottom-0 border-t py-2 px-4 ${themeMode === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
+        <div className="flex justify-between max-w-3xl mx-auto">
+          <button 
+            onClick={handlePreviousChapter}
+            disabled={currentChapterIndex === 0}
+            className={`px-4 py-2 rounded disabled:opacity-50 ${themeMode === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100'}`}
+          >
+            Chương trước
+          </button>
+          <button 
+            onClick={handleNextChapter}
+            disabled={currentChapterIndex === chapters.length - 1}
+            className={`px-4 py-2 rounded disabled:opacity-50 ${themeMode === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100'}`}
+          >
+            Chương tiếp
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

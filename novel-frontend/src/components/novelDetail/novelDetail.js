@@ -466,7 +466,9 @@ export default function NovelDetail() {
                       />
                     )}
                     <div className="ml-2">
-                      <p className="font-semibold text-white">{author?.fullname}</p>
+                      <Link to={`/authors/${author?._id || author?.id}`} className="font-semibold text-white hover:text-yellow-400">
+                        {author?.fullname || 'Unknown Author'}
+                      </Link>
                       <p className="text-sm text-gray-400">{author?.username}</p>
                     </div>
                   </div>

@@ -190,19 +190,19 @@ export default function TopRanking() {
             <p className="text-center text-red-500">{error}</p>
           ) : authorRankings.length > 0 ? (
             <>
-              <div className="flex flex-col items-center mb-4 cursor-pointer">
+              <div className="flex flex-col items-center mb-4 cursor-pointer" onClick={() => navigate(`/authors/${authorRankings[0]?.idUser?._id}`)}>
                 <img
                   src={authorRankings[0]?.idUser?.avatar || 'https://via.placeholder.com/150'}
                   alt={`Avatar of ${authorRankings[0]?.idUser?.fullname}`}
-                  className="w-24 h-24 rounded-full"
+                  className="w-24 h-24 rounded-full border-2 border-blue-300 hover:scale-105 transition-transform duration-200"
                 />
-                <span className="text-center mt-2">{authorRankings[0]?.idUser?.fullname} 🥇</span>
+                <span className="text-center mt-2 font-semibold text-white">{authorRankings[0]?.idUser?.fullname} 🥇</span>
               </div>
               {/* Các tác giả xếp hạng tiếp theo */}
               <div className="overflow-y-auto h-64">
                 {authorRankings.slice(1).map((author, index) => (
-                  <div key={author._id} className="flex items-center mb-4">
-                    <span className="flex-1 text-left">
+                  <div key={author._id} className="flex items-center mb-4 cursor-pointer" onClick={() => navigate(`/authors/${author.idUser._id}`)}>
+                    <span className="flex-1 text-left text-white font-medium">
                       {index + 2}. {author.idUser.fullname} {index === 0 ? '🥈' : index === 1 ? '🥉' : ''}
                     </span>
                   </div>

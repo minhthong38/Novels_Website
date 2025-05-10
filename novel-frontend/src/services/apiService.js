@@ -477,7 +477,7 @@ export const submitRating = async (novelId, userId, rating) => {
       novelId,
       rating,
     });
-    console.log('Rating submitted successfully');
+    console.log("Rating submitted successfully");
     return response.data;
   } catch (error) {
     console.error('Error submitting rating', error);
@@ -878,3 +878,12 @@ export const fetchAuthorLevel = async (authorExpId) => {
     throw error.response?.data || "Failed to fetch author level";
   }
 }
+
+export const fetchAuthorDetails = async (userId) => {
+  try {
+    const response = await axios.get(`${NOVEL_API}/user/${userId}`);
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || 'Lỗi không xác định';
+  }
+};

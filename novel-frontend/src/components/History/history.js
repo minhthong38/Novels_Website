@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchReadingHistories, deleteAllReadingHistory } from '../../services/apiService'; // Import API service
 import { UserContext } from '../../context/UserContext'; // Import UserContext
 
 export default function History() {
   const navigate = useNavigate();
   const { isDarkMode, loggedInUser } = useContext(UserContext); // Get dark mode state and logged-in user from context
+  const location = useLocation();
   const [readNovels, setReadNovels] = useState([]); // Initialize as an empty array
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,11 +41,13 @@ export default function History() {
     };
 
     fetchHistory();
-  }, [loggedInUser?._id]);
+  }, [loggedInUser?._id, location.pathname]);
 
   const handleResumeReading = (novel, chapter) => {
     if (novel?._id && chapter?._id) {
-      navigate(`/novelView/${novel._id}?chapterId=${chapter._id}`); // Navigate to the specific novel and chapter
+      navigate(`/novelView/${novel._id}?chapterId=${chapter._id}`, { 
+        state: { scrollToBookmark: true } 
+      }); // Navigate to the specific novel and chapter
     } else {
       console.error('Missing novel or chapter data for navigation.');
     }

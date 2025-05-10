@@ -360,6 +360,10 @@ export default function UserAccount() {
               <Link to="/payment">Lịch sử thanh toán</Link>
             </li>
             <li className="flex items-center">
+              <i className="fas fa-receipt mr-2"></i> 
+              <Link to="/unlockedNovels">Chương đã mở khóa</Link>
+            </li>
+            <li className="flex items-center">
               <i className="fas fa-key mr-2"></i> 
               <a href="#!">Đổi mật khẩu</a>
             </li>
@@ -460,7 +464,7 @@ export default function UserAccount() {
           <span>KHUNG CÁC THÀNH TÍCH:</span>
           <div className="flex justify-between mt-2 space-x-2">
             {[
-              { level: "VIP 1", border: "blue-300" },
+              { level: "VIP 1", border: "blue-500" },
               { level: "VIP 2", border: "green-300" },
               { level: "VIP 3", border: "yellow-300" },
               { level: "VIP 4", border: "orange-300" },
