@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 // import AuthorStickyNote from "../AuthorStickyNote";
 import { fetchAuthorDetails } from '../../services/apiService';
 
-export default function authors() {
+export default function Authors () {
   const { userId } = useParams();
   const [author, setAuthor] = useState(null);
   const [loading, setLoading] = useState(true);

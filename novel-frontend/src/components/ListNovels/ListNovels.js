@@ -17,11 +17,12 @@ export default function ListNovels() {
   // Fetch novels by logged in user
   useEffect(() => {
     const fetchData = async () => {
-      if (!loggedInUser || !loggedInUser.id) return;
+      if (!loggedInUser) return;
       
       try {
         setLoading(true);
-        const data = await fetchNovelsByAuthor(loggedInUser.id);
+        const userId = loggedInUser.id || loggedInUser._id; // Use the correct user ID
+        const data = await fetchNovelsByAuthor(userId);
         console.log('Fetched novels:', data); // Debug log
         
         if (data && Array.isArray(data)) {

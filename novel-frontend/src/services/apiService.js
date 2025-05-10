@@ -26,6 +26,9 @@ const WITHDRAWAL_API = `${API_URL}/withdrawalTransactions`; // Rút tiền
 const AUTHOR_TASK_API = `${API_URL}/authorTasks`; 
 const AUTHOR_LEVEL_API = `${API_URL}/authorLevels`; // Cấp độ tác giả
 
+const NOTIFICATION_API = `${API_URL}/notifications`; // Thông báo 
+
+
 
 // ===================== USER =====================
 export const loginUser = async (email, password) => {
@@ -885,5 +888,62 @@ export const fetchAuthorDetails = async (userId) => {
     return response.data.data;
   } catch (error) {
     throw error.response?.data || 'Lỗi không xác định';
+  }
+};
+
+// ===================== NOTIFICATION =====================
+// Lấy tất cả thông báo của người dùng
+export const getNotificationsByUser = async (userId) => {
+  try {
+    const response = await axios.get(`${NOTIFICATION_API}/${userId}`);
+    return response.data.notifications; // ✅ Đúng với dữ liệu thực tế trả về
+  } catch (error) {
+    console.error('[API] getNotificationsByUser error:', error);
+    throw error.response?.data || 'Không thể lấy thông báo';
+  }
+};
+
+
+// Đánh dấu một thông báo là đã đọc
+export const markAsRead = async (id) => {
+  try {
+    const response = await axios.put(`${NOTIFICATION_API}/${id}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('[API] markAsRead error:', error);
+    throw error.response?.data || 'Không thể đánh dấu đã đọc';
+  }
+};
+
+// Tạo một thông báo mới
+export const createNotification = async (notificationData) => {
+  try {
+    const response = await axios.post(`${NOTIFICATION_API}`, notificationData);
+    return response.data.data;
+  } catch (error) {
+    console.error('[API] createNotification error:', error);
+    throw error.response?.data || 'Không thể tạo thông báo';
+  }
+};
+
+// Xóa một thông báo
+export const deleteNotification = async (id) => {
+  try {
+    const response = await axios.delete(`${NOTIFICATION_API}/${id}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('[API] deleteNotification error:', error);
+    throw error.response?.data || 'Không thể xóa thông báo';
+  }
+};
+
+// ===================== INCREASE VIEW =====================
+export const increaseChapterView = async (chapterId) => {
+  try {
+    const response = await axios.post(`${CHAPTER_API}/${chapterId}/view`);
+    return response.data;
+  } catch (error) {
+    console.error('[API] increaseChapterView error:', error);
+    throw error.response?.data || 'Không thể tăng lượt xem';
   }
 };

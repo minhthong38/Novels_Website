@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { fetchUserDetails, fetchNovels, fetchCategories } from '../services/apiService'; // Import fetchNovels and fetchCategories API functions
+import { fetchUserDetails, fetchNovels, fetchCategories, getNotificationsByUser, markAsRead, deleteNotification } from '../services/apiService'; // Import fetchNovels, fetchCategories, and notification APIs
 import { UserContext } from '../context/UserContext'; // Import UserContext
 
 function Header() {
@@ -12,9 +12,13 @@ function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State to toggle menu visibility
   const [activeDropdown, setActiveDropdown] = useState(null); // State to manage dropdown visibility
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // State to toggle user menu visibility
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
   const searchRef = useRef(null);
   const userMenuRef = useRef(null);
   const menuRef = useRef(null); // Ref for the responsive menu
+  const notificationRef = useRef(null); // Ref for the notification dropdown
   const navigate = useNavigate();
 
   // Log loggedInUser mỗi khi nó thay đổi
@@ -64,6 +68,18 @@ function Header() {
   };
 
   useEffect(() => {
+    const handleClickOutsideNotification = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutsideNotification);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutsideNotification);
+    };
+  }, []);
+
+  useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -107,6 +123,109 @@ function Header() {
       })
       .catch((error) => console.error('Error fetching categories:', error));
   }, []);
+
+  useEffect(() => {
+    if (loggedInUser) {
+      const fetchNotifications = async () => {
+      try {
+        const userId = loggedInUser._id || loggedInUser.id;
+        if (!userId) {
+          console.error('User ID is undefined. Cannot fetch notifications.');
+          return;
+        }
+
+        const data = await getNotificationsByUser(userId);
+        if (!Array.isArray(data)) {
+          console.error('Invalid notifications data:', data);
+          setNotifications([]);
+          return;
+        }
+
+        setNotifications((prev) => {
+          const updated = data.map((newNotif) => {
+            const existing = prev.find((old) => old._id === newNotif._id);
+
+            // Giữ nguyên nếu đã đọc
+            if (existing && existing.read) return existing;
+
+            // Ngược lại, cập nhật
+            return { ...newNotif, read: existing?.read || newNotif.read };
+          });
+
+          return updated;
+        });
+
+        // Cập nhật lại số lượng chưa đọc
+        setUnreadCount(data.filter((notif) => !notif.read).length);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        setNotifications([]);
+      }
+    };
+      fetchNotifications();
+    }
+  }, [loggedInUser]);
+
+  useEffect(() => {
+    let intervalId;
+
+    if (loggedInUser) {
+      const fetchNotifications = async () => {
+        try {
+          const userId = loggedInUser._id || loggedInUser.id; // Ensure userId is defined
+          if (!userId) {
+            console.error('User ID is undefined. Cannot fetch notifications.');
+            return;
+          }
+
+          const data = await getNotificationsByUser(userId);
+          if (!Array.isArray(data)) {
+            console.error('Invalid notifications data:', data);
+            setNotifications([]); // Fallback to an empty array
+            return;
+          }
+
+          console.log('Fetched notifications:', data); // Log fetched notifications
+          setNotifications(data); // Set notifications
+          setUnreadCount(data.filter((notif) => !notif.isRead).length); // Safely access length
+        } catch (error) {
+          console.error('Error fetching notifications:', error);
+          setNotifications([]); // Fallback to an empty array on error
+        }
+      };
+
+      fetchNotifications(); // Initial fetch
+
+      // Set up polling every 5 seconds
+      intervalId = setInterval(fetchNotifications, 5000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId); // Clear interval on component unmount
+    };
+  }, [loggedInUser]);
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((notif) => (notif._id === id ? { ...notif, read: true } : notif))
+      );
+      setUnreadCount((prev) => prev - 1);
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const handleDeleteNotification = async (id) => {
+    try {
+      await deleteNotification(id);
+      setNotifications((prev) => prev.filter((notif) => notif._id !== id));
+      setUnreadCount((prev) => prev - 1);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  };
 
   const tabs = [
     { label: 'Trang Chủ', href: '/', onClick: () => navigate('/') },
@@ -324,8 +443,9 @@ function Header() {
             </div>
           )}
         </div>
-        {/* Dark Mode Toggle and User Profile for Larger Screens */}
-        <div className="hidden lg:flex items-center space-x-2 ">
+        {/* Dark Mode Toggle, User Profile, and Notification Icon for Larger Screens */}
+        <div className="hidden lg:flex items-center space-x-4">
+          {/* Dark Mode Toggle */}
           <label htmlFor="darkModeToggle" className="flex items-center cursor-pointer m-2">
             <div className="relative">
               <input 
@@ -337,13 +457,15 @@ function Header() {
               />
               <div className="block bg-gray-600 w-14 h-8 rounded-full"></div>
               <div 
-                className={`dot absolute left-1 top-1  bg-white w-6 h-6 rounded-full transition ${isDarkMode ? 'translate-x-full' : ''}`}
+                className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition ${isDarkMode ? 'translate-x-full' : ''}`}
               ></div>
             </div>
             <span className={`ml-3 ${isDarkMode ? 'text-white' : 'text-black'}`}>
               {isDarkMode ? 'Dark Mode' : 'Light Mode'}
             </span>
           </label>
+
+          {/* User Profile */}
           <div className="relative group">
             <button className="focus:outline-none flex items-center space-x-2">
               <img 
@@ -361,7 +483,6 @@ function Header() {
                     <Link to="/authorAccounts" className="block px-4 py-2 hover:bg-gray-600">Author Profile</Link>
                   )}
                   <Link to="/history" className="block px-4 py-2 hover:bg-gray-600">History</Link>
-                  {/* <Link to="/settings" className="block px-4 py-2 hover:bg-gray-600">Settings</Link> */}
                   <button onClick={handleLogout} className="block w-full text-left px-4 py-2 hover:bg-gray-600">Logout</button>
                 </>
               ) : (
@@ -371,6 +492,80 @@ function Header() {
                 </>
               )}
             </div>
+          </div>
+
+          {/* Notification Icon */}
+          <div className="relative" ref={notificationRef}>
+            <button
+              onClick={() => setShowNotifications((prev) => !prev)} // Toggle dropdown visibility
+              className="relative focus:outline-none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className={`w-6 h-6 ${isDarkMode ? 'text-white' : 'text-black'}`}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            {/* Dropdown */}
+            {showNotifications && (
+              <div
+                className={`absolute right-0 w-80 z-50 rounded-lg shadow-lg border ${
+                  isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-200'
+                }`}
+              >
+                <div className="p-4 font-bold border-b dark:border-gray-600">Thông báo</div>
+                {notifications && notifications.length > 0 ? (
+                  notifications.slice(0, 5).map((notif) => (
+                    <div
+                      key={notif._id}
+                      className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer flex justify-between items-start"
+                      onClick={() => {
+                        handleMarkAsRead(notif._id); // Mark as read
+                        navigate(notif.link || '/'); // Navigate to the link in the notification
+                      }}
+                    >
+                      <div>
+                        <div className="text-sm font-semibold">{notif.title}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300">{notif.description}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">
+                          {new Date(notif.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering the navigation
+                          handleDeleteNotification(notif._id);
+                        }}
+                        className="text-red-500 text-xs px-2 py-1 border border-red-500 rounded hover:bg-red-500 hover:text-white transition"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">Không có thông báo mới.</div>
+                )}
+                <div className="text-center py-2 border-t dark:border-gray-600">
+                  <Link to="/notifications" className="text-sm text-blue-500 hover:underline">
+                    Xem tất cả
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

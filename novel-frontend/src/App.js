@@ -37,6 +37,8 @@ import PlaylistByCategory from './components/playlistByCategory/playlistByCatego
 import PlaylistPage from './components/playlistPage/PlaylistPage';
 import FavoriteNovel from './pages/FavoriteNovel';
 
+import Notification from './components/Notification/notification';
+
 function App() {
   return (
     <UserProvider>
@@ -64,6 +66,7 @@ function App() {
           <Route path="/topViewedNovels" element={<ClientRoute children={<TopViewedNovels />} />} />
           <Route path="/favorites" element={<ClientRoute children={<FavoriteNovel />} />} />
           <Route path="/unlockedNovels" element={<ClientRoute children={<UnlockedNovels />} />} />
+          <Route path="/notifications" element={<ClientRoute children={<Notification />} />} />
 
           {/* Playlist routes */}
           <Route path="/playlist" element={<ClientRoute children={<PlaylistByCategory />} />} />

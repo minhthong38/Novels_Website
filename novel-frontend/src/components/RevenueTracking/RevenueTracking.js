@@ -18,7 +18,8 @@ export default function UnlockedNovels() {
       
       setLoading(true);
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      const purchases = await fetchUserPurchases(loggedInUser._id, token);
+      const userId = loggedInUser._id || loggedInUser.id;
+      const purchases = await fetchUserPurchases(userId, token);
       console.log('Purchases:', purchases);
       setChapters(purchases);
       setError('');

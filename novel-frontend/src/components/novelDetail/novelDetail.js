@@ -11,6 +11,7 @@ import {buyChapter} from '../../services/apiService'; // Import buyChapter servi
 import { checkChapterPurchased, createPurchaseHistory } from '../../services/apiService';
 import { fetchUserDetails } from '../../services/apiService';
 import { getWallet } from '../../services/apiService';
+import { increaseChapterView } from '../../services/apiService';
 
 export default function NovelDetail() {
   const [activePart, setActivePart] = useState(null);
@@ -235,7 +236,7 @@ export default function NovelDetail() {
         }
       }
   
-      await proceedToReadChapter(chapter); // ✅ nếu miễn phí hoặc đã mua
+      await proceedToReadChapter(chapter); //nếu miễn phí hoặc đã mua
     } catch (err) {
       console.error('Lỗi khi xử lý đọc chương:', err);
       alert('Đã xảy ra lỗi khi đọc chương.');
@@ -298,6 +299,8 @@ export default function NovelDetail() {
       idChapter: chapter.id || chapter._id,
       lastReadAt: new Date(),
     });
+    const chapterId = chapter.id || chapter._id;
+    await increaseChapterView(chapterId);
     navigate(`/novel/${novelID}/read?chapterId=${chapter.id || chapter._id}`);
   };
 
