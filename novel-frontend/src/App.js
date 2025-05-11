@@ -8,8 +8,6 @@ import Authors from './components/authors/authors';
 import Recommend from './components/Recommend/recommend';
 import UserAccount from './components/Account/userAccount';
 import AuthorAccounts from './components/Account/AuthorAccounts';
-import AdminAccount from './components/Account/AdminAccount';
-import AdminProfile from './components/Account/AdminProfile';
 import History from './components/History/history';
 import NovelView from './components/NovelView/novelView';
 import UserStickyNote from './components/UserStickyNote';
@@ -24,7 +22,6 @@ import Register from './components/register';
 import Login from './components/Login';
 import ClientRoute from './components/routes/ClientRoute';
 import AuthorRoute from './components/routes/AuthorRoute';
-import AdminRoute from './components/routes/AdminRoute';
 import Header from './components/Header';
 import { UserProvider } from './context/UserContext';
 import TopViewedNovels from './components/topViewedNovels/TopViewedNovels';
@@ -82,9 +79,7 @@ function App() {
           <Route path="/chapter" element={<ClientRoute children={<Chapter />} />} />
           <Route path="/revenueTracking" element={<ClientRoute children={<RevenueTracking />} />} />
 
-          {/* ---------------- ADMIN ROUTES ---------------- */}
-          <Route path="/adminAccount" element={<AdminRoute children={<AdminAccount />} />} />
-          <Route path="/adminProfile" element={<AdminRoute children={<AdminProfile />} />} />
+        
 
         </Routes>
       </BrowserRouter>

@@ -80,8 +80,7 @@ export default function PlaylistByCategory() {
             <div className="relative w-24 h-24 flex-shrink-0">
               <img
                 src={categoryImages[category._id]}
-                alt={`Cover for ${category.titleCategory}`}
-                className="w-full h-full object-cover rounded-lg border transition-transform duration-300 hover:scale-110"
+           className="w-full h-full object-cover rounded-lg border transition-transform duration-300 hover:scale-110"
                 onError={(e) =>
                   (e.target.src =
                     'https://www.shutterstock.com/image-photo/black-book-isolated-on-white-600nw-2316218599.jpg')

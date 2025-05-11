@@ -3,6 +3,7 @@ import { UserContext } from '../../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { getWalletByUserId } from '../../services/apiService';
 import { requestImmediateWithdrawal } from '../../services/apiService';
+import { FiDollarSign } from 'react-icons/fi';
 
 export default function AuthorSidebar({ activeView }) {
   const { loggedInUser, isDarkMode } = useContext(UserContext);
@@ -78,12 +79,15 @@ export default function AuthorSidebar({ activeView }) {
             <i className="fas fa-coins text-yellow-500 ml-2"></i>
           </span>
         </div>
-        <div className="mt-4">
-          <button
+        <div className="mt-4 flex justify-center">
+          <button 
             onClick={handleWithdrawClick}
-            className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition"
+            className={`py-2 px-6 rounded-lg flex items-center justify-center space-x-2 
+              ${isDarkMode ? 'bg-green-700 hover:bg-green-600' : 'bg-green-600 hover:bg-green-500'} 
+              text-white font-medium transition-colors`}
           >
-            Rút Tiền
+            <FiDollarSign />
+            <span>Rút tiền</span>
           </button>
         </div>
       </div>

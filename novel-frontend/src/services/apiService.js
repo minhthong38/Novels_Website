@@ -759,10 +759,10 @@ export const checkChapterPurchased = async (userId, chapterId) => {
 export const fetchUserPurchases = async (userId, token) => {
   try {
     const response = await axios.get(`${PURCHASE_HISTORY}/user/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
+      params: { fields: 'idNovel,idChapter,price,createdAt' }
     });
-
-    return response.data; // Trả về danh sách giao dịch mua của user
+    return response.data;
   } catch (error) {
     console.error('Error fetching user purchases:', error);
     throw error.response?.data || 'Failed to fetch purchase history';
@@ -896,7 +896,7 @@ export const fetchAuthorDetails = async (userId) => {
 export const getNotificationsByUser = async (userId) => {
   try {
     const response = await axios.get(`${NOTIFICATION_API}/${userId}`);
-    return response.data.notifications; // ✅ Đúng với dữ liệu thực tế trả về
+    return response.data.notifications; // Đúng với dữ liệu thực tế trả về
   } catch (error) {
     console.error('[API] getNotificationsByUser error:', error);
     throw error.response?.data || 'Không thể lấy thông báo';
@@ -945,5 +945,32 @@ export const increaseChapterView = async (chapterId) => {
   } catch (error) {
     console.error('[API] increaseChapterView error:', error);
     throw error.response?.data || 'Không thể tăng lượt xem';
+  }
+};
+
+// ===================== NOVEL REVENUE =====================
+export const fetchNovelRevenue = async (novelId) => {
+  try {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const response = await axios.get(`${PURCHASE_HISTORY}/novel/${novelId}/stats`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    return {
+      purchases: response.data.purchases || [],
+      totalCoins: response.data.totalCoins || 0,
+      totalChapters: response.data.totalChapters || 0,
+      purchaseCount: response.data.purchaseCount || 0,
+      chapterStats: response.data.chapterStats || {}
+    };
+  } catch (error) {
+    console.error('Error fetching novel revenue stats:', error);
+    return { 
+      totalCoins: 0, 
+      totalChapters: 0,
+      purchaseCount: 0,
+      purchases: [],
+      chapterStats: {}
+    };
   }
 };

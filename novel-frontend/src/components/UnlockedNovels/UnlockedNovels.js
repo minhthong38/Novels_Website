@@ -139,13 +139,6 @@ export default function UnlockedNovels() {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <img 
-                              className="h-10 w-10 rounded object-cover" 
-                              src={purchase.idNovel.imageUrl || 'https://via.placeholder.com/40'} 
-                              alt={purchase.idNovel.title} 
-                            />
-                          </div>
                           <div className="ml-4">
                             <Link 
                               to={`/novelDetail/${purchase.idNovel._id}`} 
@@ -153,19 +146,6 @@ export default function UnlockedNovels() {
                             >
                               {purchase.idNovel.title}
                             </Link>
-                            <div className="flex items-center mt-1">
-                              <img 
-                                className="h-4 w-4 rounded-full mr-1" 
-                                src={purchase.idUser?.avatar || 'https://via.placeholder.com/16'} 
-                                alt={purchase.idUser?.fullname} 
-                              />
-                              <Link 
-                                to={`/author/${purchase.idUser?._id}`}
-                                className="text-xs text-gray-500 hover:text-blue-500 hover:underline"
-                              >
-                                {purchase.idUser?.fullname || 'Tác giả chưa rõ'}
-                              </Link>
-                            </div>
                           </div>
                         </div>
                       </td>
