@@ -180,6 +180,11 @@ export default function UpdateNovel() {
       return;
     }
 
+    if (newChapter.content.length < 1000) {
+      setError('Nội dung chương phải có ít nhất 1000 chữ');
+      return;
+    }
+
     setLoading(true);
     try {
       const fullTitle = `Chương ${newChapter.chapterNumber}: ${newChapter.title}`;
@@ -210,6 +215,13 @@ export default function UpdateNovel() {
       console.error('Error creating chapter:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleContentChange = (content) => {
+    setNewChapter({ ...newChapter, content });
+    if (content.length >= 1000) {
+      setError(''); // Clear error if content length is sufficient
     }
   };
 
@@ -389,7 +401,10 @@ export default function UpdateNovel() {
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-bold text-gray-800 dark:text-white">Tạo Chương Mới</h3>
                   <button 
-                    onClick={() => setShowCreateChapter(false)}
+                    onClick={() => {
+                      setShowCreateChapter(false);
+                      setError(''); // Clear error when closing the popup
+                    }}
                     className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
                   >
                     <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -541,7 +556,7 @@ export default function UpdateNovel() {
                         <ReactQuill
                           theme="snow"
                           value={newChapter.content}
-                          onChange={(content) => setNewChapter({...newChapter, content})}
+                          onChange={handleContentChange} // Use the new handler
                           modules={modules}
                           formats={formats}
                           className="h-64"
@@ -566,7 +581,10 @@ export default function UpdateNovel() {
                 <div className="mt-8 pt-5">
                   <div className="flex flex-col sm:flex-row justify-end gap-3">
                     <button
-                      onClick={() => setShowCreateChapter(false)}
+                      onClick={() => {
+                        setShowCreateChapter(false);
+                        setError(''); // Clear error when closing the popup
+                      }}
                       className={`px-6 py-3 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center
                         ${isDarkMode 
                           ? 'border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white' 
