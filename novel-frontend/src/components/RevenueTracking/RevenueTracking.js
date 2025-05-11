@@ -7,7 +7,7 @@ import AuthorSidebar from '../sidebar/AuthorSidebar';
 import { fetchNovelsByAuthor, fetchNovelRevenue } from '../../services/apiService';
 import { 
   FiBook, FiShoppingCart, FiFileText, 
-  FiChevronDown, FiChevronUp, FiTrendingUp, FiChevronLeft, FiChevronRight
+  FiChevronDown, FiChevronUp, FiTrendingUp, FiChevronLeft, FiChevronRight, FiLoader
 } from 'react-icons/fi';
 import { FaCoins } from 'react-icons/fa';
 import { FiDollarSign } from 'react-icons/fi';
@@ -17,9 +17,8 @@ const COIN_CONVERSION_RATE = 5000; // 1 coin = 5,000 VND
 
 export default function RevenueTracking() {
   const { isDarkMode, loggedInUser } = useContext(UserContext);
-  const [novels, setNovels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [novels, setNovels] = useState(null); // Thay [] bằng null để phân biệt chưa load
+  const [loading, setLoading] = useState(true); // Mặc định true khi mới vào trang
   const [activeTab, setActiveTab] = useState('list');
   const [expandedNovel, setExpandedNovel] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
@@ -47,33 +46,61 @@ export default function RevenueTracking() {
     };
   };
 
-  useEffect(() => {
-    const fetchNovelsData = async () => {
-      try {
-        setLoading(true);
-        const novelsData = await fetchNovelsByAuthor(loggedInUser._id);
-        
-        const novelsWithRevenue = await Promise.all(
-          novelsData.map(async (novel) => {
+  const loadData = async (retryCount = 0) => {
+    if (!loggedInUser || !loggedInUser._id) {
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      if (retryCount === 0) setLoading(true);
+      
+      const novelsData = await fetchNovelsByAuthor(loggedInUser._id).catch(() => []);
+      
+      const novelsWithRevenue = await Promise.all(
+        novelsData.map(async (novel) => {
+          try {
             const revenueData = await fetchNovelRevenue(novel._id);
-            const monthlyPurchases = filterPurchasesByMonth(revenueData.purchases, selectedMonth);
-            const monthlyStats = calculateMonthlyStats(monthlyPurchases);
+            const monthlyPurchases = filterPurchasesByMonth(revenueData.purchases || [], selectedMonth);
             return {
               ...novel,
-              revenue: monthlyStats
+              revenue: calculateMonthlyStats(monthlyPurchases)
             };
-          })
-        );
-        
-        setNovels(novelsWithRevenue);
-      } catch (error) {
-        setError('Lỗi khi tải dữ liệu truyện');
-      } finally {
-        setLoading(false);
-      }
-    };
+          } catch {
+            return {
+              ...novel,
+              revenue: {
+                purchases: [],
+                totalCoins: 0,
+                totalChapters: 0,
+                purchaseCount: 0,
+                chapterStats: {}
+              }
+            };
+          }
+        })
+      );
+      
+      setNovels(novelsWithRevenue.length > 0 ? novelsWithRevenue : []);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchNovelsData();
+  useEffect(() => {
+    if (loggedInUser && loggedInUser._id) {
+      loadData();
+      
+      // Tăng interval lên 5 phút thay vì 30s
+      const interval = setInterval(() => {
+        // Chỉ refresh nếu tab đang active
+        if (!document.hidden) {
+          loadData();
+        }
+      }, 300000); // 5 phút = 300,000ms
+      
+      return () => clearInterval(interval);
+    }
   }, [loggedInUser, selectedMonth]);
 
   const prepareChartData = () => {
@@ -128,12 +155,16 @@ export default function RevenueTracking() {
         </div>
         
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="flex flex-col items-center justify-center h-64 space-y-4">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-blue-100 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <p className="text-blue-500">Đang tải dữ liệu...</p>
           </div>
-        ) : error ? (
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
-            <p>{error}</p>
+        ) : novels === null ? (
+          <div className="text-center py-8">
+            <p>Không có dữ liệu doanh thu</p>
           </div>
         ) : (
           <div className="space-y-6">

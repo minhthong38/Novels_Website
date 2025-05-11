@@ -182,7 +182,7 @@ export const fetchNovels = async () => {
 
 export const fetchNovelsByAuthor = async (idUser) => {
   try {
-    const response = await axios.get(`${NOVEL_API}/user/${idUser}`);
+    const response = await axios.get(`${NOVEL_API}/user/${idUser}?t=${Date.now()}`);
     return response.data.data;
   } catch (error) {
     throw error.response?.data || 'Lỗi không xác định';
@@ -949,10 +949,14 @@ export const increaseChapterView = async (chapterId) => {
 };
 
 // ===================== NOVEL REVENUE =====================
-export const fetchNovelRevenue = async (novelId) => {
+export const fetchNovelRevenue = async (novelId, retries = 3) => {
   try {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const response = await axios.get(`${PURCHASE_HISTORY}/novel/${novelId}/stats`, {
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+    
+    const response = await axios.get(`${PURCHASE_HISTORY}/novel/${novelId}/stats?t=${Date.now()}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     
@@ -964,13 +968,10 @@ export const fetchNovelRevenue = async (novelId) => {
       chapterStats: response.data.chapterStats || {}
     };
   } catch (error) {
-    console.error('Error fetching novel revenue stats:', error);
-    return { 
-      totalCoins: 0, 
-      totalChapters: 0,
-      purchaseCount: 0,
-      purchases: [],
-      chapterStats: {}
-    };
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return fetchNovelRevenue(novelId, retries - 1);
+    }
+    throw error;
   }
 };
