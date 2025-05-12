@@ -182,7 +182,7 @@ export default function TopRanking() {
         </div>
 
        {/* TOP TÁC GIẢ */}
-        <div className={`p-4 rounded-lg shadow-md w-full md:w-80 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
+        <div className={`p-4 rounded-lg shadow-md w-full md:w-80 ${isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-white text-black'}`}>
           <h2 className="text-center font-bold text-xl mb-4">TOP TÁC GIẢ</h2>
           {loading ? (
             <p className="text-center">Loading...</p>
@@ -190,19 +190,28 @@ export default function TopRanking() {
             <p className="text-center text-red-500">{error}</p>
           ) : authorRankings.length > 0 ? (
             <>
-              <div className="flex flex-col items-center mb-4 cursor-pointer" onClick={() => navigate(`/authors/${authorRankings[0]?.idUser?._id}`)}>
+              <div
+                className="flex flex-col items-center mb-4 cursor-pointer"
+                onClick={() => navigate(`/authors/${authorRankings[0]?.idUser?._id}`)}
+              >
                 <img
                   src={authorRankings[0]?.idUser?.avatar || 'https://via.placeholder.com/150'}
                   alt={`Avatar of ${authorRankings[0]?.idUser?.fullname}`}
                   className="w-24 h-24 rounded-full border-2 border-blue-300 hover:scale-105 transition-transform duration-200"
                 />
-                <span className="text-center mt-2 font-semibold text-white">{authorRankings[0]?.idUser?.fullname} 🥇</span>
+                <span className={`text-center mt-2 font-semibold ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>
+                  {authorRankings[0]?.idUser?.fullname} 🥇
+                </span>
               </div>
               {/* Các tác giả xếp hạng tiếp theo */}
               <div className="overflow-y-auto h-64">
                 {authorRankings.slice(1).map((author, index) => (
-                  <div key={author._id} className="flex items-center mb-4 cursor-pointer" onClick={() => navigate(`/authors/${author.idUser._id}`)}>
-                    <span className="flex-1 text-left text-white font-medium">
+                  <div
+                    key={author._id}
+                    className="flex items-center mb-4 cursor-pointer"
+                    onClick={() => navigate(`/authors/${author.idUser._id}`)}
+                  >
+                    <span className={`flex-1 text-left font-medium ${isDarkMode ? 'text-gray-300' : 'text-black'}`}>
                       {index + 2}. {author.idUser.fullname} {index === 0 ? '🥈' : index === 1 ? '🥉' : ''}
                     </span>
                   </div>

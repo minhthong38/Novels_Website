@@ -746,16 +746,15 @@ export const createPurchaseHistory = async ({ idUser, idNovel, idChapter, price 
 export const checkChapterPurchased = async (userId, chapterId) => {
   try {
     const response = await fetch(`${PURCHASE_HISTORY}/check?userId=${userId}&chapterId=${chapterId}`);
-
     if (!response.ok) throw new Error('Failed to check purchase status');
-
     const data = await response.json();
-    return data.isPurchased;
+    return data.isPurchased; // Đảm bảo trả về true/false
   } catch (error) {
     console.error('Error checking purchase status:', error);
-    throw error;
+    return false; // Mặc định trả về false nếu có lỗi
   }
 };
+
 export const fetchUserPurchases = async (userId, token) => {
   try {
     const response = await axios.get(`${PURCHASE_HISTORY}/user/${userId}`, {

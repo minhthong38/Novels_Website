@@ -215,33 +215,33 @@ export default function NovelDetail() {
   };
   
   const handleReadChapter = async (chapter) => {
-    const userId = loggedInUser?._id || loggedInUser?.id;
+  const userId = loggedInUser?._id || loggedInUser?.id;
 
-    if (!userId) {
-      alert('Vui lòng đăng nhập để đọc và mua chương này!');
-      navigate('/login');
-      return;
-    }
+  if (!userId) {
+    alert('Vui lòng đăng nhập để đọc và mua chương này!');
+    navigate('/login');
+    return;
+  }
 
-    const isAuthor = userId === novel?.idUser?._id;
-  
-    try {
-      if (chapter.price > 0 && !isAuthor) {
-        const hasPurchased = await checkChapterPurchased(userId, chapter.id || chapter._id);
-        if (!hasPurchased) {
-          // 👉 Hiển thị popup và lưu chương đang chờ xác nhận
-          setPendingChapter(chapter);
-          setShowPurchasePopup(true);
-          return;
-        }
+  const isAuthor = userId === novel?.idUser?._id;
+
+  try {
+    if (chapter.price > 0 && !isAuthor) {
+      const hasPurchased = await checkChapterPurchased(userId, chapter.id || chapter._id);
+      if (!hasPurchased) {
+        // Hiển thị popup và lưu chương đang chờ xác nhận
+        setPendingChapter(chapter);
+        setShowPurchasePopup(true);
+        return; // Dừng lại để không vào thẳng chương
       }
-  
-      await proceedToReadChapter(chapter); //nếu miễn phí hoặc đã mua
-    } catch (err) {
-      console.error('Lỗi khi xử lý đọc chương:', err);
-      alert('Đã xảy ra lỗi khi đọc chương.');
     }
-  };
+
+    await proceedToReadChapter(chapter); // Nếu miễn phí hoặc đã mua
+  } catch (err) {
+    console.error('Lỗi khi xử lý đọc chương:', err);
+    alert('Đã xảy ra lỗi khi đọc chương.');
+  }
+};
 
   const handleConfirmPurchase = async () => {
     const chapter = pendingChapter;
@@ -252,6 +252,10 @@ export default function NovelDetail() {
       const user = await fetchUserDetails(token);
       const wallet = await getWallet(user._id, token);
       const currentCoins = wallet?.wallet?.balance;
+      console.log('Current coins:', currentCoins);
+      console.log('Chapter price:', chapter.price);
+      
+      
   
       if (currentCoins < chapter.price) {
         setShowPurchasePopup(false);

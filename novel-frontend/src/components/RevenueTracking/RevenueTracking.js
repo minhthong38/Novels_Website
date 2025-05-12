@@ -47,15 +47,16 @@ export default function RevenueTracking() {
   };
 
   const loadData = async (retryCount = 0) => {
-    if (!loggedInUser || !loggedInUser._id) {
+    if (!loggedInUser) {
       setLoading(false);
       return;
     }
     
     try {
       if (retryCount === 0) setLoading(true);
+      const userId = loggedInUser._id || loggedInUser.id;
       
-      const novelsData = await fetchNovelsByAuthor(loggedInUser._id).catch(() => []);
+      const novelsData = await fetchNovelsByAuthor(userId).catch(() => []);
       
       const novelsWithRevenue = await Promise.all(
         novelsData.map(async (novel) => {
@@ -88,7 +89,7 @@ export default function RevenueTracking() {
   };
 
   useEffect(() => {
-    if (loggedInUser && loggedInUser._id) {
+    if (loggedInUser) {
       loadData();
       
       // Tăng interval lên 5 phút thay vì 30s
@@ -111,6 +112,9 @@ export default function RevenueTracking() {
       chapters: novel.revenue?.totalChapters || 0
     }));
   };
+
+  console.log("Revenue Tracking Data:", novels);
+  
 
   const toggleExpand = (novelId) => {
     setExpandedNovel(expandedNovel === novelId ? null : novelId);
@@ -271,17 +275,17 @@ export default function RevenueTracking() {
                         <table className="min-w-full divide-y divide-gray-200">
                           <thead>
                             <tr>
-                              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">ID Chương</th>
-                              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">ID Người dùng</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Tên Chương</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Người Mua</th>
                               <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Thời gian</th>
                               <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Số coin</th>
                             </tr>
                           </thead>
                           <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                            {novel.revenue?.purchases?.map((purchase) => (
-                              <tr key={`${purchase.idChapter}-${purchase.idUser}-${purchase.createdAt}`} className={isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}>
-                                <td className="px-4 py-2 whitespace-nowrap text-sm">{purchase.idChapter}</td>
-                                <td className="px-4 py-2 whitespace-nowrap text-sm">{purchase.idUser}</td>
+                            {(novel.revenue?.purchases?.filter(p => p.idChapter) || []).map((purchase) => (
+                              <tr key={`${purchase.idChapter?.title}-${purchase.idUser?.fullname}-${purchase.createdAt}`} className={isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm">{purchase.idChapter?.title}</td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm">{purchase.idUser?.fullname}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm">
                                   {new Date(purchase.createdAt).toLocaleTimeString('vi-VN')} {new Date(purchase.createdAt).toLocaleDateString('vi-VN')}
                                 </td>

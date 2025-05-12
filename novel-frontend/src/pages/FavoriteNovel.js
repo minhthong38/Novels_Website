@@ -7,7 +7,7 @@ import { fetchFavoriteNovels, toggleFavorite } from "../services/apiService";
 export default function FavoriteNovel() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { loggedInUser, isDarkMode, loadingUser } = useContext(UserContext);
+  const { loggedInUser, isDarkMode } = useContext(UserContext);
 
   useEffect(() => {
     const user = loggedInUser._id || loggedInUser.id;
