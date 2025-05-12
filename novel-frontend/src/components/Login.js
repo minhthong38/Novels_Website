@@ -83,6 +83,9 @@ export default function Login() {
 
       localStorage.setItem('user', JSON.stringify(userWithDetails));
       setLoggedInUser(userWithDetails); // Cập nhật context
+if (typeof window.setNotifications === 'function') {
+  window.setNotifications([]); // Reset notifications immediately after login, will be refetched by Header/NotificationPage
+}
 
       setSuccess('Đăng nhập thành công!');
     } catch (err) {

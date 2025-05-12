@@ -14,6 +14,7 @@ export default function NotificationPage() {
   useEffect(() => {
     const fetchNotifications = async () => {
       if (!loggedInUser?._id) {
+        setNotifications([]); // Clear notifications if not logged in
         setLoading(false);
         return;
       }

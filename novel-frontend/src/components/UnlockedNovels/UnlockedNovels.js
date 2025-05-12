@@ -30,19 +30,20 @@ export default function UnlockedNovels() {
   };
 
   useEffect(() => {
-    loadData();
-    
+    setError('');
+    if (loggedInUser && loggedInUser._id) {
+      loadData();
+    }
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && loggedInUser && loggedInUser._id) {
         loadData();
       }
     };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [loggedInUser]);
+  }, [loggedInUser?._id]);
 
   if (!loggedInUser) {
     return (
@@ -71,7 +72,7 @@ export default function UnlockedNovels() {
     );
   }
 
-  if (error) {
+  if (error && loggedInUser) {
     return (
       <div className={`flex flex-col items-center justify-center min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 max-w-md w-full" role="alert">
@@ -132,7 +133,15 @@ export default function UnlockedNovels() {
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700 bg-gray-900' : 'divide-gray-200 bg-white'}`}>
-                  {chapters.map((purchase) => (
+                  {chapters.filter(purchase => {
+                    const chapter = purchase.idChapter;
+                    if (!chapter || (!chapter.order && !chapter.title && !chapter.data?.order && !chapter.data?.title)) return false;
+                    if (
+                      (chapter.title && chapter.title.toLowerCase().includes('không rõ chương')) ||
+                      (chapter.data?.title && chapter.data.title.toLowerCase().includes('không rõ chương'))
+                    ) return false;
+                    return true;
+                  }).map((purchase) => (
                     <tr 
                       key={purchase._id} 
                       className={`${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} transition-colors duration-150`}
@@ -144,7 +153,7 @@ export default function UnlockedNovels() {
                               to={`/novelDetail/${purchase.idNovel._id}`} 
                               className="text-sm font-medium hover:text-blue-500 transition-colors"
                             >
-                              {purchase.idNovel.title}
+                              {purchase.idNovel?.title || purchase.idNovel?.data?.title || purchase.idNovel?.name || 'Không rõ truyện'}
                             </Link>
                           </div>
                         </div>
@@ -154,7 +163,7 @@ export default function UnlockedNovels() {
                           to={`/novel/${purchase.idNovel._id}/read?chapterId=${purchase.idChapter._id}`}
                           className="text-sm font-medium hover:text-blue-500 transition-colors"
                         >
-                          Chương {purchase.idChapter.order}
+                          Chương {purchase.idChapter?.order || purchase.idChapter?.data?.order || purchase.idChapter?.title || 'Không rõ chương'}
                         </Link>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -166,12 +175,19 @@ export default function UnlockedNovels() {
                         {new Date(purchase.purchaseDate).toLocaleString('vi-VN')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link 
-                          to={`/novel/${purchase.idNovel._id}/read?chapterId=${purchase.idChapter._id}`}
-                          className="text-blue-600 hover:text-blue-900 flex items-center justify-end"
-                        >
-                          Xem <FiChevronRight className="ml-1" />
-                        </Link>
+                        {(() => {
+  const novelId = purchase.idNovel?._id || purchase.idNovel?.data?._id;
+  const chapterId = purchase.idChapter?._id || purchase.idChapter?.data?._id;
+  return (
+    <Link 
+      to={`/novel/${novelId}/read?chapterId=${chapterId}`}
+      className="text-blue-600 hover:text-blue-900 flex items-center justify-end"
+    >
+      Xem <FiChevronRight className="ml-1" />
+    </Link>
+  );
+})()}
+
                       </td>
                     </tr>
                   ))}

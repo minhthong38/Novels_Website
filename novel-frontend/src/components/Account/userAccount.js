@@ -325,8 +325,8 @@ export default function UserAccount() {
           </span>
         </div>
         </div>
-        <button 
-          className={`mt-4 w-full py-2 rounded-lg ${isDarkMode ? 'bg-green-600 text-white' : 'bg-green-500 text-black'}`}
+        <button
+          className="mt-4 w-full py-2 rounded-lg bg-green-500 text-white"
           onClick={() => setShowCoinRechargePopup(true)}
         >
           NẠP COIN
@@ -453,7 +453,7 @@ export default function UserAccount() {
           </select>
         </div>
         <button
-          className={`mt-4 w-full py-2 rounded-lg ${isDarkMode ? 'bg-red-600 text-white' : 'bg-red-500 text-black'}`}
+          className="mt-4 w-full py-2 rounded-lg bg-red-500 text-white"
           onClick={handleSaveChanges} // Không cần truyền đối số nữa
         >
           Lưu thay đổi
@@ -557,7 +557,7 @@ export default function UserAccount() {
                 {coinPackages.map((pkg) => (
                   <div
                     key={pkg.id}
-                    className={`p-2 rounded-lg border cursor-pointer transition-all ${selectedPackage?.id === pkg.id ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-green-500'}`}
+                    className={`p-2 rounded-lg border cursor-pointer transition-all ${selectedPackage?.id === pkg.id ? 'border-green-500 bg-green-50 text-black' : 'border-gray-300 hover:border-green-500'}`}
                     onClick={() => handlePackageSelect(pkg)} // Chọn gói khi click
                   >
                     <div className="text-center">

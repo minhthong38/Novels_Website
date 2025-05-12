@@ -247,6 +247,8 @@ function Header() {
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
     setLoggedInUser(null);
+    setNotifications([]); // Clear notifications on logout
+    setUnreadCount(0); // Reset unread count
     navigate('/'); // Redirect to home page after logout
   };
 
@@ -273,7 +275,7 @@ function Header() {
           <img src="https://imgur.com/pc05sxO.png/" alt="Logo" className="w-32 h-12" />
         </Link>
         {/* User Icon and Dark Mode Toggle for Small Screens */}
-        <div className="flex items-center space-x-4 lg:hidden">
+        <div className="flex items-center gap-3 lg:hidden">
           <label htmlFor="darkModeToggle" className="flex items-center cursor-pointer">
             <div className="relative">
               <input 
@@ -289,11 +291,83 @@ function Header() {
               ></div>
             </div>
           </label>
+          {/* Notification Icon - Responsive */}
+          <div className="relative" ref={notificationRef}>
+            <button
+              onClick={() => setShowNotifications((prev) => !prev)}
+              className="relative focus:outline-none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className={`w-6 h-6 ${isDarkMode ? 'text-white' : 'text-black'}`}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            {/* Dropdown notification for mobile */}
+            {showNotifications && (
+              <div
+                className={`absolute right-0 w-72 z-50 rounded-lg shadow-lg border mt-2 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-200'}`}
+              >
+                <div className="p-4 font-bold border-b dark:border-gray-600">Thông báo</div>
+                {notifications && notifications.length > 0 ? (
+                  notifications.slice(0, 5).map((notif) => (
+                    <div
+                      key={notif._id}
+                      className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer flex justify-between items-start"
+                      onClick={() => {
+                        handleMarkAsRead(notif._id);
+                        navigate(notif.link || '/');
+                      }}
+                    >
+                      <div>
+                        <div className="text-sm font-semibold">{notif.title}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300">{notif.description}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">
+                          {new Date(notif.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteNotification(notif._id);
+                        }}
+                        className="text-red-500 text-xs px-2 py-1 border border-red-500 rounded hover:bg-red-500 hover:text-white transition"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">Không có thông báo mới.</div>
+                )}
+                <div className="text-center py-2 border-t dark:border-gray-600">
+                  <Link to="/notifications" className="text-sm text-blue-500 hover:underline">
+                    Xem tất cả
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+          {/* User Icon */}
           <div className="relative" ref={userMenuRef}>
             <button onClick={handleUserMenuToggle} className="focus:outline-none">
-              <img 
-                src={loggedInUser && loggedInUser.avatar ? loggedInUser.avatar : "https://i.imgur.com/Y0N4tO3.png"} 
-                alt="User Icon" 
+              <img
+                src={loggedInUser && loggedInUser.avatar ? loggedInUser.avatar : "https://i.imgur.com/Y0N4tO3.png"}
+                alt="User Icon"
                 className="w-6 h-6 rounded-full"
               />
             </button>
@@ -478,17 +552,17 @@ function Header() {
             <div className={`absolute border rounded shadow-lg right-0 top-full z-10 w-48 hidden group-hover:block ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'}`}>
               {loggedInUser ? (
                 <>
-                  <Link to="/userAccount" className="block px-4 py-2 hover:bg-gray-600">User Profile</Link>
+                  <Link to="/userAccount" className="block px-4 py-2 hover:bg-gray-400 ">User Profile</Link>
                   {loggedInUser.role === 'author' && (
-                    <Link to="/authorAccounts" className="block px-4 py-2 hover:bg-gray-600">Author Profile</Link>
+                    <Link to="/authorAccounts" className="block px-4 py-2 hover:bg-gray-400">Author Profile</Link>
                   )}
-                  <Link to="/history" className="block px-4 py-2 hover:bg-gray-600">History</Link>
-                  <button onClick={handleLogout} className="block w-full text-left px-4 py-2 hover:bg-gray-600">Logout</button>
+                  <Link to="/history" className="block px-4 py-2 hover:bg-gray-400">History</Link>
+                  <button onClick={handleLogout} className="block w-full text-left px-4 py-2 hover:bg-gray-400">Logout</button>
                 </>
               ) : (
                 <>
-                  <Link to="/register" className="block px-4 py-2 hover:bg-gray-600">Register</Link>
-                  <Link to="/login" className="block px-4 py-2 hover:bg-gray-600">Login</Link>
+                  <Link to="/register" className="block px-4 py-2 hover:bg-gray-400">Register</Link>
+                  <Link to="/login" className="block px-4 py-2 hover:bg-gray-400">Login</Link>
                 </>
               )}
             </div>
@@ -532,7 +606,7 @@ function Header() {
                   notifications.slice(0, 5).map((notif) => (
                     <div
                       key={notif._id}
-                      className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer flex justify-between items-start"
+                      className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600  cursor-pointer flex justify-between items-start"
                       onClick={() => {
                         handleMarkAsRead(notif._id); // Mark as read
                         navigate(notif.link || '/'); // Navigate to the link in the notification

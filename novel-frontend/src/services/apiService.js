@@ -761,7 +761,41 @@ export const fetchUserPurchases = async (userId, token) => {
       headers: { Authorization: `Bearer ${token}` },
       params: { fields: 'idNovel,idChapter,price,createdAt' }
     });
-    return response.data;
+    let purchases = response.data;
+
+    // Nếu idNovel hoặc idChapter chỉ là id, fetch thêm thông tin
+    const isIdOnly = (obj) => typeof obj === 'string' || typeof obj === 'number';
+    const fetchNovel = async (id) => {
+      const res = await axios.get(`${NOVEL_API}/${id}`);
+      return res.data;
+    };
+    const fetchChapter = async (id) => {
+      const res = await axios.get(`${CHAPTER_API}/${id}`);
+      return res.data;
+    };
+
+    // Map và fetch thiếu thông tin nếu cần
+    purchases = await Promise.all(purchases.map(async (item) => {
+      let novel = item.idNovel;
+      let chapter = item.idChapter;
+      if (isIdOnly(novel)) {
+        try {
+          novel = await fetchNovel(novel);
+        } catch (e) {
+          console.error('Không lấy được thông tin truyện:', novel, e);
+        }
+      }
+      if (isIdOnly(chapter)) {
+        try {
+          chapter = await fetchChapter(chapter);
+        } catch (e) {
+          console.error('Không lấy được thông tin chương:', chapter, e);
+        }
+      }
+      return { ...item, idNovel: novel, idChapter: chapter };
+    }));
+
+    return purchases;
   } catch (error) {
     console.error('Error fetching user purchases:', error);
     throw error.response?.data || 'Failed to fetch purchase history';

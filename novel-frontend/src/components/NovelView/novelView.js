@@ -200,30 +200,33 @@ export default function NovelView() {
   return (
     <div className="flex flex-col h-screen">
       {/* Header + Theme Toggle */}
-      <div className={`sticky top-0 z-10 shadow-sm py-2 px-4 flex flex-col gap-2 ${themeMode === 'dark' ? 'bg-gray-900' : themeMode === 'read' ? 'bg-yellow-100' : 'bg-white'}`}>
-        <div className="flex justify-between items-center">
-          <button 
-            onClick={handleBackClick}
-            className={`flex items-center ${themeMode === 'dark' ? 'text-gray-200 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
-          >
-            <ArrowLeftIcon className="h-5 w-5 mr-1" />
-            Quay lại
-          </button>
-          <h2 className={`text-lg font-medium text-center flex-1 ${themeMode === 'dark' ? 'text-white' : 'text-black'}`}>{chapters[currentChapterIndex]?.title}</h2>
-          <div className="w-8"></div> {/* For balance */}
-        </div>
-        {/* Theme Mode Toggle */}
-        <div className="flex gap-2 justify-center items-center mt-1">
-          <button
-            onClick={() => handleThemeToggle('light')}
-            className={`px-3 py-1 rounded ${themeMode === 'light' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'} transition`}
-          >Light</button>
-          <button
-            onClick={() => handleThemeToggle('dark')}
-            className={`px-3 py-1 rounded ${themeMode === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-800'} transition`}
-          >Dark</button>
-        </div>
-      </div>
+      <div className={`sticky top-0 z-30 px-0 py-0 bg-opacity-90 backdrop-blur-md ${themeMode === 'dark' ? 'bg-gradient-to-b from-gray-900/95 to-gray-900/80 border-b border-gray-800' : 'bg-gradient-to-b from-blue-50/95 to-white/80 border-b border-blue-100'}`}>
+  <div className="max-w-2xl mx-auto flex items-center justify-between px-2 pt-3 pb-2">
+    <button onClick={handleBackClick} className={`flex items-center rounded-full px-3 py-2 text-base font-medium shadow-sm hover:shadow-md transition ${themeMode === 'dark' ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-white text-blue-700 hover:bg-blue-100'}`}> <ArrowLeftIcon className="h-5 w-5 mr-1" /> Quay lại </button>
+    <div className="flex-1 text-center">
+      <div className={`font-bold text-2xl md:text-3xl tracking-tight ${themeMode === 'dark' ? 'text-white drop-shadow' : 'text-blue-900 drop-shadow'}`}>{chapters[currentChapterIndex]?.novelTitle || chapters[currentChapterIndex]?.novel?.title || ''}</div>
+      <div className={`text-lg md:text-xl font-semibold mt-1 ${themeMode === 'dark' ? 'text-blue-200' : 'text-blue-700'}`}>{chapters[currentChapterIndex]?.title}</div>
+      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Chương {currentChapterIndex + 1} / {chapters.length}</div>
+    </div>
+    <div className="min-w-[110px] flex justify-end">
+      <button
+        onClick={() => handleThemeToggle(themeMode === 'dark' ? 'light' : 'dark')}
+        className={`flex items-center gap-2 px-4 py-1 rounded-full transition font-semibold border shadow-sm ${themeMode === 'dark' ? 'bg-gray-800 text-white border-gray-600 hover:bg-gray-700' : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-blue-100'}`}
+        aria-label="Toggle Light/Dark Mode"
+      >
+        {themeMode === 'dark' ? (
+          <>
+            <span>Dark mode</span> <span role="img" aria-label="moon">🌙</span>
+          </>
+        ) : (
+          <>
+            <span>Light mode</span> <span role="img" aria-label="sun">☀</span>
+          </>
+        )}
+      </button>
+    </div>
+  </div>
+</div>
 
       {/* Main content */}
       <div className={`flex-1 overflow-y-auto px-4 pb-4 transition-colors duration-300 ${
@@ -267,21 +270,25 @@ export default function NovelView() {
       {/* Chapter navigation */}
       <div className={`sticky bottom-0 border-t py-2 px-4 ${themeMode === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
         <div className="flex justify-between max-w-3xl mx-auto">
-          <button 
-            onClick={handlePreviousChapter}
-            disabled={currentChapterIndex === 0}
-            className={`px-4 py-2 rounded disabled:opacity-50 ${themeMode === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100'}`}
-          >
-            Chương trước
-          </button>
-          <button 
-            onClick={handleNextChapter}
-            disabled={currentChapterIndex === chapters.length - 1}
-            className={`px-4 py-2 rounded disabled:opacity-50 ${themeMode === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100'}`}
-          >
-            Chương tiếp
-          </button>
-        </div>
+  <button
+    onClick={handlePreviousChapter}
+    disabled={currentChapterIndex === 0}
+    className={`flex items-center gap-2 px-6 py-2 rounded-full shadow-md font-semibold transition-all duration-200 border disabled:opacity-50 disabled:cursor-not-allowed
+      ${themeMode === 'dark' ? 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700 hover:shadow-lg' : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50 hover:shadow-lg'}`}
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+    Chương trước
+  </button>
+  <button
+    onClick={handleNextChapter}
+    disabled={currentChapterIndex === chapters.length - 1}
+    className={`flex items-center gap-2 px-6 py-2 rounded-full shadow-md font-semibold transition-all duration-200 border disabled:opacity-50 disabled:cursor-not-allowed
+      ${themeMode === 'dark' ? 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700 hover:shadow-lg' : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50 hover:shadow-lg'}`}
+  >
+    Chương tiếp
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+  </button>
+</div>
       </div>
     </div>
   );

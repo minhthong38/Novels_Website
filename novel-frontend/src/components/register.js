@@ -93,6 +93,9 @@ export default function Register() {
         console.log("Tài khoản đã được tạo:", response.data);
         setPopupError("");
         setRegisteredUser(response.data);
+        if (typeof window.setNotifications === 'function') {
+          window.setNotifications([]); // Clear notifications after register
+        }
       } else {
         setPopupError("Đăng ký thất bại. Vui lòng thử lại.");
       }
