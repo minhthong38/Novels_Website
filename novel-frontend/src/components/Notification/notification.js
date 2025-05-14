@@ -13,14 +13,15 @@ export default function NotificationPage() {
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      if (!loggedInUser?._id) {
+      if (!loggedInUser) {
         setNotifications([]); // Clear notifications if not logged in
         setLoading(false);
         return;
       }
 
       try {
-        const response = await getNotificationsByUser(loggedInUser._id);
+        const userId = loggedInUser._id || loggedInUser.id;  
+        const response = await getNotificationsByUser(userId);
         if (response && Array.isArray(response)) {
           setNotifications(response); // Assume the API directly returns an array of notifications
         } else {

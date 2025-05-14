@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchUserDetails, fetchNovels, fetchCategories, getNotificationsByUser, markAsRead, deleteNotification } from '../services/apiService'; // Import fetchNovels, fetchCategories, and notification APIs
 import { UserContext } from '../context/UserContext'; // Import UserContext
+//irebase Realtime
+import { ref, onValue, update, remove  } from 'firebase/database';
+import { db } from './firebaseConfig';
 
 function Header() {
   const { loggedInUser, setLoggedInUser, isDarkMode, toggleDarkMode } = useContext(UserContext); // Get loggedInUser from context
@@ -125,93 +128,45 @@ function Header() {
   }, []);
 
   useEffect(() => {
-    if (loggedInUser) {
-      const fetchNotifications = async () => {
-      try {
-        const userId = loggedInUser._id || loggedInUser.id;
-        if (!userId) {
-          console.error('User ID is undefined. Cannot fetch notifications.');
-          return;
-        }
+    if (!loggedInUser) return;
 
-        const data = await getNotificationsByUser(userId);
-        if (!Array.isArray(data)) {
-          console.error('Invalid notifications data:', data);
-          setNotifications([]);
-          return;
-        }
+    const userId = loggedInUser._id || loggedInUser.id;
+    const notifRef = ref(db, `notifications/${userId}`);
 
-        setNotifications((prev) => {
-          const updated = data.map((newNotif) => {
-            const existing = prev.find((old) => old._id === newNotif._id);
+    const unsubscribe = onValue(notifRef, (snapshot) => {
+      const data = snapshot.val();
 
-            // Giữ nguyên nếu đã đọc
-            if (existing && existing.read) return existing;
-
-            // Ngược lại, cập nhật
-            return { ...newNotif, read: existing?.read || newNotif.read };
-          });
-
-          return updated;
-        });
-
-        // Cập nhật lại số lượng chưa đọc
-        setUnreadCount(data.filter((notif) => !notif.read).length);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
+      if (data) {
+        // Lấy cả key và value, gán _id cho mỗi notification
+        const notifs = Object.entries(data).map(([key, notif]) => ({
+          ...notif,
+          _id: key,
+        }));
+        const sorted = notifs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setNotifications(sorted);
+        setUnreadCount(sorted.filter((n) => !n.read).length);
+      } else {
         setNotifications([]);
+        setUnreadCount(0);
       }
-    };
-      fetchNotifications();
-    }
-  }, [loggedInUser]);
+    });
 
-  useEffect(() => {
-    let intervalId;
-
-    if (loggedInUser) {
-      const fetchNotifications = async () => {
-        try {
-          const userId = loggedInUser._id || loggedInUser.id; // Ensure userId is defined
-          if (!userId) {
-            console.error('User ID is undefined. Cannot fetch notifications.');
-            return;
-          }
-
-          const data = await getNotificationsByUser(userId);
-          if (!Array.isArray(data)) {
-            console.error('Invalid notifications data:', data);
-            setNotifications([]); // Fallback to an empty array
-            return;
-          }
-
-          console.log('Fetched notifications:', data); // Log fetched notifications
-          setNotifications(data); // Set notifications
-          setUnreadCount(data.filter((notif) => !notif.isRead).length); // Safely access length
-        } catch (error) {
-          console.error('Error fetching notifications:', error);
-          setNotifications([]); // Fallback to an empty array on error
-        }
-      };
-
-      fetchNotifications(); // Initial fetch
-
-      // Set up polling every 5 seconds
-      intervalId = setInterval(fetchNotifications, 5000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId); // Clear interval on component unmount
-    };
+    return () => unsubscribe();
   }, [loggedInUser]);
 
   const handleMarkAsRead = async (id) => {
     try {
-      await markAsRead(id);
+      await markAsRead(id); // cập nhật MongoDB
+
+      // cập nhật Firebase
+      const userId = loggedInUser._id || loggedInUser.id;
+      const notifRef = ref(db, `notifications/${userId}/${id}`);
+      await update(notifRef, { read: true });
+
       setNotifications((prev) =>
         prev.map((notif) => (notif._id === id ? { ...notif, read: true } : notif))
       );
-      setUnreadCount((prev) => prev - 1);
+      setUnreadCount((prev) => Math.max(prev - 1, 0));
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -219,9 +174,15 @@ function Header() {
 
   const handleDeleteNotification = async (id) => {
     try {
-      await deleteNotification(id);
+      await deleteNotification(id); // Xóa MongoDB
+
+      // Xóa trong Firebase
+      const userId = loggedInUser._id || loggedInUser.id;
+      const notifRef = ref(db, `notifications/${userId}/${id}`);
+      await remove(notifRef);
+
       setNotifications((prev) => prev.filter((notif) => notif._id !== id));
-      setUnreadCount((prev) => prev - 1);
+      setUnreadCount((prev) => Math.max(prev - 1, 0));
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
