@@ -459,24 +459,7 @@ export default function UserAccount() {
           Lưu thay đổi
         </button>
 
-        {/* Achievement Badges */}
-        <div className="mt-4">
-          <span>KHUNG CÁC THÀNH TÍCH:</span>
-          <div className="flex justify-between mt-2 space-x-2">
-            {[
-              { level: "VIP 1", border: "blue-500" },
-              { level: "VIP 2", border: "green-300" },
-              { level: "VIP 3", border: "yellow-300" },
-              { level: "VIP 4", border: "orange-300" },
-              { level: "VIP 5", border: "red-300" },
-            ].map((vip, index) => (
-              <div key={index} className={`rounded-full border-2 border-${vip.border} p-1`}>
-                <img src={avatarImage} alt={`${vip.level} badge`} className="w-12 h-12 rounded-full" />
-                <p className="text-center mt-1 text-sm">{vip.level}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+  
       </div>
 
       {/* Notification Popup */}
@@ -485,10 +468,10 @@ export default function UserAccount() {
           <div className={`p-4 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
             <h2 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>Thông báo</h2>
             <p className={`mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{notification.message}</p>
-            <button 
+            <button
               className={`w-full py-2 px-4 rounded-lg ${
-                notification.type === 'success' 
-                  ? isDarkMode 
+                notification.type === 'success'
+                  ? isDarkMode
                     ? 'bg-green-600 text-white hover:bg-green-700' 
                     : 'bg-green-500 text-white hover:bg-green-600'
                   : isDarkMode 

@@ -302,23 +302,15 @@ function AuthorAccounts() {
             {renderProgressBar()}
             
             <div className="space-y-2 text-sm">
-              {['displayName', 'username', 'password', 'email', 'introduction'].map((field) => (
+              {['displayName', 'username', 'password', 'email'].map((field) => (
                 <div key={field}>
                   <label className="font-semibold capitalize">{field === 'displayName' ? 'Tên tác giả' : field === 'fullname' ? 'Tên đăng nhập' : field === 'password' ? 'Mật khẩu' : field === 'email' ? 'Email' : 'Giới thiệu'}:</label>
-                  {field === 'introduction' ? (
-                    <textarea
-                      value={userData[field]}
-                      onChange={(e) => setUserData({ ...userData, [field]: e.target.value })}
-                      className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'}`}
-                    />
-                  ) : (
-                    <input
-                      type={field === 'password' ? 'password' : 'text'}
-                      value={userData[field]}
-                      onChange={(e) => setUserData({ ...userData, [field]: e.target.value })}
-                      className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'}`}
-                    />
-                  )}
+                  <input
+                    type={field === 'password' ? 'password' : 'text'}
+                    value={userData[field]}
+                    onChange={(e) => setUserData({ ...userData, [field]: e.target.value })}
+                    className={`w-full border rounded-lg p-2 mt-1 ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black border-gray-300'}`}
+                  />
                 </div>
               ))}
             </div>
